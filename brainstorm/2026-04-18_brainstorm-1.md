@@ -5,43 +5,49 @@
 **Types of card:** move, position (pose)
 
 ### Anatomy of a Card
-- move / inside pose
-- style depiction
-- flavor text, e.g. "At a wedding rave, you could do the forehand kitchen tray sidekick."
-- position / Clock
+- move / inside turn
+- move depiction / artwork
+- power text, e.g. "if transition move, any position can follow this move"
+- requirements to play: [position] Closed
 
 Labels around the card sketch:
 - Coop
 - requirements to play
-- energy cost
-- performance push
-- style push?
-  - to give the push it needs to be worth it to use
+
+- energy cost?
+- performance points?
+- style points?
+  - more style points if harder to play & if from lessons
 
 ### Clock / Game state
-- clock position
-- game state / broad style, limits, moves
+- closed position
+- game state / board state, limits, moves
 
-### Screen layout
+### Screen layout / phone view
 - hand of live cards on screen (row of empty card rectangles)
-- Phone view →
-- area of game playing (stage/save)
+- music of genre playing (Suno)
 
 ---
 
 ## Right page — Apr 18, Plane from San Jose to Philly
 
-I want to make a focused game that leverages different card decks and different styles of dance, and that starts out with me fully familiar with, but uses cards while on a flight — not through the internet, but through local connection.
+I want to make a focused game that leverages different cat breeds and different styles of dance, and that Mel and I can play together with both of our phones while on a flight – so not thorugh the internet but through local connection.
 
-I want to use different dance moves and styles of dance as a way to improve my knowledge of dance. It doesn't have to be 1-to-1, I might study so much, but it would be fun to learn to dance / doodle out better, as I would like to make the artwork from our drawings.
+I want to use different dance moves and styles of dance as a way to improve my knowledge of dance. It doesn't have to be cat themed, maybe that's too much, but it would be fun to learn to draw / doodle cats better, as I would like to make the artwork from our drawings.
 
-Part of the problem with Claude's Card is that it is too broad; it is hard to scaffold the intentions and hard to know better the aim of the project asks.
+Part of the problem with Clowder & Crest is that it is too broad, so it is not so polished. Too ambitious, but now I know better the scope the project needs.
 
-Could the game be card-less with the dancing being? Can I possibly project dancing? Ah! Also has a sign from spinning dance music — dance moves aren't should help her turn and also we could also I would also need to learn language that covers across types of dance music.
+Could the game be real time with the dancing thing? Can I gamify partner dancing? Mel has a tough time knowing dance move names - this could hep her learn, but also me, and then I would also need to learn language that creates various types of dance music.
 
-It would be easier to make do not privilege with the human dance — though that lives of a camera of them to hand scream at their. I do make sure the characters have prose and I can learn to handle different breads, and I can connect various breads to the geography of the dance (except that would be easier with stuff). If I am people, I could learn to dance different obstacles which would be fun — but then I could use broad game mechanics like kids as the player having, use humans movers then the approach I have somewhere when leaders you have liked options of making for which moves you can do.
+It would be easier to make the art perhaps with human figures — though that's less of a concern if some is hand drawn, as then I can make sure the characters have paws, and I can learn to doodle different breads, and I can connect various breeds to the geography of the dance (though that would be easier with dogs). If it were people, I could learn to doodle different ethnicities which would be fun.
 
-The player could be asymmetric to puppeteer the killer and look like cooperative world, for the dance relate, can follow a trip to — the other style could sponsors variation to a more game options, it could leave the player done it, like open sparks. If something like is to learn moves, then let's keep if more symmetric. Some event should celebrate special advance.
+I could start with salsa before adding other genres. I could use board game mechanisms too, such as the player having a hand of cards they choose moves from. That represents how sometimes when leading you have limited options or memory for which moves you can do.
+
+The player could be asymmetric to represent the follow and lead roles. Cooperative would fit the dance theme better. 
+
+Follow is tough to — the follow deck could represent variations or something like a spin or hop or glide.
+
+Some cards shared between genres of dance.
 
 ---
 

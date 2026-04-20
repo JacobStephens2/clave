@@ -3,10 +3,11 @@
 ## Left page — Positions, decks, and symmetry
 
 ### Positions
-- live / disconnected (could this allow playing those approaches dance styles)
+- open
+- shines / disconnected (could this allow playing two separate dance states)
 - closed
-- pin up / down
-- Paddle
+- promenade
+- cuddle
 
 ### Ability chart for solo dance — beginner, lesson
 - open position, also
