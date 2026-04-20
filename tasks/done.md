@@ -1,1 +1,1 @@
-[x] turn images into markdown
+- [x] turn images into markdown
