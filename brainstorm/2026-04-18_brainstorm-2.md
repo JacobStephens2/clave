@@ -9,42 +9,50 @@
 - promenade
 - cuddle
 
-### Ability chart for solo dance — beginner, lesson
+### starting deck for salsa dance - beginner lesson
 - open position, also
-- move / dance cards to turn
-- own, lead, cost to turn
-- minimum classes stabilise their life but all options
+- move: follow outside turn
+- move: lead outside turn
 
-### Follow hand — 5 cards?
+### Follow hand — 5 cards? Or 2 cards?
 (row of empty card rectangles)
+- 2 cards: minimum decision, start with this then add more if need more options
 
-### Job / Sub Chance — Player's state
-Card rectangles labeled: **position**, **move**, **flourish**
+[][] [follow deck] [follow draw]
+
+follow market / lessons / inspiration - two cards on display
+
+### Joint dance state
+Card rectangles labeled: **position**, **move**, **flourish** - on top of move card to side
 
 ### Notes on symmetry
-How symmetric should the decks be? If symmetric, the player [chosen?] either the lead & follow in the sub when based, but are offer of as flourish, so more flourish role, more typical than them must own dance, but lead hand can lead the back are. The inside of notation by the below that lead from your bed makes choices the follow.
+How asymmetric should the decks be? If symmetric, the players somewhat alternate both lead & follow in that both initiate moves & both respond to the others' moves. Asymmetric might require more granular moves, like "left hand up" in the lead deck, then followed with inside or outside turn by the follow, but there's not always much choice for the follow in these situations.. If the point is to learn moves, then let's keep it more symmetric.
 
 ---
 
 ## Right page — Challenge, transitions, and flourishes
 
-**Problem:** How do we make the game difficult? What challenge is there? What does it look like? What about card cost? What games do I know? For the first typical game, of later cost games are puzzle problems.
+**Problem:** How do we make the game difficult? What challenge is there? What does skill look like? What other coop card games do I know? Fox in the Forest, Regicide, or other coop games generally? Pandemic.
 
-Reflection has appropriate one pleasure to play: to choose which approach to take in the problem, given the limited and changing options of the hands, the most...
+Regicide has opponents and pressure to play — to choose which approach to take in the problem, given the limited and changing options of the hands.
 
-There could be choice validity — picking up one, moves through the clash chart... not the other you try holding together. In given choice set when you prefer dice, wig up, you need to control the moves they wants is adapt, that could just be as much as cards for free picking, one per turn or something.
+There could be deck building — picking up new moves through the dance that synergize with that dance you're building together, & you don't see what your partner picks up, so you need to watch the moves they make and adapt. There could just be a market of cards for free pickup, one per turn or something.
 
-How could the cards end? Perhaps after playing X cards? Memorable any might it for any to cook up as many points as possible because if mole work too hard to play on something like the cards 20 clicks to see him free feeds up my 10 choices once, possibly small and would need to deal it about 10? 10 may stuff the mere of the do make its in.
+How could the round end? Perhaps after playing x cards? Representing song length? & you try to rack up as many points as possible through out the song with synergies?Something like 30 or 20 cards & see how that feels in play — 10 decision each, possibly small, and what sized deck to start with 10? Maybe roughly as many as it takes for a salsa song?
 
-How did a...? Perhaps you play back plays more that connect to the bound edge.
+Can you lose? Perhaps yes if you can't play a move that connects to the board state?
 
-How could transitions between positions work? If I want to go from open to closed, I move to do that, there could really be a transition move — a style push, but allows getting into different positions.
+How could transitions between positions work? If I want to go from open to closed, I move to do that, there could simply be a transition move — no style points, but allows getting into different positions.
 
-The routine could have too to get rid the pull? Some style breaks or score breaks on different placed can be severe, extend / played / performed in a style dance.
+What incentive could there be to get into different positions? Can be entered / played / performed in a single dance.
 
-Flowers/flourishes could be played on any move, such as a hand twist or an add-turn, they too we'd have X requirement of trae hand on the way, on your possess.
+Flares could be played on any move, such as a hand twist or an inside turn, though this could have the requirement of free hand on the move or position.
 
-Can transition from closed to open via the move as a push-up? Players could have a time limit to play, pressuring to possibly dance it a 'more' game options, so could same the players dance it, like open sparks.
+I can transition from closed to open via a pass by.
+
+Players could have a time limit to play, pressuring & simulating dance.
+
+If a move or position opens options, it could have the player draw 2 cards, like open position.
 
 If it is unit to learn moves, then let's keep if more symmetric. Some cards could celebrate open advance.
 
