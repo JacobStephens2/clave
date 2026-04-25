@@ -1,6 +1,6 @@
-# Concept Brief — <Game Title>
+# Concept Brief: Clave – A Partner Dance Game (Salsa)
 
-**One-line pitch:** <A single sentence describing the game.>
+**One-line pitch:** Dance salsa with your partner in a card game where you play positions, signals, moves, shines, and flourishes to style out each song.
 
 **Elevator pitch (2–3 sentences):**
 <What is it, who is it for, why is it fun?>
@@ -15,8 +15,8 @@
 - <Scope boundaries>
 
 ## Target Player
-- Platform: Android (engine/framework TBD)
-- Audience: <demographic / player type>
+- Platform: Android Kotlin + Jetpack Compose
+- Audience: Gamey salsa dancers, such as my wife and I
 - Comparable titles: <Balatro, Slay the Spire, Marvel Snap, etc.>
 
 ## Core Fantasy
