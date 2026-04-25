@@ -29,7 +29,7 @@ Labels around the card sketch:
 
 ---
 
-## Right page — Apr 18, Plane from San Jose to Philly
+## Right page — Apr 18, Plane from San Juan to Philly
 
 I want to make a focused game that leverages different cat breeds and different styles of dance, and that Mel and I can play together with both of our phones while on a flight – so not thorugh the internet but through local connection.
 
