@@ -1,19 +1,19 @@
 # Synthesis — Dance card game concept
 
-Synthesized from the 2026-04-18 brainstorm notes (plane from San Jose to Philly).
+Synthesized from the 2026-04-18 brainstorm notes (plane from San Juan to Philly).
 
 ## Vision
 
-A focused, cooperative, two-player card game about partner dancing — playable by Jacob and Mel on their phones, over local connection (no internet required, designed for flights). Starts narrow (salsa) so it actually ships, in contrast to the prior, over-ambitious **Clowder & Crest** project.
+A focused, cooperative, two-player card game about partner dancing — playable by Jacob and Mel on their Android phones, over local connection (no internet required, designed for flights). Starts narrow (salsa) so it can have more fun gameplay, in contrast to the prior, over-ambitious **Clowder & Crest** project.
 
-The game doubles as a learning tool: players pick up real dance move names, styles, and transitions as they play. Art is hand-drawn cats, partly as a way for Jacob to practice drawing cats; different cat breeds can map to different dance genres/regions.
+The game doubles as a learning tool: players pick up real dance move names, styles, and transitions as they play. Art for the initial salsa version of the game will be in the Afro-Caribbean Figurative Expressionist tradition. As different dance styles are brought in, and eventually a fusion variation mixing styles together is created, different dance styles can have different art styles matching those dance styles.
 
 ## Core design pillars
 
-- **Cooperative, asymmetric roles** — one player is Lead, the other is Follow. Asymmetry reflects the real dance roles, but kept light enough that players learn moves (the primary goal) rather than wrestle with role-specific complexity.
-- **Phone-native, local multiplayer** — offline-friendly; two phones, no server.
+- **Cooperative, asymmetric roles** — one player is Lead, the other is Follow. Asymmetry reflects the real dance roles, but kept light enough that players learn moves (the primary goal) rather than wrestle with role-specific complexity. At least a distinction between the lead and follow is that the lead plays the first card in a dance.
+- **Phone-native, local multiplayer** — offline-friendly; two Android phones, no server.
 - **Narrow scope first** — salsa only at launch. Other genres layer in later, with some cards shared across genres.
-- **Art as a personal goal** — cat-themed hand-drawn characters; breeds tied to dance styles.
+- **Art as a personal goal** — hand-drawn artwork fleshed out with AI tools.
 - **Music** — genre-appropriate soundtrack, possibly generated via Suno.
 
 ## Card types
@@ -27,12 +27,11 @@ Three card categories surfaced in the notes:
 ### Anatomy of a card
 
 - Move name / artwork
-- Power text (e.g. "if transition move, any position can follow this move")
+- Power text (e.g. "Any position can follow this move")
 - Requirements to play (e.g. `[position] Closed`)
 - Costs / rewards:
-  - energy cost?
-  - performance points?
-  - style points? (more style points if the move is harder, or if it comes from a lesson)
+  - cost: energy cost?
+  - rewards: performance points? style points? experience points? (more style points if the move is harder, or if it is more advanced - comes from lessons). Experience points could be used to gain new moves / cards, and style points could be the ultimate game score.
 
 ## Game state
 
@@ -43,8 +42,8 @@ Three card categories surfaced in the notes:
 
 ## Hand size
 
-- Leaning toward **2 cards for Follow** as a minimum-viable decision space; grow if it feels too constrained.
-- Lead may have a larger hand (TBD). The asymmetry is that the Lead initiates while the Follow responds with limited but meaningful choices.
+- Leaning toward **3 cards for Follow** as a minimum-viable decision space, possibly having one position, move, and flourish card at a time; grow if it feels too constrained.
+- Lead could have a larger hand (TBD). The asymmetry is that the Lead initiates while the Follow responds with limited but meaningful choices.
 
 ## Round / game length
 
@@ -56,7 +55,7 @@ Three card categories surfaced in the notes:
 ## Scoring & challenge
 
 - **Points** for performance and style; synergies across the song drive the score.
-- **Deck-building mid-round** — pick up new moves from a shared market; you don't see what your partner picks, so you have to watch and adapt.
+- **Deck-building mid-round** — pick up new moves from a shared market of "lessons"; maybe you don't see what your partner picks, so you have to watch and adapt.
 - **Time pressure** — a per-turn time limit simulates the real-time feel of dancing.
 - **Reference games**: Fox in the Forest, Regicide, Pandemic — coop or trick-taking games with pressure and constrained hands.
 
@@ -68,7 +67,11 @@ Three card categories surfaced in the notes:
 
 ## Symmetry decision
 
-Leaning symmetric. If the primary goal is learning moves, deep lead/follow asymmetry (granular cards like "left hand up" in the lead deck, paired with inside/outside turn responses in the follow deck) adds complexity without adding learning value — the follow often has no real choice in those situations. Keep it symmetric enough that both players meaningfully decide and learn.
+Leaning symmetric. If the primary goal is learning moves, deep lead/follow asymmetry (granular cards like "left hand up" in the lead deck, paired with inside/outside turn responses in the follow deck) adds complexity without adding learning value — the follow often has limited choice in those situations. Keep it symmetric enough that both players meaningfully decide and learn. It's more that the players are creating a dance together and less of simulating lead and follow initiation and response.
+
+## Competitive 4 Player Mode
+
+Two sets of two players could play side by side, and each partnership could try to get a higher score than the other, or if who you are playing with / dancing with you individually get points from your dance with them, then you see who has the higher score at the end, sort of like a dance competition where you can win individually but can dance with different partners. I'm just worried about competitive scoring in a two player game incentivizing players to not play to form synergies for fear of helping their partner get points, whereas in a four player game, you would be incentivized to get as many points as you can, even if it means helping your particular partner out, so that overall you end up getting the most style points and winning. Or you could just compete your partnership versus their partnership rather than switching partners.
 
 ## Open questions
 
