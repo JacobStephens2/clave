@@ -1,0 +1,2 @@
+- pick elements from tabletop game encyclopedia for game
+- fill out docs
