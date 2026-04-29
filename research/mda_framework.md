@@ -46,6 +46,9 @@ Rather than the vague word "fun," MDA proposes a taxonomy of aesthetic goals. A 
 6. **Discovery** — game as uncharted territory to explore.
 7. **Expression** — game as a canvas for self-discovery or creativity.
 8. **Submission** — game as pastime, a pleasant routine to sink into.
+9. Abnegation
+10. Learning/Mastery
+11. Parasocial
 
 Using this vocabulary, designers can describe a game's intent precisely: e.g., chess is Challenge-heavy; *The Sims* emphasizes Discovery, Expression, and Fantasy; *Quake* deathmatch leans on Challenge, Sensation, and Fellowship.
 
