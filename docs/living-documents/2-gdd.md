@@ -1,7 +1,7 @@
 # Game Design Document — <Game Title>
 
 ## 1. Vision
-- Elevator pitch:
+- Elevator pitch: Clave — A Partner Dance Game (Salsa), or Clave for short, is a digital card game in which two players cooperatively salsa dance to salsa songs.
 - Pillars:
 - Non-goals:
 
