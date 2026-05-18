@@ -2,17 +2,18 @@
 Here is an entire social dance that I can use to add enough moves and positions to create either a prototype or single vertical slice.
 
 
-## Llorarás Bar-by-Bar Structure (180 bars of 4/4, 89 bars of 8, ~192 BPM, 720 beats)
+## Llorarás Bar-by-Bar Structure (3:42, 180 bars of 4/4, 89 bars of 8, ~192 BPM, 720 beats)
 
 ### 1. Intro, ~0:00–0:30, 24 4-bars, 12 8-bars
+xxxx. - 
 
-### 2. Cuerpo (Body / verses) ~0:30-2:14, 82 4-bars, 41 8-bars
+### 2. Cuerpo (Body / verses) ~0:30-2:14, 82 4-bars, 40 8-bars
 
 #### Verse 1, 16 4-bars, 8 8-bars, ~0:30
 
 #### Horns between verses, ~0:54-1:13, 16 4-bars, 8 8-bars
 
-#### Cuerpo, Verse 2, 18 4-bars, 9 8-bars, ~1:13
+#### Cuerpo, Verse 2, 18 4-bars, 8 8-bars, ~1:13
 
 #### Horns between verses, 16 4-bars, 8 8-bars, ~1:35
 
@@ -20,7 +21,7 @@ Here is an entire social dance that I can use to add enough moves and positions 
 
 ### 3. Montuno (Mountain) Section (Bars 97–~160) — ~2:14, 64 4-bars, 32 8-bars
 
-#### Puente (Bridge), 14 4-bars, 7 8-bars, ~2:14
+#### Puente (Bridge), 14 4-bars, 8 8-bars, ~2:14
 
 #### Mambo (Conversation with the gods), horn break, 24 4-bars, 12 8-bars, ~2:30
 
