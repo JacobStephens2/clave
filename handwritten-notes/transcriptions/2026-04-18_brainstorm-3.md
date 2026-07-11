@@ -1,5 +1,7 @@
 # Brainstorm 3 — 2026-04-18
 
+Source: `../scans/2026-04-18_brainstorm-3-doodles.jpg`
+
 ## Left page — Character doodles
 
 The left page is primarily pencil sketches of cat-like characters:

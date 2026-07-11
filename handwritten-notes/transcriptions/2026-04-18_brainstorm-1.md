@@ -1,5 +1,7 @@
 # Brainstorm 1 — 2026-04-18
 
+Source: `../scans/2026-04-18_brainstorm-1.jpg`
+
 ## Left page — Card anatomy & game layout sketches
 
 **Types of card:** move, position (pose)

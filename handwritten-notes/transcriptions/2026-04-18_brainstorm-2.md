@@ -1,5 +1,7 @@
 # Brainstorm 2 — 2026-04-18
 
+Source: `../scans/2026-04-18_brainstorm-2.jpg`
+
 ## Left page — Positions, decks, and symmetry
 
 ### Positions

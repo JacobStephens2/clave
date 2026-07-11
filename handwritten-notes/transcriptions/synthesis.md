@@ -1,6 +1,6 @@
 # Synthesis — Dance card game concept
 
-Synthesized from the 2026-04-18 brainstorm notes (plane from San Juan to Philly).
+Synthesized from the 2026-04-18 brainstorm notes (plane from San Juan to Philly). See paired scans and page transcripts in this folder and `../scans/`.
 
 ## Vision
 
