@@ -1,1 +1,3 @@
 - [x] turn images into markdown
+- [x] Write an opinionated rulebook to docs/rules/game-rules according to docs/rules/decisions and docs/rules/game-rules-draft. Feel free to look elsewhere in the repo, and especially the handwritten-notes, for inspiration.
+- [x] Add a file or files to docs/cards which defines cards for v1 of Clave.
