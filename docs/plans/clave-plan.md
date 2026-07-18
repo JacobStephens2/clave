@@ -6,8 +6,9 @@
 original is preserved as `docs/plans/reviews/clave-plan-original-2026-07-18.md`).
 Sources: `docs/rules/game-rules.md` (rules of record), `docs/cards/v1-card-list.md`,
 `docs/rules/decisions.md`, `docs/living-documents/1-concept-brief.md`,
-`docs/living-documents/0-dance.md`, `docs/clave-tech-stack.md`,
-`9-project-context.md`, and Jacob's planning direction of 2026-07-18.*
+`docs/living-documents/0-dance.md`, `docs/clave-tech-stack.md`, the architecture
+rules now in `CLAUDE.md` (formerly `9-project-context.md`, archived under
+`docs/archive/templates/`), and Jacob's planning direction of 2026-07-18.*
 
 ## 1. Summary
 
@@ -26,9 +27,10 @@ reviving them.
 v1 to play at home in the evenings") supersedes the five-platform scope of
 `docs/clave-tech-stack.md` (2026-05-17) and the "Android primarily" line in the
 concept brief. Where those documents describe *constraints* rather than scope — the
-device-whitelisting constraint, the headless-logic and data-driven-content rules in
-`9-project-context.md` — this plan keeps them. Phase 0 updates the repository's
-root documents so no other file still claims authority it no longer has.
+device-whitelisting constraint, the headless-logic and data-driven-content rules
+(formerly `9-project-context.md`, now the Architecture rules in `CLAUDE.md`) —
+this plan keeps them. Phase 0 updates the repository's root documents so no other
+file still claims authority it no longer has.
 
 ## 2. Outcome and requirements
 
@@ -184,7 +186,7 @@ without adding a device the web doesn't already reach.
 Alternatives: Rust core + wasm-bindgen now (the tech-stack doc's architecture); no
 separation at all (rules inside React components). The middle path keeps what was
 valuable about the "headless core" idea — rules/UI separation, determinism, one
-source of truth, testability, and `9-project-context.md`'s standing rule that logic
+source of truth, testability, and the repo's standing rule (`CLAUDE.md`) that logic
 is decoupled from rendering — while dropping its expensive part, the cross-language
 FFI toolchain, which only pays off when a second *language* consumes the core. The
 engine exposes the same coarse-grained API shape the tech doc specified
@@ -236,7 +238,7 @@ schemas against `docs/cards/v1-card-list.md`.** Song bonuses use a small
 condition/effect DSL (~12 condition ops cover all 16 Llorarás cards: move-style
 thresholds, danced-from position, flourish/pose played, position changed, cards
 played ≥ N, ends-in-position, same-position-as-previous-move, partner-history
-lookups). This honors `9-project-context.md`'s data-driven rule and makes tuning and
+lookups). This honors the repo's data-driven rule (`CLAUDE.md`) and makes tuning and
 a second song a data task, not a code task. Balance numbers are never hardcoded in
 the engine. Content is hashed (SHA-256 over a canonical serialization with stable
 key order), and the bytes travel with every game's resume envelope so tuning
@@ -391,16 +393,15 @@ authoritative documents — is retired in the same phase.
 
 Two halves, both cheap, each retiring a top risk.
 
-**(a) Authority cleanup.** Commit `docs/plans/` (this plan and its reviews) to git.
-Rewrite `README.md` and `9-project-context.md` to describe the v1 web/TypeScript
-scope and point at real paths (`docs/rules/game-rules.md`,
-`docs/cards/v1-card-list.md`, this plan) — both currently say "targeting Android /
-stack undecided" and link a dozen documents that no longer exist at those paths.
-Convert the header of `docs/clave-tech-stack.md` to "historical / post-v1
-reference — superseded for v1 by `docs/plans/clave-plan.md`" so its §13 agent
-directives can't fork a future session's architecture. One-time `rg`-assisted sweep
-confirming no document still unqualifiedly instructs Rust/native/Android-first v1
-work.
+**(a) Authority cleanup — done 2026-07-18 except the commit.** Completed in the
+repo-cleanup session: `README.md` rewritten to the real project and paths; the
+architecture rules from `9-project-context.md` folded into `CLAUDE.md` (the file
+agents actually read) and the stale root file archived; `docs/clave-tech-stack.md`
+headed with a historical/superseded banner neutralizing its §13 agent directives;
+the unfilled pre-production templates moved to `docs/archive/templates/` and
+`game-rules-draft.md` to `docs/archive/`; reference sweep confirmed no remaining
+unqualified Rust/native/Android-first instruction. **Remaining:** commit
+`docs/plans/` and the cleanup to git.
 
 **(b) The couch gate.** Assemble the physical prototype straight from
 `docs/cards/v1-card-list.md` (its copy counts exist for exactly this purpose):

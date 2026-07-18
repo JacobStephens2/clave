@@ -2,8 +2,8 @@
 
 The complete card set for Clave v1, as referenced by `docs/rules/game-rules.md`.
 Move vocabulary is drawn from the Llorarás social dance breakdown in
-`docs/living-documents/0-dance.md`. IDs follow the `<type>_<###>` convention from
-`9-project-context.md`.
+`docs/living-documents/0-dance.md`. IDs follow the `<type>_<###>` convention
+(see `CLAUDE.md`).
 
 Card types: `pos` (Position), `mov` (Move), `flo` (Flourish), `rec` (Recovery),
 `song` (Song). Tier: B = Beginner, I = Intermediate, A = Advanced.

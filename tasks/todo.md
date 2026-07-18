@@ -1,4 +1,4 @@
-- [ ] Phase 0a (clave-plan): authority cleanup — commit docs/plans/ to git, rewrite README.md and 9-project-context.md to v1 web/TS scope with real paths, convert docs/clave-tech-stack.md header to historical/post-v1 reference, rg sweep for stale Rust/native instructions
+- [ ] Phase 0a (clave-plan): commit the 2026-07-18 repo cleanup to git (docs/plans/ already committed; rest of authority cleanup is done — see tasks/done.md)
 - [ ] Phase 0b (clave-plan): the couch gate — build the physical prototype from docs/cards/v1-card-list.md, play ≥2 full games with Mel with the record playing, log durations/rulings/rematch intent, append rulings (incl. stumble ruling) to docs/rules/decisions.md
 - [ ] Phase 1 (clave-plan): scaffold npm-workspaces monorepo (engine/content/client/server), author cards.json + song-lloraras.json with zod validation, doc-count checks, canonical serialization + content hashing
 - [ ] Phase 2 (clave-plan): headless TS engine covering game-rules.md §4–§10 with per-section tests, property tests, golden-replay determinism corpus, ENGINE_VERSION + resume envelope type, CLI runner; write ambiguity resolutions back to docs/rules/decisions.md

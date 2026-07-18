@@ -1,3 +1,4 @@
 - [x] turn images into markdown
 - [x] Write an opinionated rulebook to docs/rules/game-rules according to docs/rules/decisions and docs/rules/game-rules-draft. Feel free to look elsewhere in the repo, and especially the handwritten-notes, for inspiration.
 - [x] Add a file or files to docs/cards which defines cards for v1 of Clave.
+- [x] Repo cleanup / Phase 0a authority work (2026-07-18): rewrote README.md to the real project; folded 9-project-context.md's architecture rules into CLAUDE.md; bannered docs/clave-tech-stack.md as historical/post-v1; archived the unfilled pre-production templates (docs/6-8,10-13, living-documents/2-5, 9-project-context.md) to docs/archive/templates/ and game-rules-draft.md to docs/archive/; fixed dangling references; swept for stale Rust/native-first instructions (none remain outside archive/historical files)

@@ -1,9 +1,16 @@
-# Partner Dance Game — Tech Stack Reference
+# Partner Dance Game — Tech Stack Reference (HISTORICAL / POST-v1)
+
+> **STATUS: SUPERSEDED FOR v1 — NOT AUTHORITATIVE.** Clave v1 is a single
+> TypeScript web application; the governing plan is `docs/plans/clave-plan.md`
+> (adjudicated 2026-07-18). The five-platform native architecture and Rust core
+> described below are a **post-v1 vision**, gated on a native client actually
+> being scheduled (plan decision D2). Do not implement anything from this
+> document for v1, and do not treat its agent directives (§13) as current.
 
 > **Project umbrella:** *Partner Dance Game* (colloquially "Clave," after the first shipping iteration)
 > **First iteration:** *Clave — A Partner Dance Game (Salsa)*
 > **Future iterations:** Lindy hop, blues, bachata, and cross-style fusion
-> **Purpose of this document:** Authoritative tech stack reference for Claude Code agents working on any iteration in the *Partner Dance Game* series. This describes *what* the stack is and *why* each piece was chosen, so the agent can make architecturally consistent decisions when implementing features, refactoring, or adding new platforms.
+> **Purpose of this document:** Historical tech-stack study for the eventual multi-platform series, retained as the post-v1 reference for the Rust-core / native-clients direction.
 
 ---
 
