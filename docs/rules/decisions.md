@@ -20,3 +20,16 @@ A stumble replaces only step 2, **Dance**. If the stumble does not reduce Connec
 to 0, the active player continues to step 3 (the optional lesson) and step 4
 (freshen up). This keeps “no other dance cards” scoped to the dance step and avoids a
 bad-hand death spiral. Connection reaching 0 still ends the game immediately.
+
+## 2026-07-19 — Position tags describe entry compatibility
+
+A Move's position tags describe the couple's state at the **start** of that 8-count.
+The figure may contain a normal re-grip, release, or opening-out action; those internal
+changes do not require a separate Position card. Half-Open and Half-Closed remain
+exact game states rather than inheriting every Open or Closed match automatically, so
+each card explicitly lists every compatible state. This keeps compatibility
+data-driven and lets individual handhold requirements remain tactically meaningful.
+
+The starter deck now contains 2 Open Positions, 1 Closed Position, the four basic
+turns, and 1 Cross Body Lead. Cross Body Lead is the starter's reliable bridge out of
+Closed and replaces the third Open Position; the starter remains eight cards.

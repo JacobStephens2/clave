@@ -83,7 +83,7 @@
       "name": "Follow Right Turn",
       "tier": "B",
       "type": "move",
-      "positions": ["Open"],
+      "positions": ["Open", "Closed", "Half-Open"],
       "style": 1
     },
     {
@@ -91,7 +91,7 @@
       "name": "Follow Left Turn",
       "tier": "B",
       "type": "move",
-      "positions": ["Open"],
+      "positions": ["Open", "Half-Open"],
       "style": 1
     },
     {
@@ -99,7 +99,7 @@
       "name": "Lead Right Turn",
       "tier": "B",
       "type": "move",
-      "positions": ["Open"],
+      "positions": ["Open", "Half-Open"],
       "style": 1
     },
     {
@@ -107,7 +107,7 @@
       "name": "Lead Left Turn",
       "tier": "B",
       "type": "move",
-      "positions": ["Open"],
+      "positions": ["Open", "Half-Open"],
       "style": 1
     },
     {
@@ -115,7 +115,7 @@
       "name": "Cross Body Lead",
       "tier": "B",
       "type": "move",
-      "positions": ["Open", "Closed"],
+      "positions": ["Open", "Closed", "Half-Open", "Half-Closed"],
       "style": 2
     },
     {
@@ -123,7 +123,7 @@
       "name": "Hesitation",
       "tier": "B",
       "type": "move",
-      "positions": ["Closed"],
+      "positions": ["Open", "Closed", "Half-Open", "Half-Closed"],
       "style": 1
     },
     {
@@ -131,7 +131,7 @@
       "name": "Cross Body Lead — Inside Turn",
       "tier": "I",
       "type": "move",
-      "positions": ["Open", "Closed"],
+      "positions": ["Open", "Closed", "Half-Open", "Half-Closed"],
       "style": 3
     },
     {
@@ -139,7 +139,7 @@
       "name": "Cross Body Lead — Outside Turn",
       "tier": "I",
       "type": "move",
-      "positions": ["Open", "Closed"],
+      "positions": ["Open", "Closed", "Half-Open", "Half-Closed"],
       "style": 3
     },
     {
@@ -147,7 +147,7 @@
       "name": "New York Walk",
       "tier": "I",
       "type": "move",
-      "positions": ["Half-Open"],
+      "positions": ["Open", "Half-Open"],
       "style": 3
     },
     {
@@ -155,7 +155,7 @@
       "name": "Change of Place (Enchufla)",
       "tier": "I",
       "type": "move",
-      "positions": ["Closed", "Half-Closed"],
+      "positions": ["Open", "Half-Open"],
       "style": 2
     },
     {
@@ -163,7 +163,7 @@
       "name": "Sombrero",
       "tier": "A",
       "type": "move",
-      "positions": ["Half-Closed"],
+      "positions": ["Open", "Half-Open"],
       "style": 4
     },
     {
@@ -171,7 +171,7 @@
       "name": "Follow Double Turn",
       "tier": "A",
       "type": "move",
-      "positions": ["Open"],
+      "positions": ["Open", "Half-Open"],
       "style": 4
     },
     {
@@ -221,12 +221,13 @@
   ],
   "decks": {
     "starter": [
-      { "cardId": "pos_001", "count": 3 },
+      { "cardId": "pos_001", "count": 2 },
       { "cardId": "pos_002", "count": 1 },
       { "cardId": "mov_001", "count": 1 },
       { "cardId": "mov_002", "count": 1 },
       { "cardId": "mov_003", "count": 1 },
-      { "cardId": "mov_004", "count": 1 }
+      { "cardId": "mov_004", "count": 1 },
+      { "cardId": "mov_005", "count": 1 }
     ],
     "beginnerSupply": [
       "pos_001",

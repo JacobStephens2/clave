@@ -40,12 +40,16 @@ The full v1 card list lives in `docs/cards/`.
 **current position** (the last Position card played) and the **last move** danced.
 Everything you play changes or builds on this shared state.
 
-**Positions.** Open, Closed, Half-Open, and Half-Closed. Positions are where the
-couple is; they score no Style themselves, but every move needs the right one.
+**Positions.** Open (two-hand facing), Closed (full partner frame), Half-Open
+(one-hand facing), and Half-Closed (one-sided frame). Positions are where the couple
+is; they score no Style themselves, but every move needs the right one.
 
 **Matching.** Every Move card lists the position(s) it can be danced from. A move may
-only be played if the current position appears on the move card. Moves match on
-positions only - never on other moves.
+only be played if the current position appears on the move card. The tag names the
+position at the start of the 8-count; the move may include a normal re-grip or release
+as it unfolds. Half-Open and Half-Closed do not match their larger families
+automatically—the card explicitly lists every allowed state. Moves match on positions
+only, never on other moves.
 
 **Style** is how good the dance looks. Moves and flourishes earn the Style printed on
 them, and the song and phrase bonuses grant more.
@@ -61,11 +65,12 @@ lessons to learn new cards.
 
 1. Decide who is the **Lead** and who is the **Follow**. The Lead is the start player.
 2. Each player takes their **starter deck** of 8 cards:
-   - 3 × Open Position, 1 × Closed Position
+   - 2 × Open Position, 1 × Closed Position
    - 1 × Follow Right Turn, 1 × Follow Left Turn
    - 1 × Lead Right Turn, 1 × Lead Left Turn
+   - 1 × Cross Body Lead
 3. Each player shuffles their deck and draws a hand of **4 cards**.
-   *Mulligan:* if your opening hand contains no Position card with a matching Move
+   _Mulligan:_ if your opening hand contains no Position card with a matching Move
    card, you may reveal it, shuffle it back, and draw a new hand once.
 4. Set the Connection marker to **4** and Style to **0**. Each player starts with $0.
 5. Build the **song deck**: the 8 cuerpo cards in order on top of the 8 montuno cards
@@ -84,7 +89,7 @@ is one 8-count. On your turn, do these steps in order:
 1. **Hear the music.** Take $1, then reveal the top song card. Its bonus applies to
    this 8-count only.
 2. **Dance.** Play cards from your hand as described in section 6 — or stumble.
-3. **Take a lesson** *(optional)*. Buy one card from the lessons (section 8). It goes
+3. **Take a lesson** _(optional)_. Buy one card from the lessons (section 8). It goes
    to your discard pile.
 4. **Freshen up.** Discard any number of cards from your hand, then draw back up to 4.
    If your deck is empty, shuffle your discard pile to make a new one.
@@ -157,12 +162,12 @@ player's dance meets it, apply it immediately.
 
 **Phrase-end scoring.** When each phrase ends, score together:
 
-| Bonus | Condition | Reward |
-| --- | --- | --- |
-| Clean phrase | Neither player stumbled this phrase | +3 Style |
-| Variety | Moves were danced from 2+ different positions this phrase | +1 Style per position beyond the first |
-| Shared flair | Both players played at least one Flourish this phrase | +2 Style |
-| Pose finish | A Pose card was played in the phrase's final 8-count | +3 Style |
+| Bonus        | Condition                                                 | Reward                                 |
+| ------------ | --------------------------------------------------------- | -------------------------------------- |
+| Clean phrase | Neither player stumbled this phrase                       | +3 Style                               |
+| Variety      | Moves were danced from 2+ different positions this phrase | +1 Style per position beyond the first |
+| Shared flair | Both players played at least one Flourish this phrase     | +2 Style                               |
+| Pose finish  | A Pose card was played in the phrase's final 8-count      | +3 Style                               |
 
 ## 8. Lessons
 
@@ -170,11 +175,11 @@ Lessons are how your decks grow beyond the beginner basics. On step 3 of your tu
 may buy **one** card. Bought cards go to your **discard pile** — you practiced it at
 home; it shows up on the floor when your deck comes back around.
 
-| Lesson | Cost | What you get |
-| --- | --- | --- |
-| Beginner (group class) | $1 | Any card from the Beginner supply |
-| Intermediate (private lesson) | $2 | Any face-up card in the Intermediate market |
-| Advanced (private lesson) | $3 | Any face-up Advanced card *(montuno only)* |
+| Lesson                        | Cost | What you get                                |
+| ----------------------------- | ---- | ------------------------------------------- |
+| Beginner (group class)        | $1   | Any card from the Beginner supply           |
+| Intermediate (private lesson) | $2   | Any face-up card in the Intermediate market |
+| Advanced (private lesson)     | $3   | Any face-up Advanced card _(montuno only)_  |
 
 Refill the Intermediate market to 3 (and the Advanced display to 2) whenever a card is
 bought.
@@ -207,14 +212,14 @@ Otherwise, when the 16th 8-count has been danced, the song ends. Your final scor
 
 Look up your performance:
 
-| Score | Rating |
-| --- | --- |
-| 0–19 | First Timers — you survived, and that's salsa too |
-| 20–29 | Social Dancers |
-| 30–39 | Regulars of the Social |
-| 40–49 | Crowd Favorites |
-| 50–59 | Festival Performers |
-| 60+ | Soneros of the Floor |
+| Score | Rating                                            |
+| ----- | ------------------------------------------------- |
+| 0–19  | First Timers — you survived, and that's salsa too |
+| 20–29 | Social Dancers                                    |
+| 30–39 | Regulars of the Social                            |
+| 40–49 | Crowd Favorites                                   |
+| 50–59 | Festival Performers                               |
+| 60+   | Soneros of the Floor                              |
 
 ## 11. Variant: No Lessons
 
