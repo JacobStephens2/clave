@@ -10,3 +10,4 @@
 - [x] Phase 5 repository scope (2026-07-18): added a production build, 500 KB gzip gate (v1: under 100 KB), Caddy/systemd templates, deploy guard, verified VACUUM INTO backup/rotation job, forward-only SQLite schema version, restore documentation, PWA metadata, and committed SM-1/SM-2 queries
 - [x] Make player hands readable at 1482×1139 and enlarge cards on click
 - [x] Keep enough of the player hand above the fold to read cards without scrolling
+- [x] Build and verify a macOS-first Unity 6.5 + C# hot-seat version of Clave (2026-07-19): deterministic headless engine, data-driven shared content, readable no-scroll hand, click-to-enlarge cards, local save/resume, native macOS build, compiled C# verification, and Unity EditMode tests

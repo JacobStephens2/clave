@@ -9,6 +9,10 @@ v1 is a single responsive web app with a headless TypeScript engine, hot-seat
 pass-and-play, and server-authoritative two-device rooms. The governing,
 adjudicated build plan is [`docs/plans/clave-plan.md`](docs/plans/clave-plan.md).
 
+An additional macOS-first Unity 6.5 + C# hot-seat implementation lives in
+[`unity/`](unity/README.md). It is a parallel desktop version and does not replace
+the web v1 or its governing plan.
+
 ## Play locally
 
 Requires Node 22 or newer.
@@ -30,6 +34,7 @@ npm run test:e2e
 npm run typecheck
 npm run lint
 npm run build
+npm run check:unity
 ```
 
 `npm run play` opens the same engine as a terminal game.
@@ -41,6 +46,7 @@ npm run build
 - `packages/client` — responsive React PWA for hot-seat and online play
 - `packages/server` — Hono/WebSocket rooms and transactional SQLite persistence
 - `ops` — Caddy, systemd, verified backup, deploy-guard, and metric-query materials
+- `unity/Clave` — macOS-first Unity UI Toolkit client and deterministic C# engine
 
 ## Repository map
 

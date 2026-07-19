@@ -1,0 +1,646 @@
+.root {
+  flex-grow: 1;
+  background-color: rgb(22, 12, 20);
+  color: rgb(247, 234, 209);
+  font-size: 13px;
+}
+
+.game-shell,
+.home {
+  flex-grow: 1;
+}
+
+.home {
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  background-color: rgb(30, 13, 24);
+}
+
+.home-title {
+  color: rgb(217, 164, 65);
+  font-size: 72px;
+  -unity-font-style: bold;
+  letter-spacing: 12px;
+  margin-top: 8px;
+}
+
+.home-subtitle {
+  color: rgb(247, 234, 209);
+  font-size: 22px;
+  margin-bottom: 28px;
+}
+
+.home-card {
+  width: 620px;
+  padding: 28px;
+  background-color: rgb(38, 19, 31);
+  border-width: 1px;
+  border-color: rgba(247, 234, 209, 0.18);
+}
+
+.home-card > * {
+  margin-bottom: 12px;
+}
+
+.home-footnote {
+  color: rgb(120, 105, 104);
+  font-size: 11px;
+  margin-top: 24px;
+}
+
+.seed-field {
+  margin-top: 8px;
+}
+
+.seed-field .unity-text-field__input {
+  background-color: rgb(22, 12, 20);
+  color: rgb(247, 234, 209);
+  border-width: 1px;
+  border-color: rgba(247, 234, 209, 0.25);
+  min-height: 38px;
+}
+
+.header {
+  height: 58px;
+  flex-direction: row;
+  align-items: center;
+  padding-left: 28px;
+  padding-right: 28px;
+  background-color: rgb(18, 8, 15);
+  border-bottom-width: 1px;
+  border-bottom-color: rgba(247, 234, 209, 0.17);
+}
+
+.brand-button {
+  background-color: transparent;
+  border-width: 0;
+  color: rgb(217, 164, 65);
+  font-size: 18px;
+  -unity-font-style: bold;
+  letter-spacing: 4px;
+}
+
+.mode-label {
+  flex-grow: 1;
+  color: rgb(172, 155, 145);
+  font-size: 10px;
+  letter-spacing: 2px;
+  -unity-text-align: middle-center;
+}
+
+.seed-label {
+  color: rgb(120, 105, 104);
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+.hud {
+  height: 72px;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  border-bottom-width: 1px;
+  border-bottom-color: rgba(247, 234, 209, 0.17);
+}
+
+.hud-stat {
+  min-width: 150px;
+  align-items: center;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.stat-label,
+.eyebrow,
+.slot-label,
+.market-heading,
+.card-topline {
+  color: rgb(172, 155, 145);
+  font-size: 9px;
+  letter-spacing: 1.6px;
+  -unity-font-style: bold;
+}
+
+.eyebrow {
+  color: rgb(217, 164, 65);
+}
+
+.stat-value {
+  color: rgb(247, 234, 209);
+  font-size: 26px;
+  -unity-font-style: bold;
+}
+
+.workspace {
+  flex-grow: 1;
+  flex-direction: row;
+  padding: 18px 24px 22px 24px;
+}
+
+.main-table {
+  flex-grow: 1;
+  min-width: 0;
+  margin-right: 16px;
+}
+
+.main-table > * {
+  margin-bottom: 12px;
+}
+
+.sidebar {
+  width: 330px;
+}
+
+.sidebar > * {
+  margin-bottom: 12px;
+}
+
+.song-banner {
+  height: 96px;
+  flex-direction: row;
+  align-items: center;
+  padding: 14px 20px;
+  background-color: rgba(217, 164, 65, 0.12);
+  border-width: 1px;
+  border-color: rgba(217, 164, 65, 0.42);
+}
+
+.song-count {
+  width: 86px;
+  color: rgb(217, 164, 65);
+  font-size: 40px;
+  -unity-font-style: bold;
+}
+
+.song-copy {
+  flex-grow: 1;
+  padding-left: 20px;
+  border-left-width: 1px;
+  border-left-color: rgba(247, 234, 209, 0.17);
+}
+
+.song-title {
+  color: rgb(247, 234, 209);
+  font-size: 22px;
+  -unity-font-style: bold;
+}
+
+.song-description,
+.body-copy {
+  color: rgb(205, 187, 176);
+  font-size: 13px;
+  white-space: normal;
+}
+
+.dance-floor {
+  min-height: 235px;
+  flex-grow: 1;
+  padding: 14px;
+  background-color: rgba(93, 23, 40, 0.13);
+  border-width: 1px;
+  border-color: rgba(247, 234, 209, 0.17);
+}
+
+.section-heading {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.table-cards {
+  flex-grow: 1;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.table-slot {
+  width: 190px;
+  align-items: center;
+}
+
+.table-slot .dance-card {
+  width: 176px;
+  min-height: 175px;
+  max-height: 190px;
+}
+
+.table-slot .card-detail,
+.table-slot .card-inspect,
+.table-slot .card-secondary,
+.table-slot .discard-toggle {
+  display: none;
+}
+
+.empty-slot {
+  width: 176px;
+  height: 175px;
+  border-width: 1px;
+  border-color: rgba(247, 234, 209, 0.12);
+  color: rgba(247, 234, 209, 0.2);
+  font-size: 28px;
+  -unity-text-align: middle-center;
+}
+
+.connector {
+  width: 36px;
+  color: rgb(217, 164, 65);
+  font-size: 20px;
+  -unity-text-align: middle-center;
+}
+
+.actions-area {
+  min-height: 82px;
+  padding: 12px 14px;
+  background-color: rgba(255, 255, 255, 0.035);
+  border-width: 1px;
+  border-color: rgba(247, 234, 209, 0.17);
+}
+
+.action-buttons {
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.action-buttons > * {
+  margin-right: 8px;
+  margin-bottom: 6px;
+}
+
+.section-title {
+  color: rgb(247, 234, 209);
+  font-size: 17px;
+  -unity-font-style: bold;
+}
+
+.hand-zone {
+  height: 264px;
+  min-height: 230px;
+  padding-top: 4px;
+}
+
+.hand-scroll {
+  flex-grow: 1;
+}
+
+.hand-scroll .unity-scroll-view__content-container {
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.hand-scroll .dance-card {
+  width: 210px;
+  min-width: 210px;
+  height: 218px;
+  margin-right: 10px;
+}
+
+.dance-card {
+  position: relative;
+  padding: 12px 12px 10px 16px;
+  background-color: rgb(239, 224, 193);
+  color: rgb(36, 20, 26);
+  border-width: 1px 1px 1px 5px;
+  border-color: rgb(185, 169, 139) rgb(185, 169, 139) rgb(185, 169, 139) rgb(143, 36, 58);
+}
+
+.dance-card.type-position {
+  border-left-color: rgb(47, 129, 118);
+}
+
+.dance-card.type-flourish {
+  border-left-color: rgb(217, 164, 65);
+}
+
+.dance-card.type-recovery {
+  border-left-color: rgb(217, 93, 82);
+}
+
+.dance-card.tier-a {
+  background-color: rgb(36, 23, 30);
+  color: rgb(247, 234, 209);
+  border-color: rgb(217, 164, 65);
+}
+
+.card-topline {
+  color: rgba(36, 20, 26, 0.7);
+}
+
+.tier-a .card-topline {
+  color: rgba(247, 234, 209, 0.7);
+}
+
+.card-glyph {
+  color: rgb(143, 36, 58);
+  font-size: 34px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.type-position .card-glyph {
+  color: rgb(47, 129, 118);
+}
+
+.type-flourish .card-glyph,
+.tier-a .card-glyph {
+  color: rgb(217, 164, 65);
+}
+
+.card-name {
+  color: rgb(36, 20, 26);
+  font-size: 18px;
+  -unity-font-style: bold;
+  white-space: normal;
+}
+
+.card-detail {
+  color: rgb(36, 20, 26);
+  opacity: 0.65;
+  font-size: 10px;
+  white-space: normal;
+}
+
+.style-pip {
+  position: absolute;
+  right: 10px;
+  top: 78px;
+  width: 54px;
+  height: 28px;
+  border-width: 1px;
+  border-color: rgb(36, 20, 26);
+  -unity-text-align: middle-center;
+  font-size: 10px;
+  -unity-font-style: bold;
+}
+
+.tier-a .style-pip {
+  border-color: rgb(247, 234, 209);
+}
+
+.card-inspect,
+.card-secondary {
+  min-height: 26px;
+  margin-top: auto;
+  background-color: transparent;
+  color: rgb(36, 20, 26);
+  border-width: 1px;
+  border-color: rgba(36, 20, 26, 0.55);
+  font-size: 9px;
+}
+
+.tier-a .card-inspect,
+.tier-a .card-secondary {
+  border-color: rgba(247, 234, 209, 0.55);
+}
+
+.card-secondary {
+  margin-top: 4px;
+}
+
+.discard-toggle {
+  margin-top: 6px;
+  color: rgb(36, 20, 26);
+}
+
+.tier-a .card-name,
+.tier-a .card-detail,
+.tier-a .card-inspect,
+.tier-a .card-secondary,
+.tier-a .discard-toggle {
+  color: rgb(247, 234, 209);
+}
+
+.panel {
+  padding: 14px;
+  background-color: rgba(255, 255, 255, 0.025);
+  border-width: 1px;
+  border-color: rgba(247, 234, 209, 0.17);
+}
+
+.panel > * {
+  margin-bottom: 7px;
+}
+
+.market-heading {
+  color: rgb(217, 164, 65);
+  margin-top: 6px;
+}
+
+.market-row {
+  min-height: 34px;
+  flex-direction: row;
+}
+
+.market-card {
+  flex-grow: 1;
+  justify-content: flex-start;
+  background-color: transparent;
+  color: rgb(247, 234, 209);
+  border-width: 0 0 0 3px;
+  border-color: rgb(143, 36, 58);
+  font-size: 10px;
+}
+
+.market-row.type-position .market-card {
+  border-left-color: rgb(47, 129, 118);
+}
+
+.small-primary,
+.market-action {
+  background-color: rgb(217, 164, 65);
+  color: rgb(22, 12, 20);
+  border-width: 0;
+  -unity-font-style: bold;
+  font-size: 9px;
+}
+
+.market-action {
+  min-height: 32px;
+}
+
+.log-scroll {
+  height: 220px;
+}
+
+.log-entry {
+  flex-direction: row;
+  padding: 5px 0;
+  border-bottom-width: 1px;
+  border-bottom-color: rgba(247, 234, 209, 0.09);
+}
+
+.log-sequence {
+  width: 24px;
+  color: rgb(217, 164, 65);
+}
+
+.log-copy {
+  flex-grow: 1;
+  color: rgb(205, 187, 176);
+  font-size: 10px;
+  white-space: normal;
+}
+
+.muted {
+  color: rgb(172, 155, 145);
+  font-size: 10px;
+}
+
+.primary,
+.secondary,
+.danger,
+.text-action {
+  min-height: 40px;
+  padding: 8px 16px;
+  -unity-font-style: bold;
+  font-size: 11px;
+}
+
+.primary {
+  background-color: rgb(217, 164, 65);
+  color: rgb(22, 12, 20);
+  border-width: 0;
+}
+
+.secondary {
+  background-color: transparent;
+  color: rgb(247, 234, 209);
+  border-width: 1px;
+  border-color: rgba(247, 234, 209, 0.28);
+}
+
+.danger {
+  background-color: transparent;
+  color: rgb(240, 142, 134);
+  border-width: 1px;
+  border-color: rgba(217, 93, 82, 0.55);
+}
+
+.text-action {
+  background-color: transparent;
+  color: rgb(172, 155, 145);
+  border-width: 0;
+}
+
+.overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(10, 5, 9, 0.92);
+}
+
+.pass-dialog,
+.signal-dialog,
+.inspector-dialog {
+  align-items: center;
+  padding: 34px;
+}
+
+.pass-dialog {
+  width: 520px;
+  background-color: rgb(31, 15, 25);
+  border-width: 1px;
+  border-color: rgba(217, 164, 65, 0.42);
+}
+
+.pass-dialog > *,
+.signal-dialog > *,
+.inspector-dialog > * {
+  margin-bottom: 16px;
+}
+
+.pass-title {
+  color: rgb(247, 234, 209);
+  font-size: 44px;
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+  white-space: normal;
+}
+
+.signal-dialog .dance-card,
+.inspector-dialog .dance-card {
+  width: 360px;
+  height: 500px;
+  padding: 22px 22px 18px 28px;
+}
+
+.signal-dialog .card-name,
+.inspector-dialog .card-name {
+  font-size: 30px;
+}
+
+.signal-dialog .card-glyph,
+.inspector-dialog .card-glyph {
+  font-size: 64px;
+  margin-top: 32px;
+}
+
+.signal-dialog .card-detail,
+.inspector-dialog .card-detail {
+  font-size: 15px;
+}
+
+.signal-dialog .card-inspect,
+.inspector-dialog .card-inspect,
+.signal-dialog .card-secondary,
+.inspector-dialog .card-secondary {
+  display: none;
+}
+
+.terminal {
+  flex-grow: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.terminal > * {
+  margin-bottom: 14px;
+}
+
+.terminal-title {
+  color: rgb(247, 234, 209);
+  font-size: 42px;
+  -unity-font-style: bold;
+}
+
+.final-score {
+  color: rgb(217, 164, 65);
+  font-size: 104px;
+  -unity-font-style: bold;
+}
+
+.score-equation {
+  color: rgb(205, 187, 176);
+  font-size: 18px;
+}
+
+.toast-error {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  width: 520px;
+  margin-left: -260px;
+  padding: 14px 18px;
+  background-color: rgb(247, 234, 209);
+  color: rgb(93, 23, 40);
+  -unity-font-style: bold;
+  white-space: normal;
+}
+
+.fatal {
+  width: 680px;
+  align-self: center;
+  margin-top: 180px;
+  padding: 30px;
+  background-color: rgb(93, 23, 40);
+  border-width: 1px;
+  border-color: rgb(217, 93, 82);
+}

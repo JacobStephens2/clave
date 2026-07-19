@@ -25,7 +25,9 @@
     "format": "prettier --write \"packages/**/*.{ts,tsx,css,json,html}\" \"scripts/**/*.ts\" \"*.{js,ts,json}\" \".github/**/*.yml\"",
     "format:check": "prettier --check \"packages/**/*.{ts,tsx,css,json,html}\" \"scripts/**/*.ts\" \"*.{js,ts,json}\" \".github/**/*.yml\"",
     "check:content": "npm run check -w @clave/content",
-    "check:bundle": "tsx scripts/check-bundle-size.ts"
+    "check:bundle": "tsx scripts/check-bundle-size.ts",
+    "check:unity": "node scripts/validate-unity-project.mjs",
+    "check:unity:csharp": "dotnet run --project unity/Verification/Clave.Engine.Verification.csproj"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
