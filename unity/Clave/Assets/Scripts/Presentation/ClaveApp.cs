@@ -33,9 +33,29 @@ namespace Clave.Presentation
         private VisualElement _discardPileTarget;
         private VisualElement _lessonFlightCard;
         private IVisualElementScheduledItem _lessonFlightAnimation;
+        private bool _dancerDemoOpen;
+        private DancerDemoMode _dancerDemoMode = DancerDemoMode.Position;
+        private IVisualElementScheduledItem _dancerDemoAnimation;
         private readonly HashSet<string> _selectedDiscards = new(StringComparer.Ordinal);
         private const float DragThreshold = 8f;
         private const float LessonFlightDuration = 0.72f;
+        private const float DancerDemoDuration = 2.4f;
+
+        private enum DancerDemoMode
+        {
+            Position,
+            Move,
+            Flourish,
+        }
+
+        private sealed class DancerRig
+        {
+            public VisualElement Root;
+            public VisualElement OutsideArm;
+            public VisualElement InsideArm;
+            public VisualElement OutsideLeg;
+            public VisualElement InsideLeg;
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -66,6 +86,7 @@ namespace Clave.Presentation
         {
             ResetCardDrag();
             CancelLessonFlight();
+            CancelDancerDemoAnimation();
             _suppressCardClickInstanceId = null;
             _discardPileTarget = null;
             var root = _document.rootVisualElement;
@@ -128,6 +149,7 @@ namespace Clave.Presentation
             _awaitingPass = true;
             _error = null;
             _pendingOpenPositionInstanceId = null;
+            _dancerDemoOpen = false;
             _selectedDiscards.Clear();
             GamePersistence.Save(_engine);
             RenderGame();
@@ -142,6 +164,7 @@ namespace Clave.Presentation
                 _awaitingPass = _engine.State.Status is GameStatus.Setup or GameStatus.Playing;
                 _error = null;
                 _pendingOpenPositionInstanceId = null;
+                _dancerDemoOpen = false;
                 _selectedDiscards.Clear();
                 RenderGame();
             }
@@ -191,6 +214,7 @@ namespace Clave.Presentation
                 root.Add(BuildPassOverlay(state));
             if (_signalPeek && state.Signal != null) root.Add(BuildSignalOverlay(state));
             if (_inspectedCard != null) root.Add(BuildCardInspector(_inspectedCard));
+            if (_dancerDemoOpen) root.Add(BuildDancerDemo(state));
         }
 
         private VisualElement BuildHeader(GameState state)
@@ -256,12 +280,15 @@ namespace Clave.Presentation
             if (acceptsDrop) floor.AddToClassList("accepts-card-drop");
             var heading = Element("section-heading");
             heading.Add(Text("ON THE FLOOR", "eyebrow"));
-            heading.Add(Text(
+            var headingTools = Element("floor-heading-tools");
+            headingTools.Add(Text(
                 acceptsDrop
                     ? pendingPosition == null ? "Drag a highlighted Position here" : "Now drag a matching Move here"
                     : state.ActiveRole == _visibleRole ? "Your 8-count" : $"{RoleName(state.ActiveRole)}'s 8-count",
                 acceptsDrop ? "drop-hint" : "muted"
             ));
+            headingTools.Add(ActionButton("WATCH DANCERS", OpenDancerDemo, "dancer-preview-button"));
+            heading.Add(headingTools);
             floor.Add(heading);
             var cards = Element("table-cards");
             cards.Add(TableSlot("POSITION", state.Table.Position ?? pendingPosition, pendingPosition != null));
@@ -770,6 +797,250 @@ namespace Clave.Presentation
             return overlay;
         }
 
+        private VisualElement BuildDancerDemo(GameState state)
+        {
+            var overlay = Element("overlay");
+            overlay.AddToClassList("dancer-demo-overlay");
+
+            var dialog = Element("dancer-demo-dialog");
+            var header = Element("dancer-demo-header");
+            var heading = Element("dancer-demo-heading");
+            heading.Add(Text("CHOREOGRAPHY PROTOTYPE", "eyebrow"));
+            heading.Add(Text("Watch the partnership", "dancer-demo-title"));
+            header.Add(heading);
+            header.Add(ActionButton("CLOSE", CloseDancerDemo, "secondary"));
+            dialog.Add(header);
+
+            var tabs = Element("dancer-mode-tabs");
+            foreach (DancerDemoMode candidate in Enum.GetValues(typeof(DancerDemoMode)))
+            {
+                var captured = candidate;
+                var button = ActionButton(
+                    candidate.ToString().ToUpperInvariant(),
+                    () => SetDancerDemoMode(captured),
+                    "dancer-mode-button"
+                );
+                if (candidate == _dancerDemoMode) button.AddToClassList("selected");
+                tabs.Add(button);
+            }
+            dialog.Add(tabs);
+
+            var stage = Element("dancer-demo-stage");
+            stage.AddToClassList($"mode-{_dancerDemoMode.ToString().ToLowerInvariant()}");
+            stage.Add(Element("dancer-stage-halo"));
+            var connection = Element("dancer-connection");
+            stage.Add(connection);
+            var lead = BuildDancerRig("lead", "LEAD");
+            var follow = BuildDancerRig("follow", "FOLLOW");
+            stage.Add(lead.Root);
+            stage.Add(follow.Root);
+            stage.Add(Text("1     2     3        5     6     7", "dancer-counts"));
+            dialog.Add(stage);
+
+            var activeCard = DancerDemoCard(state);
+            var footer = Element("dancer-demo-footer");
+            var cardCopy = Element("dancer-card-copy");
+            cardCopy.Add(Text($"{_dancerDemoMode.ToString().ToUpperInvariant()} SAMPLE", "eyebrow"));
+            cardCopy.Add(Text(activeCard.Name, "dancer-card-name"));
+            footer.Add(cardCopy);
+            footer.Add(Text(DancerDemoNote(), "dancer-demo-note"));
+            dialog.Add(footer);
+            overlay.Add(dialog);
+
+            var startedAt = Time.realtimeSinceStartup;
+            AnimateDancerDemo(lead, follow, connection, 0f);
+            _dancerDemoAnimation = stage.schedule.Execute(() =>
+            {
+                var elapsed = Time.realtimeSinceStartup - startedAt;
+                AnimateDancerDemo(lead, follow, connection, elapsed / DancerDemoDuration);
+            }).Every(16);
+            return overlay;
+        }
+
+        private static DancerRig BuildDancerRig(string roleClass, string label)
+        {
+            var root = Element("dancer-figure");
+            root.AddToClassList(roleClass);
+            root.Add(Element("dancer-head"));
+            root.Add(Element("dancer-torso"));
+            var outsideArm = Element("dancer-limb");
+            outsideArm.AddToClassList("arm");
+            outsideArm.AddToClassList("outside");
+            root.Add(outsideArm);
+            var insideArm = Element("dancer-limb");
+            insideArm.AddToClassList("arm");
+            insideArm.AddToClassList("inside");
+            root.Add(insideArm);
+            var outsideLeg = Element("dancer-limb");
+            outsideLeg.AddToClassList("leg");
+            outsideLeg.AddToClassList("outside");
+            root.Add(outsideLeg);
+            var insideLeg = Element("dancer-limb");
+            insideLeg.AddToClassList("leg");
+            insideLeg.AddToClassList("inside");
+            root.Add(insideLeg);
+            root.Add(Text(label, "dancer-role"));
+            return new DancerRig
+            {
+                Root = root,
+                OutsideArm = outsideArm,
+                InsideArm = insideArm,
+                OutsideLeg = outsideLeg,
+                InsideLeg = insideLeg,
+            };
+        }
+
+        private CardDefinition DancerDemoCard(GameState state)
+        {
+            var cardId = _dancerDemoMode switch
+            {
+                DancerDemoMode.Position => state.Table.Position?.CardId ?? "pos_001",
+                DancerDemoMode.Move => state.Table.Move?.Card.CardId ?? "mov_001",
+                DancerDemoMode.Flourish => state.Table.Flourish?.CardId ?? "flo_001",
+                _ => "pos_001",
+            };
+            return _content.Card(cardId);
+        }
+
+        private string DancerDemoNote()
+        {
+            return _dancerDemoMode switch
+            {
+                DancerDemoMode.Position => "Partners mark the rhythm apart while keeping a light two-hand connection.",
+                DancerDemoMode.Move => "The Lead marks in place while the Follow travels through a clockwise turn.",
+                DancerDemoMode.Flourish => "The partnership keeps its basic while the Lead traces an overhead accent.",
+                _ => "A small choreography sample.",
+            };
+        }
+
+        private void AnimateDancerDemo(
+            DancerRig lead,
+            DancerRig follow,
+            VisualElement connection,
+            float elapsedCycles
+        )
+        {
+            var cycle = elapsedCycles - Mathf.Floor(elapsedCycles);
+            var angle = cycle * Mathf.PI * 2f;
+            var beat = Mathf.Sin(angle);
+            var doubleBeat = Mathf.Sin(angle * 2f);
+            var bounce = -Mathf.Abs(doubleBeat) * 5f;
+
+            SetLimbRotation(lead.OutsideLeg, beat * 14f);
+            SetLimbRotation(lead.InsideLeg, -beat * 12f);
+            SetLimbRotation(follow.OutsideLeg, -beat * 14f);
+            SetLimbRotation(follow.InsideLeg, beat * 12f);
+
+            if (_dancerDemoMode == DancerDemoMode.Position)
+            {
+                SetDancerTransform(lead.Root, beat * 10f, bounce, beat * 3f);
+                SetDancerTransform(follow.Root, -beat * 10f, bounce, -beat * 3f);
+                SetLimbRotation(lead.InsideArm, -76f - beat * 6f);
+                SetLimbRotation(follow.InsideArm, 76f + beat * 6f);
+                SetLimbRotation(lead.OutsideArm, beat * 24f);
+                SetLimbRotation(follow.OutsideArm, -beat * 24f);
+                SetConnectionTransform(connection, 0f, 0f, beat * 2f, 152f + beat * 9f, 0.82f);
+                return;
+            }
+
+            if (_dancerDemoMode == DancerDemoMode.Move)
+            {
+                var travel = Mathf.Pow(Mathf.Sin(cycle * Mathf.PI), 2f);
+                SetDancerTransform(lead.Root, beat * 7f, bounce, beat * 3f);
+                SetDancerTransform(
+                    follow.Root,
+                    18f - travel * 54f,
+                    -Mathf.Abs(Mathf.Sin(angle)) * 8f,
+                    beat * 10f,
+                    Mathf.Sign(Mathf.Cos(angle)) * Mathf.Lerp(0.24f, 1f, Mathf.Abs(Mathf.Cos(angle)))
+                );
+                SetLimbRotation(lead.InsideArm, -82f - travel * 62f);
+                SetLimbRotation(follow.InsideArm, 80f + travel * 66f);
+                SetLimbRotation(lead.OutsideArm, beat * 22f);
+                SetLimbRotation(follow.OutsideArm, -58f + beat * 28f);
+                SetConnectionTransform(connection, -travel * 20f, -travel * 25f, -travel * 24f, 152f - travel * 52f, 0.62f);
+                return;
+            }
+
+            var overhead = (1f - Mathf.Cos(angle)) * 0.5f;
+            SetDancerTransform(lead.Root, beat * 9f, bounce - overhead * 3f, beat * 7f);
+            SetDancerTransform(follow.Root, -beat * 8f, bounce, -beat * 5f);
+            SetLimbRotation(lead.OutsideArm, Mathf.Lerp(22f, 166f, overhead));
+            SetLimbRotation(lead.InsideArm, -76f - beat * 5f);
+            SetLimbRotation(follow.InsideArm, 76f + beat * 5f);
+            SetLimbRotation(follow.OutsideArm, -18f + overhead * 76f);
+            SetConnectionTransform(connection, 0f, -overhead * 36f, -overhead * 12f, 152f - overhead * 24f, 0.82f);
+        }
+
+        private static void SetDancerTransform(
+            VisualElement element,
+            float x,
+            float y,
+            float degrees,
+            float scaleX = 1f
+        )
+        {
+            element.style.translate = new Translate(
+                new Length(x, LengthUnit.Pixel),
+                new Length(y, LengthUnit.Pixel)
+            );
+            element.style.rotate = new Rotate(Angle.Degrees(degrees));
+            element.style.scale = new Scale(new Vector2(scaleX, 1f));
+        }
+
+        private static void SetLimbRotation(VisualElement element, float degrees)
+        {
+            element.style.rotate = new Rotate(Angle.Degrees(degrees));
+        }
+
+        private static void SetConnectionTransform(
+            VisualElement connection,
+            float x,
+            float y,
+            float degrees,
+            float width,
+            float opacity
+        )
+        {
+            connection.style.translate = new Translate(
+                new Length(x, LengthUnit.Pixel),
+                new Length(y, LengthUnit.Pixel)
+            );
+            connection.style.rotate = new Rotate(Angle.Degrees(degrees));
+            connection.style.width = width;
+            connection.style.opacity = opacity;
+        }
+
+        private void OpenDancerDemo()
+        {
+            _dancerDemoMode = _engine.State.Table.Flourish != null
+                ? DancerDemoMode.Flourish
+                : _engine.State.Table.Move != null
+                    ? DancerDemoMode.Move
+                    : DancerDemoMode.Position;
+            _dancerDemoOpen = true;
+            RenderGame();
+        }
+
+        private void SetDancerDemoMode(DancerDemoMode mode)
+        {
+            if (_dancerDemoMode == mode) return;
+            _dancerDemoMode = mode;
+            _document.rootVisualElement.schedule.Execute(RenderGame).ExecuteLater(1);
+        }
+
+        private void CloseDancerDemo()
+        {
+            _dancerDemoOpen = false;
+            RenderGame();
+        }
+
+        private void CancelDancerDemoAnimation()
+        {
+            _dancerDemoAnimation?.Pause();
+            _dancerDemoAnimation = null;
+        }
+
         private VisualElement BuildTerminal(GameState state)
         {
             var terminal = Element("terminal");
@@ -963,6 +1234,7 @@ namespace Clave.Presentation
             _pendingOpenPositionInstanceId = null;
             _inspectedCard = null;
             _signalPeek = false;
+            _dancerDemoOpen = false;
             _awaitingPass = false;
             RenderHome();
         }

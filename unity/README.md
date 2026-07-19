@@ -15,6 +15,7 @@ headless C# rules layer for hot-seat play.
 - Wide 1440 × 900 layout with the floor, action strip, full hand, lessons, and log
 - Drag a Position to the floor, then drag a highlighted matching Move to complete the opening play
 - Purchased lesson cards arc from the market into the player's discard pile
+- Choreography sampler animates a Lead and Follow through representative Position, Move, and Flourish demonstrations
 - Card detail overlay when a card is clicked
 - Automated macOS `.app` build menu/CLI method
 

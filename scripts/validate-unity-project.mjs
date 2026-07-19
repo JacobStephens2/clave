@@ -115,7 +115,8 @@ for (const dragFeature of [
   "_pendingOpenPositionInstanceId",
   "CancelStagedPosition",
 ]) {
-  if (!presentation.includes(dragFeature)) fail(`Unity presentation is missing drag feature ${dragFeature}.`);
+  if (!presentation.includes(dragFeature))
+    fail(`Unity presentation is missing drag feature ${dragFeature}.`);
 }
 if (presentation.includes("BuildDropChoiceOverlay")) {
   fail("Unity opening drag flow must not fall back to a click-choice dialog.");
@@ -132,6 +133,26 @@ for (const lessonAnimationFeature of [
 for (const lessonAnimationStyle of ["lesson-flight-card", "discard-pile-target.receiving"]) {
   if (!presentationStyles.includes(lessonAnimationStyle))
     fail(`Unity styles are missing lesson animation style ${lessonAnimationStyle}.`);
+}
+for (const dancerFeature of [
+  "BuildDancerDemo",
+  "DancerDemoMode.Position",
+  "DancerDemoMode.Move",
+  "DancerDemoMode.Flourish",
+  "AnimateDancerDemo",
+  "Angle.Degrees",
+]) {
+  if (!presentation.includes(dancerFeature))
+    fail(`Unity presentation is missing dancer sample feature ${dancerFeature}.`);
+}
+for (const dancerStyle of [
+  "dancer-demo-stage",
+  "dancer-figure",
+  "dancer-limb",
+  "dancer-mode-button.selected",
+]) {
+  if (!presentationStyles.includes(dancerStyle))
+    fail(`Unity styles are missing dancer sample style ${dancerStyle}.`);
 }
 
 const csharpFiles = fs
@@ -200,7 +221,8 @@ const assertBalanced = (file) => {
     } else if (value === '"') mode = "string";
     else if (value === "'") mode = "char";
     else if (["{", "(", "["].includes(value)) stack.push(value);
-    else if (pairs.has(value) && stack.pop() !== pairs.get(value)) fail(`Unbalanced ${value} in ${file}.`);
+    else if (pairs.has(value) && stack.pop() !== pairs.get(value))
+      fail(`Unbalanced ${value} in ${file}.`);
   }
   if (mode === "string" || mode === "char" || mode === "block" || stack.length > 0) {
     fail(`Unclosed token in ${file}.`);
@@ -217,7 +239,8 @@ if (fs.existsSync(stagedContent)) {
   })
     .split(/\r?\n/u)
     .filter((name) => name.endsWith(".json"));
-  if (tracked.length > 0) fail("Generated StreamingAssets content should not be tracked in source.");
+  if (tracked.length > 0)
+    fail("Generated StreamingAssets content should not be tracked in source.");
 }
 
 process.stdout.write(

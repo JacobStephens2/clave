@@ -112,6 +112,41 @@ test("animates a purchased lesson card into the discard pile", async ({ page }) 
   await expect(discardPile).not.toHaveClass(/receiving/);
 });
 
+test("previews animated Position, Move, and Flourish choreography", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  await acceptPass(page, "Lead");
+  await page.getByRole("button", { name: "Watch dancers" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Watch the partnership" });
+  const stage = page.locator(".dancer-demo-stage");
+  await expect(dialog).toBeVisible();
+  await expect(stage).toHaveAttribute("data-choreography", "position");
+  await expect(stage.locator(".demo-dancer.lead")).toHaveCSS(
+    "animation-name",
+    "position-lead-step",
+  );
+
+  await dialog.getByRole("tab", { name: "move" }).click();
+  await expect(stage).toHaveAttribute("data-choreography", "move");
+  await expect(stage).toHaveAccessibleName(/Follow Right Turn/);
+  await expect(stage.locator(".demo-dancer.follow")).toHaveCSS(
+    "animation-name",
+    "move-follow-turn",
+  );
+
+  await dialog.getByRole("tab", { name: "flourish" }).click();
+  await expect(stage).toHaveAttribute("data-choreography", "flourish");
+  await expect(stage).toHaveAccessibleName(/Arm Overhead/);
+  await expect(stage.locator(".demo-dancer.lead .arm.outside")).toHaveCSS(
+    "animation-name",
+    "flourish-overhead-arm",
+  );
+
+  await dialog.getByRole("button", { name: "Close" }).click();
+  await expect(dialog).toBeHidden();
+});
+
 test("keeps a readable hand in a 13-inch laptop viewport and enlarges cards", async ({ page }) => {
   await page.setViewportSize({ width: 1482, height: 1139 });
   await page.goto("/");

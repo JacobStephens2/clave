@@ -687,6 +687,552 @@ button {
   color: var(--gold);
   font-weight: 800;
 }
+.floor-heading-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.watch-dancers {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(217, 164, 65, 0.45);
+  background: rgba(217, 164, 65, 0.08);
+  color: var(--cream);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 8px;
+  font-weight: 800;
+}
+.watch-dancers:hover {
+  border-color: var(--gold);
+  background: rgba(217, 164, 65, 0.16);
+}
+.dancer-demo-overlay {
+  position: fixed;
+  z-index: 140;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(10, 4, 9, 0.86);
+  backdrop-filter: blur(12px);
+}
+.dancer-demo-dialog {
+  width: min(820px, 96vw);
+  max-height: 94vh;
+  overflow-y: auto;
+  border: 1px solid rgba(217, 164, 65, 0.5);
+  background: radial-gradient(circle at 50% 34%, #4b1b2c, #1b0d17 68%);
+  box-shadow: 0 28px 100px #000c;
+  padding: clamp(16px, 3vw, 28px);
+}
+.dancer-demo-dialog > header,
+.dancer-demo-dialog > footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+.dancer-demo-dialog header small,
+.dancer-demo-dialog footer small {
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 8px;
+}
+.dancer-demo-dialog h2 {
+  margin: 4px 0 0;
+  font-family: Georgia, serif;
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 400;
+}
+.dancer-demo-close {
+  min-height: 36px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  padding: 0 14px;
+  cursor: pointer;
+}
+.choreography-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 20px 0 12px;
+}
+.choreography-tabs button {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 9px;
+  cursor: pointer;
+}
+.choreography-tabs button + button {
+  border-left: 0;
+}
+.choreography-tabs button.selected {
+  background: var(--gold);
+  color: var(--ink);
+  border-color: var(--gold);
+  font-weight: 900;
+}
+.dancer-demo-stage {
+  height: 300px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(247, 234, 209, 0.16);
+  background:
+    linear-gradient(90deg, transparent 49.85%, rgba(247, 234, 209, 0.08) 50%, transparent 50.15%),
+    radial-gradient(ellipse at 50% 108%, rgba(217, 164, 65, 0.25), transparent 62%);
+  isolation: isolate;
+}
+.dancer-demo-stage::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 12%;
+  right: 12%;
+  bottom: 38px;
+  height: 48px;
+  border: 1px solid rgba(217, 164, 65, 0.18);
+  border-radius: 50%;
+}
+.stage-halo {
+  position: absolute;
+  z-index: -1;
+  border: 1px solid rgba(217, 164, 65, 0.1);
+  border-radius: 50%;
+}
+.stage-halo.one {
+  width: 250px;
+  height: 250px;
+  left: calc(50% - 125px);
+  top: 10px;
+}
+.stage-halo.two {
+  width: 180px;
+  height: 180px;
+  left: calc(50% - 90px);
+  top: 45px;
+}
+.partner-connection {
+  position: absolute;
+  z-index: 1;
+  left: calc(50% - 76px);
+  top: 113px;
+  width: 152px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--coral), var(--gold));
+  transform-origin: center;
+  animation: connection-breathe 2.4s ease-in-out infinite;
+}
+.demo-dancer {
+  --dancer-color: var(--coral);
+  position: absolute;
+  z-index: 2;
+  left: calc(50% - 150px);
+  bottom: 43px;
+  width: 76px;
+  height: 190px;
+  transform-origin: 50% 100%;
+  animation-duration: 2.4s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+.demo-dancer.follow {
+  --dancer-color: var(--gold);
+  left: calc(50% + 74px);
+}
+.demo-dancer > small {
+  position: absolute;
+  top: 198px;
+  left: 0;
+  width: 76px;
+  color: var(--muted);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 7px;
+}
+.dancer-head,
+.dancer-torso,
+.dancer-limb {
+  position: absolute;
+  display: block;
+  background: var(--dancer-color);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--dancer-color), transparent 55%);
+}
+.dancer-head {
+  width: 32px;
+  height: 32px;
+  left: 22px;
+  top: 0;
+  border-radius: 50%;
+}
+.dancer-torso {
+  width: 24px;
+  height: 69px;
+  left: 26px;
+  top: 37px;
+  border-radius: 14px 14px 8px 8px;
+}
+.demo-dancer.follow .dancer-torso {
+  width: 36px;
+  left: 20px;
+  clip-path: polygon(31% 0, 69% 0, 100% 100%, 0 100%);
+  border-radius: 10px 10px 2px 2px;
+}
+.dancer-limb {
+  width: 9px;
+  height: 68px;
+  border-radius: 8px;
+  transform-origin: 50% 5px;
+  animation-duration: 2.4s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+.dancer-limb.arm {
+  top: 42px;
+}
+.dancer-limb.arm.outside,
+.dancer-limb.leg.outside {
+  left: 20px;
+}
+.dancer-limb.arm.inside,
+.dancer-limb.leg.inside {
+  left: 47px;
+}
+.dancer-limb.leg {
+  top: 98px;
+  height: 84px;
+  transform-origin: 50% 4px;
+}
+.rhythm-counts {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  display: flex;
+  gap: 17px;
+  transform: translateX(-50%);
+}
+.rhythm-counts i {
+  color: rgba(247, 234, 209, 0.28);
+  font-family: Georgia, serif;
+  font-size: 11px;
+  font-style: normal;
+  animation: rhythm-pulse 2.4s steps(1) infinite;
+}
+.rhythm-counts i:nth-child(2) {
+  animation-delay: -2s;
+}
+.rhythm-counts i:nth-child(3) {
+  animation-delay: -1.6s;
+}
+.rhythm-counts i:nth-child(4) {
+  animation-delay: -1.2s;
+}
+.rhythm-counts i:nth-child(5) {
+  animation-delay: -0.8s;
+}
+.rhythm-counts i:nth-child(6) {
+  animation-delay: -0.4s;
+}
+.dancer-demo-stage[data-choreography="position"] .lead {
+  animation-name: position-lead-step;
+}
+.dancer-demo-stage[data-choreography="position"] .follow {
+  animation-name: position-follow-step;
+}
+.dancer-demo-stage[data-choreography="position"] .lead .arm.inside {
+  animation-name: position-lead-hand;
+}
+.dancer-demo-stage[data-choreography="position"] .follow .arm.inside {
+  animation-name: position-follow-hand;
+}
+.dancer-demo-stage[data-choreography="position"] .arm.outside {
+  animation-name: arm-mark;
+}
+.dancer-demo-stage[data-choreography="position"] .leg.outside,
+.dancer-demo-stage[data-choreography="move"] .leg.outside,
+.dancer-demo-stage[data-choreography="flourish"] .leg.outside {
+  animation-name: leg-mark-outside;
+}
+.dancer-demo-stage[data-choreography="position"] .leg.inside,
+.dancer-demo-stage[data-choreography="move"] .leg.inside,
+.dancer-demo-stage[data-choreography="flourish"] .leg.inside {
+  animation-name: leg-mark-inside;
+}
+.dancer-demo-stage[data-choreography="move"] .lead {
+  animation-name: move-lead-mark;
+}
+.dancer-demo-stage[data-choreography="move"] .follow {
+  animation-name: move-follow-turn;
+}
+.dancer-demo-stage[data-choreography="move"] .lead .arm.inside {
+  animation-name: move-lead-guide;
+}
+.dancer-demo-stage[data-choreography="move"] .follow .arm.inside {
+  animation-name: move-follow-turning-arm;
+}
+.dancer-demo-stage[data-choreography="move"] .arm.outside {
+  animation-name: move-free-arm;
+}
+.dancer-demo-stage[data-choreography="move"] .partner-connection {
+  animation-name: connection-turn;
+}
+.dancer-demo-stage[data-choreography="flourish"] .lead {
+  animation-name: flourish-lead-sway;
+}
+.dancer-demo-stage[data-choreography="flourish"] .follow {
+  animation-name: flourish-follow-sway;
+}
+.dancer-demo-stage[data-choreography="flourish"] .lead .arm.outside {
+  animation-name: flourish-overhead-arm;
+}
+.dancer-demo-stage[data-choreography="flourish"] .lead .arm.inside {
+  animation-name: position-lead-hand;
+}
+.dancer-demo-stage[data-choreography="flourish"] .follow .arm.inside {
+  animation-name: position-follow-hand;
+}
+.dancer-demo-stage[data-choreography="flourish"] .follow .arm.outside {
+  animation-name: flourish-follow-arm;
+}
+.dancer-demo-stage[data-choreography="flourish"] .partner-connection {
+  animation-name: connection-flourish;
+}
+.dancer-demo-dialog > footer {
+  align-items: center;
+  margin-top: 16px;
+}
+.dancer-demo-dialog footer strong {
+  display: block;
+  margin-top: 4px;
+  font-family: Georgia, serif;
+  font-size: 22px;
+  font-weight: 400;
+}
+.dancer-demo-dialog footer p {
+  max-width: 440px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+  font-size: 12px;
+  text-align: right;
+}
+@keyframes position-lead-step {
+  0%,
+  100% {
+    transform: translateX(-9px) rotate(-2deg);
+  }
+  25% {
+    transform: translate(-1px, -5px) rotate(1deg);
+  }
+  50% {
+    transform: translateX(10px) rotate(3deg);
+  }
+  75% {
+    transform: translate(1px, -4px) rotate(0);
+  }
+}
+@keyframes position-follow-step {
+  0%,
+  100% {
+    transform: translateX(9px) rotate(2deg);
+  }
+  25% {
+    transform: translate(1px, -4px) rotate(-1deg);
+  }
+  50% {
+    transform: translateX(-10px) rotate(-3deg);
+  }
+  75% {
+    transform: translate(-1px, -5px) rotate(0);
+  }
+}
+@keyframes position-lead-hand {
+  0%,
+  100% {
+    transform: rotate(-72deg);
+  }
+  50% {
+    transform: rotate(-82deg);
+  }
+}
+@keyframes position-follow-hand {
+  0%,
+  100% {
+    transform: rotate(72deg);
+  }
+  50% {
+    transform: rotate(82deg);
+  }
+}
+@keyframes arm-mark {
+  0%,
+  100% {
+    transform: rotate(24deg);
+  }
+  50% {
+    transform: rotate(-22deg);
+  }
+}
+@keyframes leg-mark-outside {
+  0%,
+  100% {
+    transform: rotate(13deg);
+  }
+  50% {
+    transform: rotate(-14deg);
+  }
+}
+@keyframes leg-mark-inside {
+  0%,
+  100% {
+    transform: rotate(-11deg);
+  }
+  50% {
+    transform: rotate(13deg);
+  }
+}
+@keyframes move-lead-mark {
+  0%,
+  100% {
+    transform: translateX(-5px) rotate(-2deg);
+  }
+  50% {
+    transform: translate(7px, -5px) rotate(3deg);
+  }
+}
+@keyframes move-follow-turn {
+  0% {
+    transform: translateX(18px) rotate(0) scaleX(1);
+  }
+  25% {
+    transform: translate(-18px, -7px) rotate(-8deg) scaleX(0.24);
+  }
+  50% {
+    transform: translate(-42px, -2px) rotate(0) scaleX(-1);
+  }
+  75% {
+    transform: translate(-14px, -7px) rotate(8deg) scaleX(-0.24);
+  }
+  100% {
+    transform: translateX(18px) rotate(0) scaleX(1);
+  }
+}
+@keyframes move-lead-guide {
+  0%,
+  100% {
+    transform: rotate(-80deg);
+  }
+  50% {
+    transform: rotate(-150deg);
+  }
+}
+@keyframes move-follow-turning-arm {
+  0%,
+  100% {
+    transform: rotate(78deg);
+  }
+  50% {
+    transform: rotate(150deg);
+  }
+}
+@keyframes move-free-arm {
+  0%,
+  100% {
+    transform: rotate(18deg);
+  }
+  50% {
+    transform: rotate(-68deg);
+  }
+}
+@keyframes flourish-lead-sway {
+  0%,
+  100% {
+    transform: translateX(-7px) rotate(-4deg);
+  }
+  50% {
+    transform: translate(9px, -7px) rotate(7deg);
+  }
+}
+@keyframes flourish-follow-sway {
+  0%,
+  100% {
+    transform: translateX(7px) rotate(3deg);
+  }
+  50% {
+    transform: translate(-9px, -5px) rotate(-5deg);
+  }
+}
+@keyframes flourish-overhead-arm {
+  0%,
+  100% {
+    transform: rotate(22deg);
+  }
+  35%,
+  65% {
+    transform: rotate(166deg);
+  }
+}
+@keyframes flourish-follow-arm {
+  0%,
+  100% {
+    transform: rotate(-18deg);
+  }
+  50% {
+    transform: rotate(62deg);
+  }
+}
+@keyframes connection-breathe {
+  0%,
+  100% {
+    transform: scaleX(0.92);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scaleX(1.05);
+    opacity: 0.95;
+  }
+}
+@keyframes connection-turn {
+  0%,
+  100% {
+    transform: rotate(0) scaleX(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: rotate(-25deg) scaleX(0.65);
+    opacity: 0.28;
+  }
+}
+@keyframes connection-flourish {
+  0%,
+  100% {
+    transform: rotate(-3deg) scaleX(0.94);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translateY(-36px) rotate(-12deg) scaleX(0.82);
+    opacity: 0.9;
+  }
+}
+@keyframes rhythm-pulse {
+  0%,
+  16% {
+    color: var(--gold);
+    transform: translateY(-3px);
+  }
+  17%,
+  100% {
+    color: rgba(247, 234, 209, 0.24);
+    transform: none;
+  }
+}
 .table-cards {
   display: grid;
   grid-template-columns: minmax(130px, 1fr) auto minmax(130px, 1fr) auto minmax(130px, 1fr);
@@ -1664,6 +2210,38 @@ button {
     min-height: 278px;
     padding: 14px 8px;
   }
+  .floor-heading-tools small {
+    display: none;
+  }
+  .dancer-demo-overlay {
+    padding: 8px;
+  }
+  .dancer-demo-dialog {
+    width: 100%;
+    padding: 15px;
+  }
+  .dancer-demo-dialog > header,
+  .dancer-demo-dialog > footer {
+    align-items: flex-start;
+  }
+  .dancer-demo-stage {
+    height: 260px;
+  }
+  .demo-dancer {
+    bottom: 36px;
+    left: calc(50% - 126px);
+  }
+  .demo-dancer.follow {
+    left: calc(50% + 50px);
+  }
+  .partner-connection {
+    left: calc(50% - 61px);
+    width: 122px;
+  }
+  .dancer-demo-dialog footer p {
+    max-width: 52%;
+    font-size: 10px;
+  }
   .table-cards {
     grid-template-columns: repeat(3, minmax(90px, 1fr));
     gap: 6px;
@@ -1781,8 +2359,12 @@ button {
 
 @media (prefers-reduced-motion: reduce) {
   .lesson-card-flight.flying,
-  .discard-pile-target.receiving {
+  .discard-pile-target.receiving,
+  .dancer-demo-stage *,
+  .dancer-demo-stage *::before,
+  .dancer-demo-stage *::after {
     animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
   }
   *,
   *::before,

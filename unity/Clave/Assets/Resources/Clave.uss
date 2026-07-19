@@ -231,6 +231,27 @@
   margin-bottom: 8px;
 }
 
+.floor-heading-tools {
+  flex-direction: row;
+  align-items: center;
+}
+
+.floor-heading-tools > * {
+  margin-left: 12px;
+}
+
+.dancer-preview-button {
+  min-height: 28px;
+  padding: 4px 10px;
+  background-color: rgba(217, 164, 65, 0.08);
+  color: rgb(247, 234, 209);
+  border-width: 1px;
+  border-color: rgba(217, 164, 65, 0.45);
+  font-size: 8px;
+  letter-spacing: 1px;
+  -unity-font-style: bold;
+}
+
 .table-cards {
   flex-grow: 1;
   flex-direction: row;
@@ -637,6 +658,192 @@
   align-items: center;
   justify-content: center;
   background-color: rgba(10, 5, 9, 0.92);
+}
+
+.dancer-demo-dialog {
+  width: 820px;
+  padding: 24px;
+  background-color: rgb(31, 14, 25);
+  border-width: 1px;
+  border-color: rgba(217, 164, 65, 0.52);
+}
+
+.dancer-demo-header,
+.dancer-demo-footer {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dancer-demo-title {
+  color: rgb(247, 234, 209);
+  font-size: 34px;
+  -unity-font-style: bold;
+}
+
+.dancer-mode-tabs {
+  flex-direction: row;
+  margin-top: 18px;
+  margin-bottom: 12px;
+}
+
+.dancer-mode-button {
+  flex-grow: 1;
+  min-height: 38px;
+  background-color: rgba(255, 255, 255, 0.025);
+  color: rgb(172, 155, 145);
+  border-width: 1px;
+  border-color: rgba(247, 234, 209, 0.17);
+  font-size: 9px;
+  letter-spacing: 1px;
+  -unity-font-style: bold;
+}
+
+.dancer-mode-button.selected {
+  background-color: rgb(217, 164, 65);
+  color: rgb(22, 12, 20);
+  border-color: rgb(217, 164, 65);
+}
+
+.dancer-demo-stage {
+  height: 320px;
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(78, 25, 43, 0.42);
+  border-width: 1px;
+  border-color: rgba(247, 234, 209, 0.17);
+}
+
+.dancer-stage-halo {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  left: 256px;
+  top: 20px;
+  border-width: 1px;
+  border-color: rgba(217, 164, 65, 0.1);
+  border-radius: 50%;
+}
+
+.dancer-connection {
+  position: absolute;
+  left: 310px;
+  top: 120px;
+  width: 152px;
+  height: 3px;
+  background-color: rgb(217, 164, 65);
+  transform-origin: 50% 50%;
+}
+
+.dancer-figure {
+  position: absolute;
+  left: 235px;
+  top: 65px;
+  width: 76px;
+  height: 205px;
+  transform-origin: 50% 100%;
+}
+
+.dancer-figure.follow {
+  left: 462px;
+}
+
+.dancer-head,
+.dancer-torso,
+.dancer-limb {
+  position: absolute;
+  background-color: rgb(217, 93, 82);
+}
+
+.dancer-figure.follow .dancer-head,
+.dancer-figure.follow .dancer-torso,
+.dancer-figure.follow .dancer-limb {
+  background-color: rgb(217, 164, 65);
+}
+
+.dancer-head {
+  width: 32px;
+  height: 32px;
+  left: 22px;
+  top: 0;
+  border-radius: 50%;
+}
+
+.dancer-torso {
+  width: 24px;
+  height: 69px;
+  left: 26px;
+  top: 37px;
+  border-radius: 12px;
+}
+
+.dancer-figure.follow .dancer-torso {
+  width: 36px;
+  left: 20px;
+}
+
+.dancer-limb {
+  width: 9px;
+  height: 68px;
+  border-radius: 8px;
+  transform-origin: 50% 7%;
+}
+
+.dancer-limb.arm {
+  top: 42px;
+}
+
+.dancer-limb.arm.outside,
+.dancer-limb.leg.outside {
+  left: 20px;
+}
+
+.dancer-limb.arm.inside,
+.dancer-limb.leg.inside {
+  left: 47px;
+}
+
+.dancer-limb.leg {
+  top: 98px;
+  height: 84px;
+}
+
+.dancer-role {
+  position: absolute;
+  top: 192px;
+  left: 0;
+  width: 76px;
+  color: rgb(172, 155, 145);
+  font-size: 8px;
+  letter-spacing: 1px;
+  -unity-text-align: middle-center;
+}
+
+.dancer-counts {
+  position: absolute;
+  left: 266px;
+  bottom: 11px;
+  color: rgba(247, 234, 209, 0.38);
+  font-size: 12px;
+  letter-spacing: 4px;
+}
+
+.dancer-demo-footer {
+  margin-top: 14px;
+}
+
+.dancer-card-name {
+  color: rgb(247, 234, 209);
+  font-size: 21px;
+  -unity-font-style: bold;
+}
+
+.dancer-demo-note {
+  width: 420px;
+  color: rgb(172, 155, 145);
+  font-size: 11px;
+  white-space: normal;
+  -unity-text-align: middle-right;
 }
 
 .pass-dialog,

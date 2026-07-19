@@ -3,6 +3,7 @@ import type { DanceCard as DanceCardDefinition } from "@clave/content";
 import type { CardView, GameAction, PlayerSnapshot, Role } from "@clave/engine";
 import { useAppStore } from "../store.js";
 import { DanceCard } from "./DanceCard.js";
+import { DancerDemo } from "./DancerDemo.js";
 
 const roleName = (role: Role) => (role === "lead" ? "Lead" : "Follow");
 type InspectableCard = CardView | DanceCardDefinition;
@@ -126,6 +127,7 @@ function DanceTable({
   dragOver,
   onDragOverChange,
   onCardDrop,
+  onOpenDancerDemo,
 }: {
   view: PlayerSnapshot;
   onInspect: (card: InspectableCard) => void;
@@ -134,6 +136,7 @@ function DanceTable({
   dragOver: boolean;
   onDragOverChange: (over: boolean) => void;
   onCardDrop: (instanceId: string) => void;
+  onOpenDancerDemo: () => void;
 }) {
   const opening = view.table.position === null;
   const floorHint = pendingPosition
@@ -176,7 +179,12 @@ function DanceTable({
     >
       <div className="table-heading">
         <span>On the floor</span>
-        <small className={acceptsDrop ? "floor-drop-hint" : ""}>{floorHint}</small>
+        <div className="floor-heading-tools">
+          <small className={acceptsDrop ? "floor-drop-hint" : ""}>{floorHint}</small>
+          <button type="button" className="watch-dancers" onClick={onOpenDancerDemo}>
+            Watch dancers
+          </button>
+        </div>
       </div>
       <div className="table-cards">
         <TableCard label="Position" staged={Boolean(pendingPosition)}>
@@ -771,6 +779,7 @@ export function GameScreen() {
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
   const [floorDragOver, setFloorDragOver] = useState(false);
   const [lessonFlight, setLessonFlight] = useState<LessonFlight | null>(null);
+  const [dancerDemoOpen, setDancerDemoOpen] = useState(false);
   const discardTargetRef = useRef<HTMLSpanElement>(null);
   const lessonFlightKey = useRef(0);
   useEffect(() => {
@@ -957,6 +966,7 @@ export function GameScreen() {
             dragOver={floorDragOver}
             onDragOverChange={setFloorDragOver}
             onCardDrop={playDroppedCard}
+            onOpenDancerDemo={() => setDancerDemoOpen(true)}
           />
           <TurnActions
             view={view}
@@ -1033,6 +1043,7 @@ export function GameScreen() {
       {inspectedCard && (
         <CardInspector card={inspectedCard} onClose={() => setInspectedCard(null)} />
       )}
+      {dancerDemoOpen && <DancerDemo view={view} onClose={() => setDancerDemoOpen(false)} />}
     </main>
   );
 }
