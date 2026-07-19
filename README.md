@@ -45,7 +45,7 @@ npm run check:unity
 - `packages/engine` — deterministic rules, legal actions, private snapshots, replay
 - `packages/client` — responsive React PWA for hot-seat and online play
 - `packages/server` — Hono/WebSocket rooms and transactional SQLite persistence
-- `ops` — Caddy, systemd, verified backup, deploy-guard, and metric-query materials
+- `ops` — Apache/Caddy, systemd, verified backup, deploy-guard, and metric-query materials
 - `unity/Clave` — macOS-first Unity UI Toolkit client and deterministic C# engine
 
 ## Repository map

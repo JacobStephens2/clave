@@ -12,6 +12,7 @@ import { RoomDatabase } from "./database.js";
 import { RoomManager } from "./rooms.js";
 
 const port = Number.parseInt(process.env.PORT ?? "8787", 10);
+const hostname = process.env.HOST ?? "0.0.0.0";
 const database = new RoomDatabase();
 const rooms = new RoomManager(database);
 const app = new Hono();
@@ -132,7 +133,7 @@ app.get("*", async (context) => {
   });
 });
 
-const server = serve({ fetch: app.fetch, port });
+const server = serve({ fetch: app.fetch, port, hostname });
 const sockets = new WebSocketServer({ noServer: true });
 const clients = new Map<WebSocket, { code: string; role: Role; seatToken: string }>();
 
@@ -215,7 +216,7 @@ const maintenance = setInterval(
 );
 maintenance.unref();
 
-console.log(`[clave] listening on http://0.0.0.0:${port}`);
+console.log(`[clave] listening on http://${hostname}:${port}`);
 
 function shutdown(): void {
   clearInterval(maintenance);

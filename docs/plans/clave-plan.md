@@ -256,15 +256,19 @@ song *deck* sequences the arc of the song thematically. The Phase 0 couch gate
 tests exactly this experience before any code exists. Confirmed acceptable by
 Jacob, 2026-07-18.
 
-**D8. Hosting: the stephens.page Linux server behind Caddy with automatic TLS, at
-`clave.dance`, as a systemd service.** Resolved 2026-07-18: the server is
-internet-reachable and `clave.dance` + `playclave.com` are registered on Porkbun.
-Primary domain: `clave.dance` (short, on-theme); `playclave.com` becomes a 301
-redirect (one extra Caddy block). DNS: an A record pointing at the server —
-Porkbun's own DNS or Cloudflare in DNS-only (grey-cloud) mode both work identically;
-keep the record unproxied so Caddy's Let's Encrypt issuance stays zero-config.
-Cloudflare's orange-cloud proxy is a later option (hides the server IP) at the cost
-of switching Caddy to a DNS challenge or origin certs — no requirement for it in v1.
+**D8. Hosting: the stephens.page Linux server behind its existing Apache reverse
+proxy with Certbot TLS, at `clave.dance`, as a systemd service.** Resolved
+2026-07-18 and corrected from the assumed Caddy frontend on 2026-07-19 after the
+live server identified itself as Apache 2.4.58: the server is internet-reachable
+and `clave.dance` + `playclave.com` are registered on Porkbun. Primary domain:
+`clave.dance` (short, on-theme); `playclave.com` becomes a 301 redirect after its
+apex and `www` records are pointed away from Porkbun parking. DNS: an A record
+pointing at the server — Porkbun's own DNS or Cloudflare in DNS-only (grey-cloud)
+mode both work identically. Cloudflare's orange-cloud proxy is a later option
+(hides the server IP) at the cost of an additional proxy layer — no requirement
+for it in v1. A Caddy template remains available for a fresh host, but replacing
+the server's working Apache frontend only for Clave would add avoidable launch
+risk.
 Alternatives considered: LAN-only hosting on the Mac (works for home play but adds a
 "is the laptop awake" failure mode and no stable URL); Cloudflare Pages + Workers
 (splits the stack and can't run the WebSocket room server as designed).
@@ -345,7 +349,7 @@ server rejects illegal actions (engine says so) and stale sequence numbers
 the owning player's snapshot — hand privacy is structural, not cosmetic.
 
 Threat model beyond that: **not material.** No accounts, no PII, no payments, two
-known users. Controls anyway: 128-bit random room codes, TLS via Caddy, a cap on
+known users. Controls anyway: 128-bit random room codes, TLS via Apache/Certbot, a cap on
 concurrent rooms and creation rate, room expiry. Accepted residual risk: DoS against
 a hobby box (recovery: restart; committed state survives per NFR-6).
 
@@ -476,7 +480,8 @@ room resumes from its snapshot — all recovered losslessly.
 ### Phase 5 — Deploy, operations, and launch (4–6 evenings, high confidence)
 
 Scope: FR-14, NFR-1, NFR-5; point `clave.dance` DNS at the stephens.page server,
-Caddy + systemd, `playclave.com` → 301 redirect (per D8); PWA manifest + icons (a
+Apache/Certbot + systemd, `playclave.com` → 301 redirect after its DNS cutover
+(per D8); PWA manifest + icons (a
 service worker only if the household's Chrome requires one for install — verify at
 implementation; if added, it reuses the version handshake so a cached client can't
 speak a stale protocol); nightly backup via `VACUUM INTO` + `PRAGMA
@@ -629,7 +634,7 @@ No open questions remain. Resolution log:
 
 | ID | Question | Resolution |
 | --- | --- | --- |
-| OQ-1 | Is the Linux server internet-reachable with a domain for Caddy auto-TLS? | **Resolved 2026-07-18.** Reachable (it serves stephens.page). `clave.dance` primary, `playclave.com` redirects; DNS via Porkbun or Cloudflare DNS-only. Details in D8. |
+| OQ-1 | Is the Linux server internet-reachable with a domain and TLS frontend? | **Resolved 2026-07-18; frontend corrected 2026-07-19.** Reachable (it serves stephens.page). Its existing Apache/Certbot frontend will proxy `clave.dance`; `playclave.com` redirects after its DNS cutover. DNS via Porkbun or Cloudflare DNS-only. Details in D8. |
 | OQ-2 | Stumble-turn semantics: may the stumbling player still take a lesson and freshen up? | **Resolved 2026-07-18: yes.** A stumble replaces only turn step 2 (Dance); steps 1, 3, and 4 proceed. Rationale: §6's literal text ("no other *dance* cards"), avoiding a bad-hand death spiral, and the "recovery is a skill" pillar. Recorded in `docs/rules/decisions.md` at Phase 0(b), enforced by `engine/tests/dancing.test.ts` in Phase 2. |
 | OQ-3 | Is speaker-played music acceptable for v1 evenings (no in-app audio)? | **Resolved 2026-07-18: yes**, confirmed by Jacob; playback model made explicit (ambient, unsynchronized — D7) after adversarial review; experience-validated at the Phase 0 couch gate. |
 | — | Adversarial review 2026-07-18 | All six findings adjudicated (2 accepted, 4 partially accepted) plus two new findings accepted; this revision incorporates every accepted change. See `docs/plans/reviews/clave-plan-adjudication-2026-07-18.md`. |
