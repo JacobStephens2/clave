@@ -78,14 +78,25 @@ export function DanceCard({
         <span>{details.type}</span>
         <span>{card.tier}</span>
       </div>
-      <div className="card-glyph" aria-hidden="true">
-        {card.type === "position"
-          ? "◇"
-          : card.type === "move"
-            ? "↝"
-            : card.type === "flourish"
-              ? "✦"
-              : "↺"}
+      <div className="card-art" aria-hidden="true">
+        <span className="card-art-fallback">
+          {card.type === "position"
+            ? "◇"
+            : card.type === "move"
+              ? "↝"
+              : card.type === "flourish"
+                ? "✦"
+                : "↺"}
+        </span>
+        <img
+          src={`/card-art/${card.id}.webp`}
+          alt=""
+          decoding="async"
+          draggable={false}
+          onError={(event) => {
+            event.currentTarget.hidden = true;
+          }}
+        />
       </div>
       <h4>{card.name}</h4>
       <p>{details.detail}</p>

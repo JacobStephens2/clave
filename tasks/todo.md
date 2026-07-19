@@ -1,4 +1,4 @@
 - [ ] Phase 0b (clave-plan): the couch gate — build the physical prototype from docs/cards/v1-card-list.md, play ≥2 full games with Mel with the record playing, log durations/rulings/rematch intent, and append any new rulings to docs/rules/decisions.md (the planned stumble ruling is already recorded)
 - [ ] Phase 3 human gate (clave-plan): play a complete hot-seat game on one Android phone and one MacBook, kill/reload mid-game on the phone, and log a digital playtest with Mel
 - [ ] Phase 4 physical/operations gate (clave-plan): play on two home-Wi-Fi devices and drill a mid-game server kill plus ENGINE_VERSION upgrade resume
-- [ ] Phase 5 launch (clave-plan): point DNS and deploy the supplied Caddy/systemd service to clave.dance, verify playclave.com redirect, run the three-device smoke matrix, latency/reconnect/crash/upgrade/restore drills, and complete the 10-item launch checklist
+- [ ] Phase 5 launch (clave-plan): deploy the supplied Apache/Certbot + systemd service to clave.dance, cut over and verify the playclave.com redirect, run the three-device smoke matrix, latency/reconnect/crash/upgrade/restore drills, and complete the 10-item launch checklist

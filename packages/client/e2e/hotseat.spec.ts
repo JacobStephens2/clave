@@ -18,6 +18,15 @@ async function finishSetup(page: Page) {
   await acceptPass(page, "Lead");
 }
 
+test("carries the card artwork into the home-screen visual system", async ({ page }) => {
+  await page.goto("/");
+
+  const heroArtwork = page.locator(".rhythm-mark img");
+  await expect(heroArtwork).toBeVisible();
+  expect(await heroArtwork.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(512);
+  await expect(page.locator(".home")).toHaveCSS("background-color", "rgb(8, 27, 37)");
+});
+
 test("plays a complete sixteen-count hot-seat game", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Pass & play/ }).click();
@@ -154,6 +163,9 @@ test("keeps a readable hand in a 13-inch laptop viewport and enlarges cards", as
   await acceptPass(page, "Lead");
 
   const firstCard = page.locator(".hand-scroll .dance-card").first();
+  const firstArtwork = firstCard.locator(".card-art img");
+  await expect(firstArtwork).toBeVisible();
+  expect(await firstArtwork.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(512);
   const cardBox = await firstCard.boundingBox();
   expect(cardBox).not.toBeNull();
   expect(cardBox!.y).toBeLessThan(900);
@@ -162,6 +174,9 @@ test("keeps a readable hand in a 13-inch laptop viewport and enlarges cards", as
   await firstCard.click({ position: { x: 70, y: 80 } });
   const enlarged = page.locator(".card-inspector .dance-card");
   await expect(enlarged).toBeVisible();
+  const enlargedArtwork = enlarged.locator(".card-art img");
+  await expect(enlargedArtwork).toBeVisible();
+  await expect(enlargedArtwork).toHaveAttribute("src", await firstArtwork.getAttribute("src"));
   const enlargedBox = await enlarged.boundingBox();
   expect(enlargedBox!.width).toBeGreaterThan(cardBox!.width);
   expect(enlargedBox!.height).toBeGreaterThan(cardBox!.height);

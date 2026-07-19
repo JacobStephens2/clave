@@ -55,6 +55,16 @@ const song = JSON.parse(
 );
 const cardIds = new Set(cards.cards.map((card) => card.id));
 if (cardIds.size !== cards.cards.length) fail("Shared content contains duplicate card ids.");
+const cardArtRoot = path.join(unityRoot, "Assets", "Resources", "CardArt");
+const cardArtIds = new Set(
+  fs
+    .readdirSync(cardArtRoot)
+    .filter((name) => name.endsWith(".png"))
+    .map((name) => path.basename(name, ".png")),
+);
+for (const id of cardIds) if (!cardArtIds.has(id)) fail(`Unity artwork is missing ${id}.png.`);
+for (const id of cardArtIds)
+  if (!cardIds.has(id)) fail(`Unity artwork has unknown card ${id}.png.`);
 if (song.cards.length !== 16) fail("Unity version requires the 16-card Llorarás song.");
 if (new Set(song.cards.map((card) => card.id)).size !== 16) fail("Song ids must be unique.");
 
@@ -118,6 +128,19 @@ for (const dragFeature of [
   if (!presentation.includes(dragFeature))
     fail(`Unity presentation is missing drag feature ${dragFeature}.`);
 }
+for (const artFeature of [
+  "BuildCardArt",
+  "BuildHomeArtwork",
+  'Resources.Load<Texture2D>($"CardArt/{definition.Id}")',
+  'Resources.Load<Texture2D>("CardArt/pos_001")',
+]) {
+  if (!presentation.includes(artFeature))
+    fail(`Unity presentation is missing card-art feature ${artFeature}.`);
+}
+for (const artStyle of ["Artwork-inspired visual system", "home-art-frame"]) {
+  if (!presentationStyles.includes(artStyle))
+    fail(`Unity styles are missing artwork-inspired feature ${artStyle}.`);
+}
 if (presentation.includes("BuildDropChoiceOverlay")) {
   fail("Unity opening drag flow must not fall back to a click-choice dialog.");
 }
@@ -166,7 +189,7 @@ const authoredAssets = fs
     (entry) =>
       entry.isFile() &&
       !entry.name.endsWith(".meta") &&
-      [".cs", ".asmdef", ".uss"].includes(path.extname(entry.name)),
+      [".cs", ".asmdef", ".uss", ".png"].includes(path.extname(entry.name)),
   )
   .map((entry) => path.join(entry.parentPath, entry.name));
 const guids = new Set();

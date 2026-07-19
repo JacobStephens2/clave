@@ -270,6 +270,11 @@
   max-height: 190px;
 }
 
+.table-slot .card-art {
+  height: 58px;
+  min-height: 58px;
+}
+
 .table-slot .card-detail,
 .table-slot .card-inspect,
 .table-slot .card-secondary,
@@ -417,8 +422,9 @@
   font-size: 9px;
 }
 
-.lesson-flight-card .card-glyph {
-  font-size: 28px;
+.lesson-flight-card .card-art {
+  height: 68px;
+  min-height: 68px;
   margin-top: 6px;
 }
 
@@ -457,19 +463,41 @@
   color: rgba(247, 234, 209, 0.7);
 }
 
-.card-glyph {
-  color: rgb(143, 36, 58);
-  font-size: 34px;
+.card-art {
+  position: relative;
+  height: 82px;
+  min-height: 82px;
   margin-top: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  overflow: hidden;
+  background-color: rgb(201, 168, 117);
+  border-width: 1px;
+  border-color: rgba(36, 20, 26, 0.32);
 }
 
-.type-position .card-glyph {
+.tier-a .card-art {
+  border-color: rgba(217, 164, 65, 0.6);
+}
+
+.card-art-image {
+  width: 100%;
+  height: 100%;
+  flex-grow: 1;
+}
+
+.card-art-fallback {
+  flex-grow: 1;
+  color: rgb(143, 36, 58);
+  font-size: 34px;
+  -unity-text-align: middle-center;
+}
+
+.type-position .card-art-fallback {
   color: rgb(47, 129, 118);
 }
 
-.type-flourish .card-glyph,
-.tier-a .card-glyph {
+.type-flourish .card-art-fallback,
+.tier-a .card-art-fallback {
   color: rgb(217, 164, 65);
 }
 
@@ -881,15 +909,22 @@
   padding: 22px 22px 18px 28px;
 }
 
+.signal-dialog .card-art,
+.inspector-dialog .card-art {
+  height: 238px;
+  min-height: 238px;
+  margin-top: 18px;
+  margin-bottom: 14px;
+}
+
 .signal-dialog .card-name,
 .inspector-dialog .card-name {
   font-size: 30px;
 }
 
-.signal-dialog .card-glyph,
-.inspector-dialog .card-glyph {
+.signal-dialog .card-art-fallback,
+.inspector-dialog .card-art-fallback {
   font-size: 64px;
-  margin-top: 32px;
 }
 
 .signal-dialog .card-detail,
@@ -953,4 +988,217 @@
   background-color: rgb(93, 23, 40);
   border-width: 1px;
   border-color: rgb(217, 93, 82);
+}
+
+/* Artwork-inspired visual system: bold painted fields and screen-print contrast. */
+.root {
+  background-color: rgb(8, 27, 37);
+  color: rgb(244, 226, 186);
+}
+
+.home {
+  padding: 34px 56px;
+  background-color: rgb(8, 27, 37);
+}
+
+.home-hero {
+  width: 1120px;
+  height: 420px;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.home-intro-copy {
+  flex-grow: 1;
+  padding-left: 18px;
+  padding-right: 56px;
+}
+
+.home-title {
+  color: rgb(244, 226, 186);
+  font-size: 82px;
+  letter-spacing: 14px;
+  -unity-text-outline-width: 2px;
+  -unity-text-outline-color: rgb(125, 41, 56);
+}
+
+.home-subtitle {
+  color: rgb(244, 226, 186);
+  font-size: 34px;
+  -unity-font-style: bold;
+  white-space: normal;
+}
+
+.home-description {
+  color: rgb(226, 211, 179);
+  font-size: 16px;
+  margin-top: 14px;
+}
+
+.home-art-frame {
+  position: relative;
+  width: 320px;
+  height: 390px;
+  background-color: rgb(22, 143, 145);
+  border-width: 3px;
+  border-color: rgb(8, 27, 37);
+}
+
+.home-art-block-one {
+  position: absolute;
+  left: -15px;
+  top: -15px;
+  width: 220px;
+  height: 210px;
+  background-color: rgb(227, 95, 79);
+}
+
+.home-art-block-two {
+  position: absolute;
+  right: -15px;
+  bottom: -15px;
+  width: 210px;
+  height: 170px;
+  background-color: rgb(226, 167, 53);
+}
+
+.home-art-image {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 8px;
+  bottom: 8px;
+  border-width: 2px;
+  border-color: rgb(244, 226, 186);
+}
+
+.home-art-fallback {
+  flex-grow: 1;
+  color: rgb(244, 226, 186);
+  font-size: 90px;
+  -unity-text-align: middle-center;
+}
+
+.home-card {
+  width: 1120px;
+  padding: 22px 28px;
+  background-color: rgb(16, 47, 64);
+  border-width: 2px 2px 2px 10px;
+  border-color: rgb(226, 167, 53) rgb(226, 167, 53) rgb(226, 167, 53) rgb(227, 95, 79);
+}
+
+.home-footnote {
+  color: rgb(182, 167, 142);
+  margin-top: 16px;
+}
+
+.header {
+  height: 62px;
+  background-color: rgb(7, 24, 32);
+  border-bottom-width: 4px;
+  border-bottom-color: rgb(227, 95, 79);
+}
+
+.hud {
+  height: 76px;
+  background-color: rgb(244, 226, 186);
+  color: rgb(8, 27, 37);
+  border-bottom-width: 4px;
+  border-bottom-color: rgb(22, 143, 145);
+}
+
+.hud .stat-label {
+  color: rgb(39, 107, 110);
+}
+
+.hud .stat-value {
+  color: rgb(16, 47, 64);
+}
+
+.song-banner {
+  background-color: rgb(226, 167, 53);
+  border-width: 2px 2px 2px 9px;
+  border-color: rgb(8, 27, 37) rgb(8, 27, 37) rgb(8, 27, 37) rgb(227, 95, 79);
+}
+
+.song-count {
+  color: rgb(16, 47, 64);
+}
+
+.song-copy {
+  border-left-width: 2px;
+  border-left-color: rgba(8, 27, 37, 0.52);
+}
+
+.song-banner .eyebrow,
+.song-title,
+.song-description {
+  color: rgb(8, 27, 37);
+}
+
+.dance-floor {
+  background-color: rgb(13, 43, 55);
+  border-width: 2px;
+  border-color: rgb(226, 167, 53);
+}
+
+.actions-area,
+.panel {
+  background-color: rgb(18, 56, 69);
+  border-width: 2px;
+  border-color: rgb(233, 204, 145);
+}
+
+.hand-zone {
+  border-top-width: 4px;
+  border-top-color: rgb(227, 95, 79);
+}
+
+.dance-card {
+  background-color: rgb(240, 221, 177);
+  border-width: 2px 2px 2px 7px;
+  border-color: rgb(8, 27, 37) rgb(8, 27, 37) rgb(8, 27, 37) rgb(167, 53, 67);
+}
+
+.dance-card.tier-a {
+  background-color: rgb(16, 47, 64);
+}
+
+.card-art {
+  border-width: 2px;
+  border-color: rgb(8, 27, 37);
+}
+
+.primary,
+.small-primary,
+.market-action {
+  background-color: rgb(226, 167, 53);
+  color: rgb(8, 27, 37);
+  border-width: 2px;
+  border-color: rgb(8, 27, 37);
+}
+
+.secondary {
+  background-color: rgb(22, 143, 145);
+  color: rgb(8, 27, 37);
+  border-width: 2px;
+  border-color: rgb(8, 27, 37);
+}
+
+.overlay {
+  background-color: rgba(7, 24, 32, 0.95);
+}
+
+.dancer-demo-dialog,
+.pass-dialog {
+  background-color: rgb(16, 47, 64);
+  border-width: 3px;
+  border-color: rgb(226, 167, 53);
+}
+
+.dancer-demo-stage {
+  background-color: rgb(13, 43, 55);
+  border-width: 2px;
+  border-color: rgb(233, 204, 145);
 }

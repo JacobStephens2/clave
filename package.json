@@ -16,7 +16,7 @@
   "scripts": {
     "dev": "concurrently -n client,server -c cyan,magenta \"npm run dev -w @clave/client\" \"npm run dev -w @clave/server\"",
     "play": "npm run play -w @clave/engine",
-    "build": "npm run build -w @clave/content && npm run build -w @clave/engine && npm run build -w @clave/client && npm run build -w @clave/server && npm run check:bundle",
+    "build": "npm run check:art && npm run build -w @clave/content && npm run build -w @clave/engine && npm run build -w @clave/client && npm run build -w @clave/server && npm run check:bundle",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
@@ -25,6 +25,7 @@
     "format": "prettier --write \"packages/**/*.{ts,tsx,css,json,html}\" \"scripts/**/*.ts\" \"*.{js,ts,json}\" \".github/**/*.yml\"",
     "format:check": "prettier --check \"packages/**/*.{ts,tsx,css,json,html}\" \"scripts/**/*.ts\" \"*.{js,ts,json}\" \".github/**/*.yml\"",
     "check:content": "npm run check -w @clave/content",
+    "check:art": "node scripts/check-card-art.mjs",
     "check:bundle": "tsx scripts/check-bundle-size.ts",
     "check:unity": "node scripts/validate-unity-project.mjs",
     "check:unity:csharp": "dotnet run --project unity/Verification/Clave.Engine.Verification.csproj"

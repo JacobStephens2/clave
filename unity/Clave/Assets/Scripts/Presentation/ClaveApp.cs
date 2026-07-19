@@ -115,9 +115,15 @@ namespace Clave.Presentation
             var page = Element("home");
             root.Add(page);
 
-            page.Add(Text("A PARTNER DANCE GAME", "eyebrow"));
-            page.Add(Text("CLAVE", "home-title"));
-            page.Add(Text("Dance Llorarás together — one 8-count at a time.", "home-subtitle"));
+            var hero = Element("home-hero");
+            var intro = Element("home-intro-copy");
+            intro.Add(Text("A PARTNER DANCE GAME", "eyebrow"));
+            intro.Add(Text("CLAVE", "home-title"));
+            intro.Add(Text("Listen. Connect. Make the floor yours.", "home-subtitle"));
+            intro.Add(Text("Dance Llorarás together — one 8-count at a time.", "home-description"));
+            hero.Add(intro);
+            hero.Add(BuildHomeArtwork());
+            page.Add(hero);
 
             var card = Element("home-card");
             card.Add(Text("Pass & play on macOS", "section-title"));
@@ -134,6 +140,29 @@ namespace Clave.Presentation
             }
             page.Add(card);
             page.Add(Text("Designed for a 1440 × 900 or larger Mac window · deterministic C# engine · local save", "home-footnote"));
+        }
+
+        private static VisualElement BuildHomeArtwork()
+        {
+            var frame = Element("home-art-frame");
+            frame.Add(Element("home-art-block-one"));
+            frame.Add(Element("home-art-block-two"));
+            var texture = Resources.Load<Texture2D>("CardArt/pos_001");
+            if (texture == null)
+            {
+                frame.Add(Text("◇", "home-art-fallback"));
+                return frame;
+            }
+
+            var image = new Image
+            {
+                image = texture,
+                scaleMode = ScaleMode.ScaleAndCrop,
+                pickingMode = PickingMode.Ignore,
+            };
+            image.AddToClassList("home-art-image");
+            frame.Add(image);
+            return frame;
         }
 
         private void StartNewGame()
@@ -451,7 +480,8 @@ namespace Clave.Presentation
         private VisualElement BuildCard(
             CardDefinition definition,
             CardInstance instance = null,
-            bool showDiscardToggle = false
+            bool showDiscardToggle = false,
+            bool fullArtwork = false
         )
         {
             var card = Element("dance-card");
@@ -477,7 +507,7 @@ namespace Clave.Presentation
                 ConfigureCardDrag(card, definition, instance);
             }
             card.Add(Text($"{definition.Type.ToUpperInvariant()} · {definition.Tier}", "card-topline"));
-            card.Add(Text(CardGlyph(definition), "card-glyph"));
+            card.Add(BuildCardArt(definition, fullArtwork));
             card.Add(Text(definition.Name, "card-name"));
             card.Add(Text(CardDetail(definition), "card-detail"));
             if (definition.Style > 0) card.Add(Text($"+{definition.Style} STYLE", "style-pip"));
@@ -592,7 +622,7 @@ namespace Clave.Presentation
             preview.AddToClassList($"tier-{definition.Tier.ToLowerInvariant()}");
             preview.pickingMode = PickingMode.Ignore;
             preview.Add(Text($"{definition.Type.ToUpperInvariant()} · {definition.Tier}", "card-topline"));
-            preview.Add(Text(CardGlyph(definition), "card-glyph"));
+            preview.Add(BuildCardArt(definition));
             preview.Add(Text(definition.Name, "card-name"));
             preview.Add(Text(CardDetail(definition), "card-detail"));
             if (definition.Style > 0) preview.Add(Text($"+{definition.Style} STYLE", "style-pip"));
@@ -791,7 +821,7 @@ namespace Clave.Presentation
             var dialog = Element("inspector-dialog");
             dialog.RegisterCallback<ClickEvent>(evt => evt.StopPropagation());
             dialog.Add(Text("CARD DETAIL", "eyebrow"));
-            dialog.Add(BuildCard(definition));
+            dialog.Add(BuildCard(definition, fullArtwork: true));
             dialog.Add(ActionButton("Close", CloseInspector, "secondary"));
             overlay.Add(dialog);
             return overlay;
@@ -1158,7 +1188,7 @@ namespace Clave.Presentation
             card.AddToClassList($"tier-{definition.Tier.ToLowerInvariant()}");
             card.pickingMode = PickingMode.Ignore;
             card.Add(Text($"{definition.Type.ToUpperInvariant()} · {definition.Tier}", "card-topline"));
-            card.Add(Text(CardGlyph(definition), "card-glyph"));
+            card.Add(BuildCardArt(definition));
             card.Add(Text(definition.Name, "card-name"));
             card.Add(Text(CardDetail(definition), "card-detail"));
             if (definition.Style > 0) card.Add(Text($"+{definition.Style} STYLE", "style-pip"));
@@ -1313,6 +1343,28 @@ namespace Clave.Presentation
                 "flourish" => "✦",
                 _ => "↺",
             };
+        }
+
+        private static VisualElement BuildCardArt(CardDefinition definition, bool fullArtwork = false)
+        {
+            var art = Element("card-art");
+            art.pickingMode = PickingMode.Ignore;
+            var texture = Resources.Load<Texture2D>($"CardArt/{definition.Id}");
+            if (texture == null)
+            {
+                art.Add(Text(CardGlyph(definition), "card-art-fallback"));
+                return art;
+            }
+
+            var image = new Image
+            {
+                image = texture,
+                scaleMode = fullArtwork ? ScaleMode.ScaleToFit : ScaleMode.ScaleAndCrop,
+                pickingMode = PickingMode.Ignore,
+            };
+            image.AddToClassList("card-art-image");
+            art.Add(image);
+            return art;
         }
 
         private static string CardDetail(CardDefinition card)

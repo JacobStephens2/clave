@@ -70,6 +70,7 @@ export function HomeScreen() {
           </p>
         </div>
         <div className="rhythm-mark" aria-hidden="true">
+          <img src="/card-art/pos_001.webp" alt="" decoding="async" draggable={false} />
           <span>1</span>
           <i></i>
           <span>2</span>

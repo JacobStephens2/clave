@@ -12,7 +12,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "check": "vitest run tests"
+    "check": "vitest run --root ../.. packages/content/tests"
   },
   "dependencies": {
     "@noble/hashes": "2.2.0",

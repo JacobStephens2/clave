@@ -1411,21 +1411,59 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
-.card-glyph {
+.card-art {
+  position: relative;
+  height: 96px;
+  flex: 0 0 96px;
+  margin: 10px 0 8px;
+  overflow: hidden;
+  border: 1px solid rgba(36, 20, 26, 0.28);
+  background: #c9a875;
+  isolation: isolate;
+}
+.card-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  box-shadow: inset 0 0 18px rgba(20, 9, 13, 0.3);
+}
+.card-art img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 36%;
+}
+.card-art-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
   font-family: Georgia, serif;
   font-size: 36px;
   line-height: 1;
   color: var(--wine-bright);
-  margin: 18px 0 8px;
 }
-.position .card-glyph {
+.position .card-art-fallback {
   color: var(--teal);
 }
-.flourish .card-glyph {
+.flourish .card-art-fallback {
   color: #9a6d13;
 }
-.tier-a .card-glyph {
+.tier-a .card-art {
+  border-color: rgba(217, 164, 65, 0.55);
+}
+.tier-a .card-art-fallback {
   color: var(--gold);
+}
+.dance-card.compact .card-art {
+  height: 70px;
+  flex-basis: 70px;
+  margin: 7px 0 6px;
 }
 .dance-card h4 {
   font-family: Georgia, serif;
@@ -1736,8 +1774,8 @@ button {
   text-transform: uppercase;
 }
 .card-inspector .dance-card {
-  width: min(82vw, 360px);
-  height: min(68vh, 520px);
+  width: min(86vw, 430px);
+  height: min(78vh, 720px);
   min-height: 400px;
   padding: 22px;
   cursor: default;
@@ -1745,8 +1783,18 @@ button {
 .card-inspector .card-topline {
   font-size: 11px;
 }
-.card-inspector .card-glyph {
-  margin: 36px 0 20px;
+.card-inspector .card-art {
+  width: 100%;
+  height: min(44vh, 420px);
+  flex-basis: min(44vh, 420px);
+  margin: 20px 0 16px;
+  background: #172d35;
+}
+.card-inspector .card-art img {
+  object-fit: contain;
+  object-position: center;
+}
+.card-inspector .card-art-fallback {
   font-size: 68px;
 }
 .card-inspector .dance-card h4 {
@@ -2030,12 +2078,411 @@ button {
   font-weight: 400;
 }
 
+/* Artwork-inspired visual system: screen-printed rhythm, paper, and painted geometry. */
+:root {
+  --ink: #081b25;
+  --indigo: #102f40;
+  --indigo-deep: #071820;
+  --wine: #7d2938;
+  --wine-bright: #a73543;
+  --cream: #f4e2ba;
+  --paper: #e9cc91;
+  --gold: #e2a735;
+  --coral: #e35f4f;
+  --teal: #168f91;
+  --turquoise: #26a7a4;
+  --muted: #b6a78e;
+  --line: rgba(244, 226, 186, 0.24);
+}
+
+html,
+body {
+  background-color: var(--indigo-deep);
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 12% 2%, rgba(227, 95, 79, 0.22), transparent 28%),
+    linear-gradient(122deg, transparent 0 72%, rgba(22, 143, 145, 0.12) 72% 78%, transparent 78%),
+    repeating-linear-gradient(113deg, transparent 0 58px, rgba(244, 226, 186, 0.025) 59px 61px);
+}
+
+.home {
+  background-color: #081b25;
+  background-image:
+    linear-gradient(142deg, rgba(227, 95, 79, 0.2) 0 14%, transparent 14% 100%),
+    linear-gradient(28deg, transparent 0 80%, rgba(226, 167, 53, 0.18) 80% 88%, transparent 88%),
+    radial-gradient(circle at 82% 40%, rgba(38, 167, 164, 0.24), transparent 31%);
+  isolation: isolate;
+}
+
+.home::before {
+  opacity: 0.5;
+  background-image:
+    repeating-radial-gradient(
+      circle at 76% 42%,
+      transparent 0 68px,
+      rgba(244, 226, 186, 0.08) 69px 71px
+    ),
+    repeating-linear-gradient(11deg, transparent 0 7px, rgba(244, 226, 186, 0.018) 8px 9px);
+}
+
+.home::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  width: min(38vw, 520px);
+  height: min(18vw, 240px);
+  right: -8%;
+  bottom: 4%;
+  background: rgba(227, 95, 79, 0.12);
+  clip-path: polygon(16% 0, 100% 18%, 82% 100%, 0 72%);
+  pointer-events: none;
+}
+
+.brand-lockup h1,
+.mini-brand {
+  color: var(--cream);
+  text-shadow: 3px 3px 0 var(--wine);
+}
+
+.brand-lockup .brand-eyebrow {
+  color: var(--gold);
+}
+
+.kicker {
+  display: inline-block;
+  width: fit-content;
+  padding: 7px 10px 6px;
+  background: var(--coral);
+  color: var(--ink) !important;
+  box-shadow: 5px 5px 0 rgba(8, 27, 37, 0.6);
+  transform: rotate(-1deg);
+}
+
+.home-copy h2 {
+  color: var(--cream);
+  text-shadow: 4px 4px 0 rgba(125, 41, 56, 0.72);
+}
+
+.home-copy > p:last-child {
+  color: #e3d3b2;
+}
+
+.rhythm-mark {
+  aspect-ratio: 0.84;
+  max-width: 370px;
+  border: 3px solid var(--ink);
+  border-radius: 0 28% 0 28%;
+  background: var(--teal);
+  box-shadow:
+    12px 12px 0 var(--gold),
+    -13px -13px 0 rgba(227, 95, 79, 0.82);
+  isolation: isolate;
+  transform: rotate(1.5deg);
+}
+
+.rhythm-mark::before {
+  inset: 5%;
+  z-index: 2;
+  border: 2px solid rgba(244, 226, 186, 0.64);
+  border-radius: 0 26% 0 26%;
+}
+
+.rhythm-mark::after {
+  inset: auto -7% -6% 36%;
+  z-index: 3;
+  height: 34%;
+  border: 0;
+  border-radius: 0;
+  background: rgba(22, 143, 145, 0.56);
+  box-shadow: none;
+  clip-path: polygon(12% 0, 100% 18%, 84% 100%, 0 74%);
+}
+
+.rhythm-mark img {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 44%;
+  filter: saturate(1.06) contrast(1.04);
+}
+
+.rhythm-mark > span,
+.rhythm-mark > i,
+.rhythm-mark > b {
+  display: none;
+}
+
+.resume-strip,
+.mode-card,
+.network-panel {
+  border: 2px solid var(--ink);
+  box-shadow: 7px 7px 0 rgba(4, 13, 18, 0.72);
+}
+
+.resume-strip {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.resume-strip small {
+  color: rgba(8, 27, 37, 0.7);
+}
+
+.resume-strip .text-button {
+  color: rgba(8, 27, 37, 0.78);
+}
+
+.resume-strip .text-button:hover {
+  color: var(--ink);
+}
+
+.mode-card {
+  background: var(--indigo);
+  border-color: var(--paper);
+}
+
+.mode-card.primary-mode {
+  background: var(--cream);
+  box-shadow: 7px 7px 0 var(--coral);
+}
+
+.mode-card:not(.primary-mode) {
+  box-shadow: 7px 7px 0 var(--teal);
+}
+
+.mode-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 10px 10px 0 var(--gold);
+}
+
+.network-panel {
+  background: var(--indigo);
+  border-color: var(--gold);
+}
+
+.button {
+  border-width: 2px;
+  border-color: var(--ink);
+  box-shadow: 3px 3px 0 rgba(8, 27, 37, 0.72);
+}
+
+.game {
+  background-color: var(--indigo-deep);
+  background-image:
+    linear-gradient(28deg, transparent 0 82%, rgba(227, 95, 79, 0.09) 82% 88%, transparent 88%),
+    radial-gradient(circle at 12% 42%, rgba(22, 143, 145, 0.15), transparent 27%),
+    repeating-linear-gradient(105deg, transparent 0 72px, rgba(244, 226, 186, 0.018) 73px 75px);
+}
+
+.main-table {
+  gap: 14px;
+}
+
+.game-header {
+  min-height: 62px;
+  border-bottom: 4px solid var(--coral);
+  background: rgba(7, 24, 32, 0.94);
+  box-shadow: 0 5px 0 rgba(226, 167, 53, 0.72);
+}
+
+.hud {
+  background: var(--cream);
+  color: var(--ink);
+  border-bottom: 4px solid var(--teal);
+  box-shadow: inset 0 -1px 0 var(--ink);
+}
+
+.hud-stat small {
+  color: #276b6e;
+  font-weight: 900;
+}
+
+.hud-stat strong {
+  color: var(--indigo);
+  font-weight: 700;
+}
+
+.hud-stat > span,
+.hud-stat strong span {
+  color: rgba(8, 27, 37, 0.58);
+}
+
+.connection-meter i {
+  background: rgba(8, 27, 37, 0.25);
+}
+
+.connection-meter i.filled {
+  background: var(--coral);
+}
+
+.song-card {
+  border: 2px solid var(--ink);
+  background-color: var(--gold);
+  background-image:
+    linear-gradient(114deg, rgba(244, 226, 186, 0.54) 0 19%, transparent 19%),
+    linear-gradient(35deg, transparent 0 76%, rgba(227, 95, 79, 0.62) 76% 100%);
+  color: var(--ink);
+  box-shadow: 7px 7px 0 var(--coral);
+}
+
+.song-count {
+  border-right: 2px solid rgba(8, 27, 37, 0.5);
+}
+
+.song-count span {
+  color: var(--indigo);
+  font-weight: 700;
+}
+
+.song-count small,
+.song-card > div:last-child > small,
+.song-card.waiting > small,
+.song-card p {
+  color: rgba(8, 27, 37, 0.72);
+}
+
+.dance-table {
+  border: 2px solid var(--gold);
+  background-color: #0d2b37;
+  background-image:
+    radial-gradient(ellipse at center, rgba(22, 143, 145, 0.28), transparent 58%),
+    conic-gradient(
+      from 24deg at 50% 55%,
+      transparent 0 8%,
+      rgba(227, 95, 79, 0.14) 8% 14%,
+      transparent 14% 25%,
+      rgba(226, 167, 53, 0.11) 25% 31%,
+      transparent 31% 100%
+    );
+  box-shadow: 7px 7px 0 rgba(3, 12, 17, 0.8);
+}
+
+.dance-table::before {
+  border: 2px solid rgba(244, 226, 186, 0.16);
+  border-radius: 48% 52% 44% 56%;
+  transform: rotate(-3deg);
+}
+
+.watch-dancers {
+  border: 2px solid var(--gold);
+  background: var(--teal);
+  color: var(--ink);
+  box-shadow: 3px 3px 0 var(--coral);
+}
+
+.empty-slot {
+  border: 2px dashed rgba(244, 226, 186, 0.28);
+  background: rgba(244, 226, 186, 0.035);
+}
+
+.turn-actions,
+.market,
+.game-log {
+  border: 2px solid var(--paper);
+  background: #123845;
+  box-shadow: 5px 5px 0 rgba(3, 12, 17, 0.7);
+}
+
+.hand-zone {
+  border-top: 4px solid var(--coral);
+}
+
+.dance-card {
+  border: 2px solid var(--ink);
+  background-color: #f0ddb1;
+  background-image: repeating-linear-gradient(
+    9deg,
+    transparent 0 10px,
+    rgba(8, 27, 37, 0.025) 11px 12px
+  );
+  box-shadow: 6px 7px 0 rgba(3, 12, 17, 0.62);
+}
+
+.dance-card::before {
+  width: 7px;
+}
+
+.dance-card.tier-i {
+  background-color: #dfc17f;
+}
+
+.dance-card.tier-a {
+  background-color: var(--indigo);
+  background-image: repeating-linear-gradient(
+    12deg,
+    transparent 0 12px,
+    rgba(244, 226, 186, 0.035) 13px 14px
+  );
+}
+
+.dance-card.inspectable:hover,
+.dance-card.playable {
+  box-shadow:
+    0 0 0 2px var(--gold),
+    8px 9px 0 var(--coral);
+}
+
+.card-art {
+  border: 2px solid var(--ink);
+}
+
+.style-pip,
+.step-heading > span {
+  border-width: 2px;
+  border-radius: 44% 56% 47% 53%;
+}
+
+.market > summary,
+.game-log > summary {
+  background: rgba(226, 167, 53, 0.1);
+}
+
+.card-inspector,
+.dancer-demo-overlay {
+  background-color: rgba(7, 24, 32, 0.94);
+  background-image: radial-gradient(circle at 50% 45%, rgba(22, 143, 145, 0.2), transparent 46%);
+}
+
+.dancer-demo-dialog {
+  border: 3px solid var(--gold);
+  background: var(--indigo);
+  box-shadow: 10px 10px 0 var(--coral);
+}
+
+.dancer-demo-stage {
+  border: 2px solid var(--paper);
+  background-color: #0d2b37;
+  background-image:
+    linear-gradient(128deg, transparent 0 76%, rgba(227, 95, 79, 0.18) 76%),
+    radial-gradient(ellipse at 50% 108%, rgba(226, 167, 53, 0.3), transparent 62%);
+}
+
+.pass-screen,
+.terminal-screen {
+  background-color: var(--indigo-deep);
+  background-image:
+    radial-gradient(circle at center, rgba(227, 95, 79, 0.36), transparent 42%),
+    conic-gradient(
+      from 25deg at 50% 50%,
+      transparent 0 14%,
+      rgba(22, 143, 145, 0.12) 14% 21%,
+      transparent 21% 44%,
+      rgba(226, 167, 53, 0.1) 44% 51%,
+      transparent 51%
+    );
+}
+
 @media (min-width: 741px) and (min-height: 700px) {
   .main-table {
     min-height: 0;
     grid-template-rows:
       clamp(82px, 11vh, 112px) minmax(110px, 1fr) auto
-      clamp(160px, 24vh, 270px);
+      clamp(160px, 24vh, 272px);
   }
   .song-card {
     min-height: 0;
@@ -2063,8 +2510,9 @@ button {
   .hand-scroll .dance-card p {
     font-size: 10px;
   }
-  .hand-scroll .card-glyph {
-    margin: 12px 0 7px;
+  .hand-scroll .card-art {
+    height: clamp(72px, 10vh, 106px);
+    flex-basis: clamp(72px, 10vh, 106px);
   }
   .game-sidebar {
     min-height: 0;
@@ -2087,7 +2535,7 @@ button {
     overflow: hidden;
   }
   .game-grid {
-    height: calc(100vh - 132px);
+    height: calc(100vh - 136px);
     overflow: hidden;
     align-items: stretch;
   }
@@ -2256,8 +2704,12 @@ button {
   .dance-card.compact {
     min-height: 162px;
   }
-  .dance-card.compact .card-glyph {
-    margin: 12px 0 6px;
+  .dance-card.compact .card-art {
+    height: 58px;
+    flex-basis: 58px;
+    margin: 6px 0 5px;
+  }
+  .dance-card.compact .card-art-fallback {
     font-size: 26px;
   }
   .dance-card.compact h4 {
@@ -2311,9 +2763,17 @@ button {
     height: min(68vh, 450px);
     min-height: 340px;
   }
-  .card-inspector .card-glyph {
-    margin: 22px 0 14px;
+  .card-inspector .card-art {
+    height: min(28vh, 180px);
+    flex-basis: min(28vh, 180px);
+    margin: 12px 0 10px;
+  }
+  .card-inspector .card-art-fallback {
     font-size: 52px;
+  }
+  .card-inspector .card-art img {
+    object-fit: cover;
+    object-position: center 36%;
   }
   .card-inspector .dance-card h4 {
     font-size: 27px;
