@@ -13,3 +13,10 @@ Moves match only on positions.
 v1 of Clave excludes flourish state tracking, and it excludes the cierre.
 
 v1 of Clave includes the lessons module.
+
+## 2026-07-18 — Stumble turn timing
+
+A stumble replaces only step 2, **Dance**. If the stumble does not reduce Connection
+to 0, the active player continues to step 3 (the optional lesson) and step 4
+(freshen up). This keeps “no other dance cards” scoped to the dance step and avoids a
+bad-hand death spiral. Connection reaching 0 still ends the game immediately.

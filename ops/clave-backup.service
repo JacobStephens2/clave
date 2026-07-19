@@ -1,0 +1,10 @@
+[Unit]
+Description=Create and verify a Clave SQLite backup
+
+[Service]
+Type=oneshot
+User=clave
+WorkingDirectory=/opt/clave/current
+Environment=CLAVE_DB_PATH=/var/lib/clave/clave.sqlite
+Environment=CLAVE_BACKUP_DIR=/var/backups/clave
+ExecStart=/usr/bin/npm run backup -w @clave/server

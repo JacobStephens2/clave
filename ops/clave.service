@@ -1,0 +1,22 @@
+[Unit]
+Description=Clave partner dance game
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=clave
+WorkingDirectory=/opt/clave/current
+Environment=NODE_ENV=production
+Environment=PORT=8787
+Environment=CLAVE_DB_PATH=/var/lib/clave/clave.sqlite
+ExecStart=/usr/bin/npm start -w @clave/server
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/clave
+
+[Install]
+WantedBy=multi-user.target

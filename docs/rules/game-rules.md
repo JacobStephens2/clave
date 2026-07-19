@@ -133,6 +133,9 @@ as you stumble:
 After a stumble the state is empty, so the next dance play must open again with a
 position and a matching move.
 
+A stumble replaces only the **Dance** step of the turn. Unless Connection reaches 0,
+the player may still take a lesson and must still freshen up normally.
+
 > **Example.** The position is Closed. Ana plays **Cross Body Lead** (tags: Open,
 > Closed — it matches) for 2 Style, then transitions by playing **Open Position** on
 > top of Closed, and flourishes the move with **Arm Overhead** for 1 more Style. Three

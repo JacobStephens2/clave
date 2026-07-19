@@ -5,9 +5,42 @@ a salsa song together, one 8-count at a time. Play positions, moves, and
 flourishes; protect your Connection; finish the song with as much Style as you
 can. It is the first entry in the planned *Partner Dance Game* series.
 
-v1 is being built as a single responsive web app (headless TypeScript engine,
-hot-seat and two-device play over home Wi-Fi). The governing, adjudicated build
-plan is [`docs/plans/clave-plan.md`](docs/plans/clave-plan.md).
+v1 is a single responsive web app with a headless TypeScript engine, hot-seat
+pass-and-play, and server-authoritative two-device rooms. The governing,
+adjudicated build plan is [`docs/plans/clave-plan.md`](docs/plans/clave-plan.md).
+
+## Play locally
+
+Requires Node 22 or newer.
+
+```sh
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`. The client and room server start together. Hot-seat
+games are saved after every accepted action in the browser; online rooms are saved
+transactionally in SQLite.
+
+Verification commands:
+
+```sh
+npm test
+npm run test:e2e
+npm run typecheck
+npm run lint
+npm run build
+```
+
+`npm run play` opens the same engine as a terminal game.
+
+## Application map
+
+- `packages/content` — validated JSON cards, decks, balance values, and Llorarás song
+- `packages/engine` — deterministic rules, legal actions, private snapshots, replay
+- `packages/client` — responsive React PWA for hot-seat and online play
+- `packages/server` — Hono/WebSocket rooms and transactional SQLite persistence
+- `ops` — Caddy, systemd, verified backup, deploy-guard, and metric-query materials
 
 ## Repository map
 
@@ -25,6 +58,8 @@ plan is [`docs/plans/clave-plan.md`](docs/plans/clave-plan.md).
 
 ## Status (2026-07-18)
 
-Planning is complete and adjudicated. Next up is Phase 0 of the plan: commit the
-plan, then the "couch gate" — a physical-prototype playtest of the full game,
-before any code is written.
+The digital v1 is implemented and passes the automated engine, persistence, build,
+bundle-size, hot-seat, reload-resume, and two-browser online-game checks. The
+human/external launch gates remain: the two physical couch playtests, device smoke
+matrix, production DNS/service deployment, latency/crash/upgrade drills, and backup
+restore drill. Those are tracked in [`tasks/todo.md`](tasks/todo.md).

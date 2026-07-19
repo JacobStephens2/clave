@@ -1,0 +1,214 @@
+{
+  "id": "lloraras",
+  "title": "Llorarás",
+  "artist": "Oscar D'León",
+  "cards": [
+    {
+      "id": "song_001",
+      "number": 1,
+      "section": "Cuerpo",
+      "moment": "Verse 1",
+      "title": "Settle in",
+      "description": "+1 Connection if you play a Move worth 2 Style or less",
+      "bonuses": [
+        {
+          "condition": { "op": "moveStyleAtMost", "value": 2 },
+          "effect": { "style": 0, "connection": 1 }
+        }
+      ]
+    },
+    {
+      "id": "song_002",
+      "number": 2,
+      "section": "Cuerpo",
+      "moment": "Verse 1",
+      "title": "Open invitation",
+      "description": "+1 Style if your Move is danced from Open",
+      "bonuses": [
+        {
+          "condition": { "op": "moveFrom", "positions": ["Open"] },
+          "effect": { "style": 1, "connection": 0 }
+        }
+      ]
+    },
+    {
+      "id": "song_003",
+      "number": 3,
+      "section": "Cuerpo",
+      "moment": "Horns",
+      "title": "Catch the horns",
+      "description": "+2 Style if you play a Flourish",
+      "bonuses": [
+        { "condition": { "op": "flourishPlayed" }, "effect": { "style": 2, "connection": 0 } }
+      ]
+    },
+    {
+      "id": "song_004",
+      "number": 4,
+      "section": "Cuerpo",
+      "moment": "Horns",
+      "title": "Make it count",
+      "description": "+1 Style if your Move is worth 2+ Style",
+      "bonuses": [
+        {
+          "condition": { "op": "moveStyleAtLeast", "value": 2 },
+          "effect": { "style": 1, "connection": 0 }
+        }
+      ]
+    },
+    {
+      "id": "song_005",
+      "number": 5,
+      "section": "Cuerpo",
+      "moment": "Verse 2",
+      "title": "Stay close",
+      "description": "+1 Connection if you play no Position card",
+      "bonuses": [
+        { "condition": { "op": "noPositionPlayed" }, "effect": { "style": 0, "connection": 1 } }
+      ]
+    },
+    {
+      "id": "song_006",
+      "number": 6,
+      "section": "Cuerpo",
+      "moment": "Verse 2",
+      "title": "Hold the thread",
+      "description": "+1 Style if your Move is danced from the same position as the previous Move",
+      "bonuses": [
+        {
+          "condition": { "op": "samePositionAsPreviousMove" },
+          "effect": { "style": 1, "connection": 0 }
+        }
+      ]
+    },
+    {
+      "id": "song_007",
+      "number": 7,
+      "section": "Cuerpo",
+      "moment": "Horns",
+      "title": "Answer the horns",
+      "description": "+2 Style if you play a Flourish",
+      "bonuses": [
+        { "condition": { "op": "flourishPlayed" }, "effect": { "style": 2, "connection": 0 } }
+      ]
+    },
+    {
+      "id": "song_008",
+      "number": 8,
+      "section": "Cuerpo",
+      "moment": "Verse 3",
+      "title": "Verse's end",
+      "description": "+1 Connection if this 8-count ends in Closed",
+      "bonuses": [
+        {
+          "condition": { "op": "endsInPosition", "position": "Closed" },
+          "effect": { "style": 0, "connection": 1 }
+        }
+      ]
+    },
+    {
+      "id": "song_009",
+      "number": 9,
+      "section": "Montuno",
+      "moment": "Puente",
+      "title": "Cross the bridge",
+      "description": "+1 Connection if you change position this 8-count",
+      "bonuses": [
+        { "condition": { "op": "positionChanged" }, "effect": { "style": 0, "connection": 1 } }
+      ]
+    },
+    {
+      "id": "song_010",
+      "number": 10,
+      "section": "Montuno",
+      "moment": "Puente",
+      "title": "Echo",
+      "description": "+2 Style if you play a Move your partner has played this game",
+      "bonuses": [
+        {
+          "condition": { "op": "partnerPlayedMoveGame" },
+          "effect": { "style": 2, "connection": 0 }
+        }
+      ]
+    },
+    {
+      "id": "song_011",
+      "number": 11,
+      "section": "Montuno",
+      "moment": "Mambo",
+      "title": "Bring the mambo",
+      "description": "+2 Style if your Move is worth 3+ Style",
+      "bonuses": [
+        {
+          "condition": { "op": "moveStyleAtLeast", "value": 3 },
+          "effect": { "style": 2, "connection": 0 }
+        }
+      ]
+    },
+    {
+      "id": "song_012",
+      "number": 12,
+      "section": "Montuno",
+      "moment": "Mambo",
+      "title": "Shine",
+      "description": "+2 Style if you play a Flourish",
+      "bonuses": [
+        { "condition": { "op": "flourishPlayed" }, "effect": { "style": 2, "connection": 0 } }
+      ]
+    },
+    {
+      "id": "song_013",
+      "number": 13,
+      "section": "Montuno",
+      "moment": "Mambo",
+      "title": "In full swing",
+      "description": "+1 Style and +1 Connection if you play 3+ cards",
+      "bonuses": [
+        {
+          "condition": { "op": "cardsPlayedAtLeast", "value": 3 },
+          "effect": { "style": 1, "connection": 1 }
+        }
+      ]
+    },
+    {
+      "id": "song_014",
+      "number": 14,
+      "section": "Montuno",
+      "moment": "Pregón",
+      "title": "Call",
+      "description": "+2 Style if you play a Move your partner played earlier this phrase",
+      "bonuses": [
+        {
+          "condition": { "op": "partnerPlayedMovePhrase" },
+          "effect": { "style": 2, "connection": 0 }
+        }
+      ]
+    },
+    {
+      "id": "song_015",
+      "number": 15,
+      "section": "Montuno",
+      "moment": "Coro",
+      "title": "Response",
+      "description": "+2 Style if your Move is danced from Half-Open or Half-Closed",
+      "bonuses": [
+        {
+          "condition": { "op": "moveFrom", "positions": ["Half-Open", "Half-Closed"] },
+          "effect": { "style": 2, "connection": 0 }
+        }
+      ]
+    },
+    {
+      "id": "song_016",
+      "number": 16,
+      "section": "Montuno",
+      "moment": "Coro",
+      "title": "Big finish",
+      "description": "+3 Style if you play a Pose; otherwise +1 Style if you play a Flourish",
+      "bonuses": [
+        { "condition": { "op": "posePlayed" }, "effect": { "style": 3, "connection": 0 } },
+        { "condition": { "op": "flourishPlayed" }, "effect": { "style": 1, "connection": 0 } }
+      ]
+    }
+  ]
+}

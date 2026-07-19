@@ -1,0 +1,8 @@
+clave.dance {
+  encode zstd gzip
+  reverse_proxy 127.0.0.1:8787
+}
+
+playclave.com, www.playclave.com {
+  redir https://clave.dance{uri} permanent
+}

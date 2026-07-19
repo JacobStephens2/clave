@@ -1,0 +1,13 @@
+{
+  "name": "Clave — A Partner Dance Game",
+  "short_name": "Clave",
+  "description": "Dance Llorarás together, one 8-count at a time.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#160c14",
+  "theme_color": "#2a0f1c",
+  "orientation": "any",
+  "icons": [
+    { "src": "/clave-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
