@@ -13,6 +13,7 @@ headless C# rules layer for hot-seat play.
 - Beginner, Intermediate, and Advanced lessons plus partner learning
 - Deterministic seeded shuffles, undo, private pass screens, signaling, save/resume
 - Wide 1440 × 900 layout with the floor, action strip, full hand, lessons, and log
+- Drag playable hand cards directly onto the dance floor, with legal-drop highlighting
 - Card detail overlay when a card is clicked
 - Automated macOS `.app` build menu/CLI method
 

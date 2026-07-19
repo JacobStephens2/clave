@@ -93,9 +93,23 @@ const engine = fs.readFileSync(
   path.join(unityRoot, "Assets", "Scripts", "Engine", "ClaveEngine.cs"),
   "utf8",
 );
+const presentation = fs.readFileSync(
+  path.join(unityRoot, "Assets", "Scripts", "Presentation", "ClaveApp.cs"),
+  "utf8",
+);
 for (const action of expectedActions) {
   if (!models.includes(`${action},`)) fail(`GameActionType is missing ${action}.`);
   if (!engine.includes(`GameActionType.${action}`)) fail(`C# engine does not handle ${action}.`);
+}
+
+for (const dragFeature of [
+  "PointerDownEvent",
+  "PointerMoveEvent",
+  "PointerUpEvent",
+  "worldBound.Contains",
+  "PlayDroppedCard",
+]) {
+  if (!presentation.includes(dragFeature)) fail(`Unity presentation is missing drag feature ${dragFeature}.`);
 }
 
 const csharpFiles = fs

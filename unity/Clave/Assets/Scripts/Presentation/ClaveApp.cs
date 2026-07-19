@@ -20,7 +20,19 @@ namespace Clave.Presentation
         private string _error;
         private string _seedText = "20260719";
         private bool _styleApplied;
+        private VisualElement _floorDropZone;
+        private VisualElement _dragSource;
+        private VisualElement _dragPreview;
+        private CardInstance _draggedInstance;
+        private CardDefinition _draggedDefinition;
+        private Vector2 _dragStart;
+        private int _dragPointerId = -1;
+        private bool _dragActive;
+        private string _suppressCardClickInstanceId;
+        private List<GameAction> _dropChoices;
+        private string _dropCardName;
         private readonly HashSet<string> _selectedDiscards = new(StringComparer.Ordinal);
+        private const float DragThreshold = 8f;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -49,6 +61,8 @@ namespace Clave.Presentation
 
         private VisualElement Root()
         {
+            ResetCardDrag();
+            _suppressCardClickInstanceId = null;
             var root = _document.rootVisualElement;
             root.Clear();
             var styleSheet = Resources.Load<StyleSheet>("Clave");
@@ -169,6 +183,7 @@ namespace Clave.Presentation
                 root.Add(BuildPassOverlay(state));
             if (_signalPeek && state.Signal != null) root.Add(BuildSignalOverlay(state));
             if (_inspectedCard != null) root.Add(BuildCardInspector(_inspectedCard));
+            if (_dropChoices is { Count: > 0 }) root.Add(BuildDropChoiceOverlay());
         }
 
         private VisualElement BuildHeader(GameState state)
@@ -228,9 +243,17 @@ namespace Clave.Presentation
         private VisualElement BuildDanceFloor(GameState state)
         {
             var floor = Element("dance-floor");
+            _floorDropZone = floor;
+            var acceptsDrop = state.Player(_visibleRole).Hand.Any(instance => DropActionsFor(instance.InstanceId).Count > 0);
+            if (acceptsDrop) floor.AddToClassList("accepts-card-drop");
             var heading = Element("section-heading");
             heading.Add(Text("ON THE FLOOR", "eyebrow"));
-            heading.Add(Text(state.ActiveRole == _visibleRole ? "Your 8-count" : $"{RoleName(state.ActiveRole)}'s 8-count", "muted"));
+            heading.Add(Text(
+                acceptsDrop
+                    ? "Drag a highlighted card here"
+                    : state.ActiveRole == _visibleRole ? "Your 8-count" : $"{RoleName(state.ActiveRole)}'s 8-count",
+                acceptsDrop ? "drop-hint" : "muted"
+            ));
             floor.Add(heading);
             var cards = Element("table-cards");
             cards.Add(TableSlot("POSITION", state.Table.Position));
@@ -357,20 +380,27 @@ namespace Clave.Presentation
         )
         {
             var card = Element("dance-card");
-            card.tooltip = "Click to view larger";
+            var draggable = instance != null && DropActionsFor(instance.InstanceId).Count > 0;
+            card.tooltip = draggable ? "Drag to the floor to play · click to view larger" : "Click to view larger";
             card.RegisterCallback<ClickEvent>(evt =>
             {
                 var target = evt.target as VisualElement;
-                if (
-                    target is Button
-                    || target?.GetFirstAncestorOfType<Button>() != null
-                    || target is Toggle
-                    || target?.GetFirstAncestorOfType<Toggle>() != null
-                ) return;
+                if (instance != null && _suppressCardClickInstanceId == instance.InstanceId)
+                {
+                    _suppressCardClickInstanceId = null;
+                    evt.StopPropagation();
+                    return;
+                }
+                if (IsInteractiveControl(target)) return;
                 Inspect(definition);
             });
             card.AddToClassList($"type-{definition.Type}");
             card.AddToClassList($"tier-{definition.Tier.ToLowerInvariant()}");
+            if (draggable)
+            {
+                card.AddToClassList("playable-card");
+                ConfigureCardDrag(card, definition, instance);
+            }
             card.Add(Text($"{definition.Type.ToUpperInvariant()} · {definition.Tier}", "card-topline"));
             card.Add(Text(CardGlyph(definition), "card-glyph"));
             card.Add(Text(definition.Name, "card-name"));
@@ -407,6 +437,212 @@ namespace Clave.Presentation
             }
             return card;
         }
+
+        private void ConfigureCardDrag(VisualElement card, CardDefinition definition, CardInstance instance)
+        {
+            card.RegisterCallback<PointerDownEvent>(evt => BeginCardDrag(evt, card, definition, instance));
+            card.RegisterCallback<PointerMoveEvent>(MoveCardDrag);
+            card.RegisterCallback<PointerUpEvent>(EndCardDrag);
+            card.RegisterCallback<PointerCaptureOutEvent>(evt =>
+            {
+                if (_dragPointerId != evt.pointerId) return;
+                if (_dragActive && _draggedInstance != null)
+                    SuppressNextCardClick(_draggedInstance.InstanceId);
+                ResetCardDrag();
+            });
+        }
+
+        private void BeginCardDrag(
+            PointerDownEvent evt,
+            VisualElement card,
+            CardDefinition definition,
+            CardInstance instance
+        )
+        {
+            if (evt.button != 0 || IsInteractiveControl(evt.target as VisualElement)) return;
+            if (DropActionsFor(instance.InstanceId).Count == 0) return;
+
+            _dragSource = card;
+            _draggedInstance = instance;
+            _draggedDefinition = definition;
+            _dragStart = PointerPosition(evt.position);
+            _dragPointerId = evt.pointerId;
+            _dragActive = false;
+            card.CapturePointer(evt.pointerId);
+            evt.StopPropagation();
+        }
+
+        private void MoveCardDrag(PointerMoveEvent evt)
+        {
+            if (_draggedInstance == null || evt.pointerId != _dragPointerId) return;
+            var point = PointerPosition(evt.position);
+            if (!_dragActive && Vector2.Distance(_dragStart, point) < DragThreshold) return;
+
+            if (!_dragActive)
+            {
+                _dragActive = true;
+                _dragSource?.AddToClassList("drag-source");
+                _floorDropZone?.AddToClassList("drop-target");
+                _dragPreview = BuildDragPreview(_draggedDefinition);
+                _document.rootVisualElement.Add(_dragPreview);
+            }
+
+            PositionDragPreview(point);
+            var overFloor = _floorDropZone?.worldBound.Contains(point) == true;
+            _floorDropZone?.EnableInClassList("drop-target-active", overFloor);
+            evt.StopPropagation();
+        }
+
+        private void EndCardDrag(PointerUpEvent evt)
+        {
+            if (_draggedInstance == null || evt.pointerId != _dragPointerId) return;
+            var instance = _draggedInstance;
+            var definition = _draggedDefinition;
+            var point = PointerPosition(evt.position);
+            var wasDragging = _dragActive;
+            var droppedOnFloor = wasDragging && _floorDropZone?.worldBound.Contains(point) == true;
+            if (wasDragging) SuppressNextCardClick(instance.InstanceId);
+            ResetCardDrag();
+            if (!wasDragging) return;
+
+            evt.StopPropagation();
+            if (droppedOnFloor) PlayDroppedCard(instance, definition);
+        }
+
+        private VisualElement BuildDragPreview(CardDefinition definition)
+        {
+            var preview = Element("dance-card");
+            preview.AddToClassList("drag-preview");
+            preview.AddToClassList($"type-{definition.Type}");
+            preview.AddToClassList($"tier-{definition.Tier.ToLowerInvariant()}");
+            preview.pickingMode = PickingMode.Ignore;
+            preview.Add(Text($"{definition.Type.ToUpperInvariant()} · {definition.Tier}", "card-topline"));
+            preview.Add(Text(CardGlyph(definition), "card-glyph"));
+            preview.Add(Text(definition.Name, "card-name"));
+            preview.Add(Text(CardDetail(definition), "card-detail"));
+            if (definition.Style > 0) preview.Add(Text($"+{definition.Style} STYLE", "style-pip"));
+            return preview;
+        }
+
+        private void PositionDragPreview(Vector2 point)
+        {
+            if (_dragPreview == null) return;
+            _dragPreview.style.left = point.x + 16f;
+            _dragPreview.style.top = point.y - 105f;
+        }
+
+        private void ResetCardDrag()
+        {
+            var source = _dragSource;
+            var pointerId = _dragPointerId;
+            _dragPointerId = -1;
+            _dragSource = null;
+            _draggedInstance = null;
+            _draggedDefinition = null;
+            _dragActive = false;
+            source?.RemoveFromClassList("drag-source");
+            _floorDropZone?.RemoveFromClassList("drop-target");
+            _floorDropZone?.RemoveFromClassList("drop-target-active");
+            _dragPreview?.RemoveFromHierarchy();
+            _dragPreview = null;
+            if (source != null && pointerId >= 0 && source.HasPointerCapture(pointerId))
+                source.ReleasePointer(pointerId);
+        }
+
+        private List<GameAction> DropActionsFor(string instanceId)
+        {
+            if (_engine == null) return new List<GameAction>();
+            return _engine
+                .LegalActions(_visibleRole)
+                .Where(action => ActionUsesCard(action, instanceId))
+                .OrderBy(action => action.StableKey, StringComparer.Ordinal)
+                .ToList();
+        }
+
+        private static bool ActionUsesCard(GameAction action, string instanceId)
+        {
+            return action.Type switch
+            {
+                GameActionType.PlayOpen => action.PositionInstanceId == instanceId || action.MoveInstanceId == instanceId,
+                GameActionType.PlayMove => action.MoveInstanceId == instanceId,
+                GameActionType.Transition => action.PositionInstanceId == instanceId,
+                GameActionType.PlayFlourish => action.FlourishInstanceId == instanceId,
+                GameActionType.Stumble => action.RecoveryInstanceId == instanceId,
+                _ => false,
+            };
+        }
+
+        private void PlayDroppedCard(CardInstance instance, CardDefinition definition)
+        {
+            var choices = DropActionsFor(instance.InstanceId);
+            if (choices.Count == 0)
+            {
+                _error = $"{definition.Name} cannot be played on the floor right now.";
+                RenderGame();
+                return;
+            }
+
+            var labelledChoices = choices.GroupBy(ActionLabel, StringComparer.Ordinal).Select(group => group.First()).ToList();
+            if (labelledChoices.Count == 1)
+            {
+                ApplyAction(labelledChoices[0]);
+                return;
+            }
+
+            _dropChoices = labelledChoices;
+            _dropCardName = definition.Name;
+            RenderGame();
+        }
+
+        private VisualElement BuildDropChoiceOverlay()
+        {
+            var overlay = Element("overlay");
+            var dialog = Element("drop-dialog");
+            dialog.Add(Text("CHOOSE THE PLAY", "eyebrow"));
+            dialog.Add(Text($"Play {_dropCardName}", "section-title"));
+            dialog.Add(Text("This card has more than one legal way onto the floor.", "body-copy"));
+            foreach (var action in _dropChoices)
+            {
+                var captured = action;
+                dialog.Add(ActionButton(ActionLabel(captured), () => ChooseDroppedAction(captured), "drop-choice"));
+            }
+            dialog.Add(ActionButton("Cancel", CancelDroppedAction, "secondary"));
+            overlay.Add(dialog);
+            return overlay;
+        }
+
+        private void ChooseDroppedAction(GameAction action)
+        {
+            _dropChoices = null;
+            _dropCardName = null;
+            ApplyAction(action);
+        }
+
+        private void CancelDroppedAction()
+        {
+            _dropChoices = null;
+            _dropCardName = null;
+            RenderGame();
+        }
+
+        private static bool IsInteractiveControl(VisualElement target)
+        {
+            return target is Button
+                || target?.GetFirstAncestorOfType<Button>() != null
+                || target is Toggle
+                || target?.GetFirstAncestorOfType<Toggle>() != null;
+        }
+
+        private void SuppressNextCardClick(string instanceId)
+        {
+            _suppressCardClickInstanceId = instanceId;
+            _document.rootVisualElement.schedule.Execute(() =>
+            {
+                if (_suppressCardClickInstanceId == instanceId) _suppressCardClickInstanceId = null;
+            });
+        }
+
+        private static Vector2 PointerPosition(Vector3 position) => new(position.x, position.y);
 
         private VisualElement TableSlot(string label, CardInstance instance)
         {

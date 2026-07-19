@@ -202,6 +202,28 @@
   border-color: rgba(247, 234, 209, 0.17);
 }
 
+.dance-floor.accepts-card-drop {
+  border-color: rgba(217, 164, 65, 0.42);
+}
+
+.dance-floor.drop-target {
+  border-width: 2px;
+  border-color: rgba(217, 164, 65, 0.82);
+  background-color: rgba(217, 164, 65, 0.08);
+}
+
+.dance-floor.drop-target-active {
+  border-width: 3px;
+  border-color: rgb(72, 177, 143);
+  background-color: rgba(72, 177, 143, 0.16);
+}
+
+.drop-hint {
+  color: rgb(217, 164, 65);
+  font-size: 10px;
+  -unity-font-style: bold;
+}
+
 .section-heading {
   flex-direction: row;
   justify-content: space-between;
@@ -296,6 +318,24 @@
   min-width: 210px;
   height: 218px;
   margin-right: 10px;
+}
+
+.hand-scroll .dance-card.playable-card {
+  border-bottom-width: 4px;
+  border-bottom-color: rgb(217, 164, 65);
+}
+
+.dance-card.drag-source {
+  opacity: 0.28;
+}
+
+.dance-card.drag-preview {
+  position: absolute;
+  width: 210px;
+  height: 218px;
+  opacity: 0.96;
+  border-width: 2px 2px 2px 7px;
+  border-color: rgb(217, 164, 65);
 }
 
 .dance-card {
@@ -538,7 +578,8 @@
 
 .pass-dialog,
 .signal-dialog,
-.inspector-dialog {
+.inspector-dialog,
+.drop-dialog {
   align-items: center;
   padding: 34px;
 }
@@ -552,8 +593,26 @@
 
 .pass-dialog > *,
 .signal-dialog > *,
-.inspector-dialog > * {
+.inspector-dialog > *,
+.drop-dialog > * {
   margin-bottom: 16px;
+}
+
+.drop-dialog {
+  width: 560px;
+  max-height: 720px;
+  background-color: rgb(31, 15, 25);
+  border-width: 1px;
+  border-color: rgba(217, 164, 65, 0.52);
+}
+
+.drop-choice {
+  width: 100%;
+  min-height: 40px;
+  background-color: rgb(217, 164, 65);
+  color: rgb(22, 12, 20);
+  border-width: 0;
+  -unity-font-style: bold;
 }
 
 .pass-title {
