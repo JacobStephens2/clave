@@ -660,6 +660,16 @@ button {
   border-radius: 50%;
   pointer-events: none;
 }
+.dance-table.accepts-card-drop {
+  border-color: rgba(217, 164, 65, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(217, 164, 65, 0.14);
+}
+.dance-table.drag-over {
+  border-color: var(--gold);
+  box-shadow:
+    inset 0 0 0 2px rgba(217, 164, 65, 0.42),
+    0 0 36px rgba(217, 164, 65, 0.16);
+}
 .table-heading {
   display: flex;
   justify-content: space-between;
@@ -672,6 +682,10 @@ button {
 }
 .table-heading small {
   color: var(--muted);
+}
+.table-heading .floor-drop-hint {
+  color: var(--gold);
+  font-weight: 800;
 }
 .table-cards {
   display: grid;
@@ -692,6 +706,34 @@ button {
   font-size: 8px;
   letter-spacing: 0.11em;
   margin-bottom: 7px;
+}
+.table-slot {
+  position: relative;
+}
+.table-slot.staged-slot > span {
+  color: var(--gold);
+}
+.table-slot.staged-slot .dance-card {
+  opacity: 0.86;
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 2px rgba(217, 164, 65, 0.24),
+    0 12px 30px rgba(0, 0, 0, 0.25);
+}
+.staged-note {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  z-index: 2;
+  padding: 5px;
+  background: rgba(36, 20, 26, 0.92);
+  color: var(--gold);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 7px;
+  font-weight: 800;
 }
 .empty-slot {
   height: 198px;
@@ -792,6 +834,21 @@ button {
   box-shadow:
     0 0 0 2px rgba(217, 164, 65, 0.55),
     0 16px 36px rgba(0, 0, 0, 0.4);
+}
+.dance-card.playable {
+  cursor: grab;
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 2px rgba(217, 164, 65, 0.7),
+    0 16px 36px rgba(0, 0, 0, 0.42);
+  user-select: none;
+}
+.dance-card.playable:active {
+  cursor: grabbing;
+}
+.dance-card.dragging {
+  opacity: 0.34;
+  transform: translateY(0) scale(0.97);
 }
 .dance-card.compact {
   min-width: 0;
@@ -897,7 +954,7 @@ button {
   min-height: 96px;
 }
 .turn-actions > div:first-child > small,
-.opening-options > small,
+.opening-drag-guide > small,
 .learn-partner > small {
   text-transform: uppercase;
   color: var(--coral);
@@ -932,16 +989,17 @@ button {
   place-items: center;
   border-radius: 50%;
 }
-.opening-options {
+.opening-drag-guide {
   flex: 1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  display: grid;
+  gap: 4px;
+  min-width: 220px;
 }
-.opening-options > small {
-  width: 100%;
+.opening-drag-guide span {
+  color: var(--cream);
+  font-size: 11px;
+  line-height: 1.4;
 }
-.opening-options button,
 .learn-partner button {
   border: 1px solid var(--line);
   background: var(--wine);
@@ -949,10 +1007,6 @@ button {
   padding: 6px 10px;
   cursor: pointer;
   font-size: 9px;
-}
-.opening-options button b {
-  color: var(--gold);
-  padding: 0 5px;
 }
 .button-row {
   display: flex;
@@ -1565,10 +1619,7 @@ button {
     flex: 1;
     min-width: 130px;
   }
-  .opening-options {
-    width: 100%;
-  }
-  .opening-options button {
+  .opening-drag-guide {
     width: 100%;
   }
   .hand-scroll {

@@ -45,6 +45,53 @@ test("restores the exact hot-seat turn after a page reload", async ({ page }) =>
   await expect(page.getByText("Follow hand")).toBeVisible();
 });
 
+test("opens with a sequential Position-then-Move drag instead of pair buttons", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1482, height: 1139 });
+  await page.addInitScript(() => {
+    Object.defineProperty(globalThis.crypto, "getRandomValues", {
+      configurable: true,
+      value: (values: Uint32Array) => {
+        values.fill(1);
+        return values;
+      },
+    });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  await finishSetup(page);
+
+  const floor = page.getByRole("region", {
+    name: "Current dance state and card drop area",
+  });
+  const positionSlot = page.locator('[data-slot="position"]');
+  const moveSlot = page.locator('[data-slot="last-move"]');
+  const position = page.locator(".hand-scroll .dance-card.position.playable").first();
+  const positionName = await position.locator("h4").innerText();
+
+  await expect(page.locator(".opening-options")).toHaveCount(0);
+  await expect(page.locator(".hand-scroll .dance-card.playable:not(.position)")).toHaveCount(0);
+  await position.dragTo(floor);
+
+  await expect(positionSlot).toHaveClass(/staged-slot/);
+  await expect(positionSlot).toContainText(positionName);
+  await expect(positionSlot).toContainText("Waiting for Move");
+  await expect(page.getByText("Return Position to hand")).toBeVisible();
+  await expect(page.locator(".hand-heading strong")).toHaveText("3 cards");
+  await expect(page.locator(".hand-scroll .dance-card.playable:not(.move)")).toHaveCount(0);
+
+  const move = page.locator(".hand-scroll .dance-card.move.playable").first();
+  const moveName = await move.locator("h4").innerText();
+  await move.dragTo(floor);
+
+  await expect(positionSlot).not.toHaveClass(/staged-slot/);
+  await expect(positionSlot).toContainText(positionName);
+  await expect(moveSlot).toContainText(moveName);
+  await expect(page.getByText("Return Position to hand")).toHaveCount(0);
+  await expect(page.locator(".hand-heading strong")).toHaveText("2 cards");
+});
+
 test("keeps a readable hand in a 13-inch laptop viewport and enlarges cards", async ({ page }) => {
   await page.setViewportSize({ width: 1482, height: 1139 });
   await page.goto("/");

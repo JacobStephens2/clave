@@ -54,6 +54,7 @@ npm run check:unity
 - [`docs/rules/decisions.md`](docs/rules/decisions.md) — rules decisions and rulings
 - [`docs/cards/v1-card-list.md`](docs/cards/v1-card-list.md) — the complete v1 card set and the Llorarás song deck
 - [`docs/plans/`](docs/plans/) — the v1 build plan, its adversarial review, and the adjudication
+- [`docs/unity-vs-web-implementation-report.md`](docs/unity-vs-web-implementation-report.md) — comparison of Unity/Hearthstone-style and browser/BGA-style Clave development
 - [`docs/living-documents/1-concept-brief.md`](docs/living-documents/1-concept-brief.md) — pitch, pillars, non-goals
 - [`docs/living-documents/0-dance.md`](docs/living-documents/0-dance.md) — the Llorarás song/dance breakdown behind the v1 song deck
 - [`docs/handwritten-notes/`](docs/handwritten-notes/) — journal scans and transcriptions the design grew from

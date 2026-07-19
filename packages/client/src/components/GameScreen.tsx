@@ -6,6 +6,7 @@ import { DanceCard } from "./DanceCard.js";
 
 const roleName = (role: Role) => (role === "lead" ? "Lead" : "Follow");
 type InspectableCard = CardView | DanceCardDefinition;
+type OpeningAction = Extract<GameAction, { type: "PLAY_OPEN" }>;
 
 function actionForCard(actions: GameAction[], instanceId: string): GameAction | undefined {
   return actions.find(
@@ -81,11 +82,23 @@ function SongMoment({ view }: { view: PlayerSnapshot }) {
   );
 }
 
-function TableCard({ label, children }: { label: string; children: React.ReactNode }) {
+function TableCard({
+  label,
+  children,
+  staged = false,
+}: {
+  label: string;
+  children: React.ReactNode;
+  staged?: boolean;
+}) {
   return (
-    <div className="table-slot">
-      <span>{label}</span>
+    <div
+      className={`table-slot ${staged ? "staged-slot" : ""}`}
+      data-slot={label.toLowerCase().replaceAll(" ", "-")}
+    >
+      <span>{staged ? `${label} · staged` : label}</span>
       {children || <div className="empty-slot">—</div>}
+      {staged && <small className="staged-note">Waiting for Move</small>}
     </div>
   );
 }
@@ -93,27 +106,70 @@ function TableCard({ label, children }: { label: string; children: React.ReactNo
 function DanceTable({
   view,
   onInspect,
+  pendingPosition,
+  acceptsDrop,
+  dragOver,
+  onDragOverChange,
+  onCardDrop,
 }: {
   view: PlayerSnapshot;
   onInspect: (card: InspectableCard) => void;
+  pendingPosition: CardView | null;
+  acceptsDrop: boolean;
+  dragOver: boolean;
+  onDragOverChange: (over: boolean) => void;
+  onCardDrop: (instanceId: string) => void;
 }) {
+  const opening = view.table.position === null;
+  const floorHint = pendingPosition
+    ? "Now drag a highlighted matching Move here"
+    : opening && acceptsDrop
+      ? "Drag a highlighted Position here"
+      : acceptsDrop
+        ? "Drag a highlighted card here"
+        : view.activeRole === view.viewerRole
+          ? "Your 8-count"
+          : `${roleName(view.activeRole)}’s 8-count`;
   return (
-    <section className="dance-table" aria-label="Current dance state">
+    <section
+      className={`dance-table ${acceptsDrop ? "accepts-card-drop" : ""} ${dragOver ? "drag-over" : ""}`}
+      aria-label="Current dance state and card drop area"
+      onDragEnter={(event) => {
+        if (!acceptsDrop) return;
+        event.preventDefault();
+        onDragOverChange(true);
+      }}
+      onDragOver={(event) => {
+        if (!acceptsDrop) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+        onDragOverChange(true);
+      }}
+      onDragLeave={(event) => {
+        if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+        onDragOverChange(false);
+      }}
+      onDrop={(event) => {
+        if (!acceptsDrop) return;
+        event.preventDefault();
+        const instanceId =
+          event.dataTransfer.getData("application/x-clave-card") ||
+          event.dataTransfer.getData("text/plain");
+        onDragOverChange(false);
+        if (instanceId) onCardDrop(instanceId);
+      }}
+    >
       <div className="table-heading">
         <span>On the floor</span>
-        <small>
-          {view.activeRole === view.viewerRole
-            ? "Your 8-count"
-            : `${roleName(view.activeRole)}’s 8-count`}
-        </small>
+        <small className={acceptsDrop ? "floor-drop-hint" : ""}>{floorHint}</small>
       </div>
       <div className="table-cards">
-        <TableCard label="Position">
-          {view.table.position ? (
+        <TableCard label="Position" staged={Boolean(pendingPosition)}>
+          {view.table.position || pendingPosition ? (
             <DanceCard
-              value={view.table.position}
+              value={view.table.position ?? pendingPosition!}
               compact
-              onInspect={() => onInspect(view.table.position!)}
+              onInspect={() => onInspect(view.table.position ?? pendingPosition!)}
             />
           ) : null}
         </TableCard>
@@ -235,10 +291,14 @@ function TurnActions({
   view,
   dispatch,
   selectedDiscards,
+  pendingPosition,
+  cancelPendingPosition,
 }: {
   view: PlayerSnapshot;
   dispatch: (action: GameAction) => void;
   selectedDiscards: Set<string>;
+  pendingPosition: CardView | null;
+  cancelPendingPosition: () => void;
 }) {
   const actions = view.legalActions;
   const byType = <T extends GameAction["type"]>(type: T) =>
@@ -292,58 +352,60 @@ function TurnActions({
           <span>2</span>
           <div>
             <small>Dance</small>
-            <strong>{view.turn.cardsPlayed ? "Build the 8-count" : "Choose your step"}</strong>
+            <strong>
+              {pendingPosition
+                ? "Complete the opening"
+                : openings.length > 0
+                  ? "Drag a Position to the floor"
+                  : view.turn.cardsPlayed
+                    ? "Build the 8-count"
+                    : "Choose your step"}
+            </strong>
           </div>
         </div>
         {openings.length > 0 && (
-          <div className="opening-options">
-            <small>Open together</small>
-            {openings.map((action) => {
-              const position = view.self.hand.find(
-                (entry) => entry.instanceId === action.positionInstanceId,
-              )!;
-              const move = view.self.hand.find(
-                (entry) => entry.instanceId === action.moveInstanceId,
-              )!;
-              return (
-                <button
-                  type="button"
-                  key={`${action.positionInstanceId}-${action.moveInstanceId}`}
-                  onClick={() => dispatch(action)}
-                >
-                  <span>{position.card.name}</span>
-                  <b>+</b>
-                  <span>{move.card.name}</span>
-                </button>
-              );
-            })}
+          <div className="opening-drag-guide" aria-live="polite">
+            <small>Opening play</small>
+            <span>
+              {pendingPosition
+                ? `${pendingPosition.card.name} is staged. Drag a highlighted matching Move next.`
+                : "Start with any highlighted Position in your hand."}
+            </span>
           </div>
         )}
         <div className="button-row wrap">
-          {end && (
-            <button type="button" className="button gold" onClick={() => dispatch(end)}>
-              {view.turn.cardsPlayed === 0 ? "Dance the basic" : "Finish the 8-count"}
+          {pendingPosition ? (
+            <button type="button" className="button outline" onClick={cancelPendingPosition}>
+              Return Position to hand
             </button>
-          )}
-          {stumbles.map((action) => {
-            const recovery = action.recoveryInstanceId
-              ? view.self.hand.find((entry) => entry.instanceId === action.recoveryInstanceId)
-              : null;
-            return (
-              <button
-                type="button"
-                className="button danger-outline"
-                key={action.recoveryInstanceId ?? "plain"}
-                onClick={() => dispatch(action)}
-              >
-                {recovery ? `Stumble · ${recovery.card.name}` : "Stumble · −2 Connection"}
-              </button>
-            );
-          })}
-          {undo && (
-            <button type="button" className="text-button" onClick={() => dispatch(undo)}>
-              Reset turn
-            </button>
+          ) : (
+            <>
+              {end && (
+                <button type="button" className="button gold" onClick={() => dispatch(end)}>
+                  {view.turn.cardsPlayed === 0 ? "Dance the basic" : "Finish the 8-count"}
+                </button>
+              )}
+              {stumbles.map((action) => {
+                const recovery = action.recoveryInstanceId
+                  ? view.self.hand.find((entry) => entry.instanceId === action.recoveryInstanceId)
+                  : null;
+                return (
+                  <button
+                    type="button"
+                    className="button danger-outline"
+                    key={action.recoveryInstanceId ?? "plain"}
+                    onClick={() => dispatch(action)}
+                  >
+                    {recovery ? `Stumble · ${recovery.card.name}` : "Stumble · −2 Connection"}
+                  </button>
+                );
+              })}
+              {undo && (
+                <button type="button" className="text-button" onClick={() => dispatch(undo)}>
+                  Reset turn
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -426,22 +488,36 @@ function Hand({
   selectedDiscards,
   toggleDiscard,
   onInspect,
+  pendingPosition,
+  draggableCardIds,
+  draggingCardId,
+  onCardDragStart,
+  onCardDragEnd,
 }: {
   view: PlayerSnapshot;
   dispatch: (action: GameAction) => void;
   selectedDiscards: Set<string>;
   toggleDiscard: (id: string) => void;
   onInspect: (card: InspectableCard) => void;
+  pendingPosition: CardView | null;
+  draggableCardIds: Set<string>;
+  draggingCardId: string | null;
+  onCardDragStart: (instanceId: string, event: React.DragEvent<HTMLElement>) => void;
+  onCardDragEnd: () => void;
 }) {
   const isOwnTurn =
     view.activeRole === view.viewerRole ||
     (view.status === "setup" && view.setupRole === view.viewerRole);
+  const visibleHand = view.self.hand.filter(
+    (entry) => entry.instanceId !== pendingPosition?.instanceId,
+  );
   return (
     <section className="hand-zone">
       <div className="hand-heading">
         <div>
           <small>{roleName(view.viewerRole)} hand</small>
-          <strong>{view.self.hand.length} cards</strong>
+          <strong>{visibleHand.length} cards</strong>
+          {pendingPosition && <span>1 Position staged</span>}
         </div>
         <div>
           <span>Deck {view.self.drawCount}</span>
@@ -449,13 +525,14 @@ function Hand({
         </div>
       </div>
       <div className="hand-scroll">
-        {view.self.hand.map((entry) => {
+        {visibleHand.map((entry) => {
           const primary = actionForCard(view.legalActions, entry.instanceId);
           const signal = view.legalActions.find(
             (action) => action.type === "SIGNAL_CARD" && action.instanceId === entry.instanceId,
           );
           const selected = selectedDiscards.has(entry.instanceId);
           const freshen = view.phase === "freshen" && isOwnTurn;
+          const draggable = draggableCardIds.has(entry.instanceId);
           return (
             <DanceCard
               key={entry.instanceId}
@@ -472,6 +549,12 @@ function Hand({
               }
               onSignal={signal && view.phase !== "freshen" ? () => dispatch(signal) : undefined}
               onInspect={() => onInspect(entry)}
+              draggable={draggable}
+              dragging={draggingCardId === entry.instanceId}
+              onDragStart={
+                draggable ? (event) => onCardDragStart(entry.instanceId, event) : undefined
+              }
+              onDragEnd={draggable ? onCardDragEnd : undefined}
             />
           );
         })}
@@ -618,11 +701,82 @@ export function GameScreen() {
   } = useAppStore();
   const [selectedDiscards, setSelectedDiscards] = useState<Set<string>>(new Set());
   const [inspectedCard, setInspectedCard] = useState<InspectableCard | null>(null);
-  useEffect(() => setSelectedDiscards(new Set()), [view?.sequence, view?.phase]);
+  const [pendingOpenPositionId, setPendingOpenPositionId] = useState<string | null>(null);
+  const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
+  const [floorDragOver, setFloorDragOver] = useState(false);
+  useEffect(() => {
+    setSelectedDiscards(new Set());
+    setPendingOpenPositionId(null);
+    setDraggingCardId(null);
+    setFloorDragOver(false);
+  }, [view?.sequence, view?.phase, view?.viewerRole, passTo]);
   const clearSignal = useMemo(
     () => view?.legalActions.find((action) => action.type === "CLEAR_SIGNAL"),
     [view],
   );
+  const openingActions = useMemo(
+    () =>
+      view?.legalActions.filter((action): action is OpeningAction => action.type === "PLAY_OPEN") ??
+      [],
+    [view],
+  );
+  const pendingPosition = useMemo(
+    () =>
+      pendingOpenPositionId
+        ? (view?.self.hand.find((entry) => entry.instanceId === pendingOpenPositionId) ?? null)
+        : null,
+    [pendingOpenPositionId, view],
+  );
+  const draggableCardIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (
+      !view ||
+      view.status !== "playing" ||
+      view.phase !== "dance" ||
+      view.activeRole !== view.viewerRole
+    )
+      return ids;
+
+    if (!view.table.position) {
+      for (const action of openingActions) {
+        if (pendingOpenPositionId) {
+          if (action.positionInstanceId === pendingOpenPositionId) ids.add(action.moveInstanceId);
+        } else ids.add(action.positionInstanceId);
+      }
+      return ids;
+    }
+
+    for (const action of view.legalActions) {
+      if (action.type === "PLAY_MOVE") ids.add(action.moveInstanceId);
+      if (action.type === "TRANSITION") ids.add(action.positionInstanceId);
+      if (action.type === "PLAY_FLOURISH") ids.add(action.flourishInstanceId);
+    }
+    return ids;
+  }, [openingActions, pendingOpenPositionId, view]);
+
+  const playDroppedCard = (instanceId: string) => {
+    if (!view || !draggableCardIds.has(instanceId)) return;
+    if (!view.table.position) {
+      if (!pendingOpenPositionId) {
+        if (openingActions.some((action) => action.positionInstanceId === instanceId))
+          setPendingOpenPositionId(instanceId);
+        return;
+      }
+      const opening = openingActions.find(
+        (action) =>
+          action.positionInstanceId === pendingOpenPositionId &&
+          action.moveInstanceId === instanceId,
+      );
+      if (opening) {
+        setPendingOpenPositionId(null);
+        dispatch(opening);
+      }
+      return;
+    }
+
+    const action = actionForCard(view.legalActions, instanceId);
+    if (action) dispatch(action);
+  };
 
   if (!view)
     return (
@@ -664,13 +818,41 @@ export function GameScreen() {
       <div className="game-grid">
         <div className="main-table">
           <SongMoment view={view} />
-          <DanceTable view={view} onInspect={setInspectedCard} />
-          <TurnActions view={view} dispatch={dispatch} selectedDiscards={selectedDiscards} />
+          <DanceTable
+            view={view}
+            onInspect={setInspectedCard}
+            pendingPosition={pendingPosition}
+            acceptsDrop={draggableCardIds.size > 0}
+            dragOver={floorDragOver}
+            onDragOverChange={setFloorDragOver}
+            onCardDrop={playDroppedCard}
+          />
+          <TurnActions
+            view={view}
+            dispatch={dispatch}
+            selectedDiscards={selectedDiscards}
+            pendingPosition={pendingPosition}
+            cancelPendingPosition={() => setPendingOpenPositionId(null)}
+          />
           <Hand
             view={view}
             dispatch={dispatch}
             selectedDiscards={selectedDiscards}
             onInspect={setInspectedCard}
+            pendingPosition={pendingPosition}
+            draggableCardIds={draggableCardIds}
+            draggingCardId={draggingCardId}
+            onCardDragStart={(instanceId, event) => {
+              event.dataTransfer.effectAllowed = "move";
+              event.dataTransfer.setData("application/x-clave-card", instanceId);
+              event.dataTransfer.setData("text/plain", instanceId);
+              setDraggingCardId(instanceId);
+              setInspectedCard(null);
+            }}
+            onCardDragEnd={() => {
+              setDraggingCardId(null);
+              setFloorDragOver(false);
+            }}
             toggleDiscard={(id) =>
               setSelectedDiscards((current) => {
                 const next = new Set(current);

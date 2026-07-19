@@ -35,6 +35,10 @@ export function DanceCard({
   onAction,
   onSignal,
   onInspect,
+  draggable = false,
+  dragging = false,
+  onDragStart,
+  onDragEnd,
 }: {
   value: CardView | DanceCardDefinition;
   compact?: boolean;
@@ -44,14 +48,21 @@ export function DanceCard({
   onAction?: (() => void) | undefined;
   onSignal?: (() => void) | undefined;
   onInspect?: (() => void) | undefined;
+  draggable?: boolean;
+  dragging?: boolean;
+  onDragStart?: React.DragEventHandler<HTMLElement> | undefined;
+  onDragEnd?: React.DragEventHandler<HTMLElement> | undefined;
 }) {
   const card = "card" in value ? value.card : value;
   const details = cardDetails(card);
   return (
     <article
-      className={`dance-card ${card.type} tier-${card.tier.toLowerCase()} ${compact ? "compact" : ""} ${selected ? "selected" : ""} ${disabled ? "disabled" : ""} ${onInspect ? "inspectable" : ""}`}
+      className={`dance-card ${card.type} tier-${card.tier.toLowerCase()} ${compact ? "compact" : ""} ${selected ? "selected" : ""} ${disabled ? "disabled" : ""} ${onInspect ? "inspectable" : ""} ${draggable ? "playable" : ""} ${dragging ? "dragging" : ""}`}
       tabIndex={onInspect ? 0 : undefined}
       aria-label={onInspect ? `${card.name}. Click to view larger.` : undefined}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
       onClick={(event) => {
         if ((event.target as HTMLElement).closest("button")) return;
         onInspect?.();
