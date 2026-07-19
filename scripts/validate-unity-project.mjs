@@ -97,6 +97,10 @@ const presentation = fs.readFileSync(
   path.join(unityRoot, "Assets", "Scripts", "Presentation", "ClaveApp.cs"),
   "utf8",
 );
+const presentationStyles = fs.readFileSync(
+  path.join(unityRoot, "Assets", "Resources", "Clave.uss"),
+  "utf8",
+);
 for (const action of expectedActions) {
   if (!models.includes(`${action},`)) fail(`GameActionType is missing ${action}.`);
   if (!engine.includes(`GameActionType.${action}`)) fail(`C# engine does not handle ${action}.`);
@@ -115,6 +119,19 @@ for (const dragFeature of [
 }
 if (presentation.includes("BuildDropChoiceOverlay")) {
   fail("Unity opening drag flow must not fall back to a click-choice dialog.");
+}
+for (const lessonAnimationFeature of [
+  "BuyLessonWithAnimation",
+  "StartLessonFlight",
+  "Time.realtimeSinceStartup",
+  "_discardPileTarget",
+]) {
+  if (!presentation.includes(lessonAnimationFeature))
+    fail(`Unity presentation is missing lesson animation feature ${lessonAnimationFeature}.`);
+}
+for (const lessonAnimationStyle of ["lesson-flight-card", "discard-pile-target.receiving"]) {
+  if (!presentationStyles.includes(lessonAnimationStyle))
+    fail(`Unity styles are missing lesson animation style ${lessonAnimationStyle}.`);
 }
 
 const csharpFiles = fs

@@ -7,6 +7,21 @@ import { DanceCard } from "./DanceCard.js";
 const roleName = (role: Role) => (role === "lead" ? "Lead" : "Follow");
 type InspectableCard = CardView | DanceCardDefinition;
 type OpeningAction = Extract<GameAction, { type: "PLAY_OPEN" }>;
+type LessonBuyAction = Extract<GameAction, { type: "BUY_LESSON" }>;
+
+interface LessonFlight {
+  key: number;
+  card: DanceCardDefinition;
+  source: LessonBuyAction["source"];
+  startingSequence: number;
+  from: { left: number; top: number; width: number; height: number };
+  deltaX: number;
+  deltaY: number;
+  midpointX: number;
+  midpointY: number;
+  scale: number;
+  flying: boolean;
+}
 
 function actionForCard(actions: GameAction[], instanceId: string): GameAction | undefined {
   return actions.find(
@@ -213,12 +228,18 @@ function DanceTable({
 
 function Market({
   view,
-  dispatch,
   onInspect,
+  onBuyLesson,
+  pendingLesson,
 }: {
   view: PlayerSnapshot;
-  dispatch: (action: GameAction) => void;
   onInspect: (card: InspectableCard) => void;
+  onBuyLesson: (
+    card: DanceCardDefinition,
+    action: LessonBuyAction,
+    sourceButton: HTMLButtonElement,
+  ) => void;
+  pendingLesson: { source: LessonBuyAction["source"]; cardId: string } | null;
 }) {
   const buys = view.legalActions.filter(
     (action): action is Extract<GameAction, { type: "BUY_LESSON" }> => action.type === "BUY_LESSON",
@@ -239,14 +260,16 @@ function Market({
       <div className="market-row">
         {cards.map((card, index) => {
           const buy = findBuy(source, card.id);
+          const purchasePending =
+            pendingLesson?.source === source && pendingLesson.cardId === card.id;
           return (
             <DanceCard
               key={`${source}-${card.id}-${index}`}
               value={card}
               compact
-              disabled={!buy}
-              actionLabel={`Learn · $${cost}`}
-              onAction={buy ? () => dispatch(buy) : undefined}
+              disabled={!buy || purchasePending}
+              actionLabel={purchasePending ? "Learning…" : `Learn · $${cost}`}
+              onAction={buy ? (event) => onBuyLesson(card, buy, event.currentTarget) : undefined}
               onInspect={() => onInspect(card)}
             />
           );
@@ -493,6 +516,8 @@ function Hand({
   draggingCardId,
   onCardDragStart,
   onCardDragEnd,
+  discardTargetRef,
+  discardReceiving,
 }: {
   view: PlayerSnapshot;
   dispatch: (action: GameAction) => void;
@@ -504,6 +529,8 @@ function Hand({
   draggingCardId: string | null;
   onCardDragStart: (instanceId: string, event: React.DragEvent<HTMLElement>) => void;
   onCardDragEnd: () => void;
+  discardTargetRef: React.RefObject<HTMLSpanElement | null>;
+  discardReceiving: boolean;
 }) {
   const isOwnTurn =
     view.activeRole === view.viewerRole ||
@@ -521,7 +548,13 @@ function Hand({
         </div>
         <div>
           <span>Deck {view.self.drawCount}</span>
-          <span>Discard {view.self.discardCount}</span>
+          <span
+            ref={discardTargetRef}
+            className={`discard-pile-target ${discardReceiving ? "receiving" : ""}`}
+            aria-label={`Discard pile, ${view.self.discardCount} cards`}
+          >
+            Discard {view.self.discardCount}
+          </span>
         </div>
       </div>
       <div className="hand-scroll">
@@ -560,6 +593,39 @@ function Hand({
         })}
       </div>
     </section>
+  );
+}
+
+function LessonCardFlight({
+  flight,
+  onComplete,
+}: {
+  flight: LessonFlight;
+  onComplete: () => void;
+}) {
+  const style = {
+    left: flight.from.left,
+    top: flight.from.top,
+    width: flight.from.width,
+    height: flight.from.height,
+    "--lesson-flight-x": `${flight.deltaX}px`,
+    "--lesson-flight-y": `${flight.deltaY}px`,
+    "--lesson-flight-mid-x": `${flight.midpointX}px`,
+    "--lesson-flight-mid-y": `${flight.midpointY}px`,
+    "--lesson-flight-scale": String(flight.scale),
+  } as React.CSSProperties & Record<string, string | number>;
+
+  return (
+    <div
+      className={`lesson-card-flight ${flight.flying ? "flying" : "waiting"}`}
+      style={style}
+      aria-hidden="true"
+      onAnimationEnd={(event) => {
+        if (event.target === event.currentTarget) onComplete();
+      }}
+    >
+      <DanceCard value={flight.card} compact />
+    </div>
   );
 }
 
@@ -704,12 +770,34 @@ export function GameScreen() {
   const [pendingOpenPositionId, setPendingOpenPositionId] = useState<string | null>(null);
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
   const [floorDragOver, setFloorDragOver] = useState(false);
+  const [lessonFlight, setLessonFlight] = useState<LessonFlight | null>(null);
+  const discardTargetRef = useRef<HTMLSpanElement>(null);
+  const lessonFlightKey = useRef(0);
   useEffect(() => {
     setSelectedDiscards(new Set());
     setPendingOpenPositionId(null);
     setDraggingCardId(null);
     setFloorDragOver(false);
   }, [view?.sequence, view?.phase, view?.viewerRole, passTo]);
+  useEffect(() => setLessonFlight(null), [view?.viewerRole, passTo]);
+  useEffect(() => {
+    if (!lessonFlight || lessonFlight.flying || !view) return;
+    if (view.sequence <= lessonFlight.startingSequence) return;
+    const frame = window.requestAnimationFrame(() =>
+      setLessonFlight((current) =>
+        current?.key === lessonFlight.key ? { ...current, flying: true } : current,
+      ),
+    );
+    return () => window.cancelAnimationFrame(frame);
+  }, [lessonFlight, view]);
+  useEffect(() => {
+    if (!lessonFlight || lessonFlight.flying) return;
+    const timeout = window.setTimeout(
+      () => setLessonFlight((current) => (current?.key === lessonFlight.key ? null : current)),
+      5_000,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [lessonFlight]);
   const clearSignal = useMemo(
     () => view?.legalActions.find((action) => action.type === "CLEAR_SIGNAL"),
     [view],
@@ -776,6 +864,49 @@ export function GameScreen() {
 
     const action = actionForCard(view.legalActions, instanceId);
     if (action) dispatch(action);
+  };
+
+  const buyLesson = (
+    card: DanceCardDefinition,
+    action: LessonBuyAction,
+    sourceButton: HTMLButtonElement,
+  ) => {
+    if (!view || lessonFlight) return;
+    const sourceCard = sourceButton.closest<HTMLElement>(".dance-card");
+    const discardTarget = discardTargetRef.current;
+    if (!sourceCard || !discardTarget) {
+      dispatch(action);
+      return;
+    }
+
+    const sourceRect = sourceCard.getBoundingClientRect();
+    const targetRect = discardTarget.getBoundingClientRect();
+    const deltaX =
+      targetRect.left + targetRect.width / 2 - (sourceRect.left + sourceRect.width / 2);
+    const deltaY =
+      targetRect.top + targetRect.height / 2 - (sourceRect.top + sourceRect.height / 2);
+    const arcHeight = Math.min(90, Math.abs(deltaY) * 0.18 + 30);
+    lessonFlightKey.current += 1;
+    setLessonFlight({
+      key: lessonFlightKey.current,
+      card,
+      source: action.source,
+      startingSequence: view.sequence,
+      from: {
+        left: sourceRect.left,
+        top: sourceRect.top,
+        width: sourceRect.width,
+        height: sourceRect.height,
+      },
+      deltaX,
+      deltaY,
+      midpointX: deltaX * 0.65,
+      midpointY: deltaY * 0.55 - arcHeight,
+      scale: Math.min(0.52, Math.max(0.28, targetRect.width / sourceRect.width)),
+      flying: false,
+    });
+    setInspectedCard(null);
+    dispatch(action);
   };
 
   if (!view)
@@ -853,6 +984,8 @@ export function GameScreen() {
               setDraggingCardId(null);
               setFloorDragOver(false);
             }}
+            discardTargetRef={discardTargetRef}
+            discardReceiving={Boolean(lessonFlight?.flying)}
             toggleDiscard={(id) =>
               setSelectedDiscards((current) => {
                 const next = new Set(current);
@@ -864,10 +997,20 @@ export function GameScreen() {
           />
         </div>
         <aside className="game-sidebar">
-          <Market view={view} dispatch={dispatch} onInspect={setInspectedCard} />
+          <Market
+            view={view}
+            onInspect={setInspectedCard}
+            onBuyLesson={buyLesson}
+            pendingLesson={
+              lessonFlight ? { source: lessonFlight.source, cardId: lessonFlight.card.id } : null
+            }
+          />
           <GameLog view={view} />
         </aside>
       </div>
+      {lessonFlight && (
+        <LessonCardFlight flight={lessonFlight} onComplete={() => setLessonFlight(null)} />
+      )}
       {passTo && mode === "hotseat" && <PassScreen role={passTo} onReady={acceptPass} />}
       {view.signal?.role === view.viewerRole && mode === "hotseat" && (
         <div className="signal-peek" role="dialog" aria-modal="true">

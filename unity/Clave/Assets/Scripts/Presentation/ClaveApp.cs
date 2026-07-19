@@ -30,8 +30,12 @@ namespace Clave.Presentation
         private bool _dragActive;
         private string _suppressCardClickInstanceId;
         private string _pendingOpenPositionInstanceId;
+        private VisualElement _discardPileTarget;
+        private VisualElement _lessonFlightCard;
+        private IVisualElementScheduledItem _lessonFlightAnimation;
         private readonly HashSet<string> _selectedDiscards = new(StringComparer.Ordinal);
         private const float DragThreshold = 8f;
+        private const float LessonFlightDuration = 0.72f;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -61,7 +65,9 @@ namespace Clave.Presentation
         private VisualElement Root()
         {
             ResetCardDrag();
+            CancelLessonFlight();
             _suppressCardClickInstanceId = null;
+            _discardPileTarget = null;
             var root = _document.rootVisualElement;
             root.Clear();
             var styleSheet = Resources.Load<StyleSheet>("Clave");
@@ -311,12 +317,18 @@ namespace Clave.Presentation
                     + (pendingPosition == null ? "" : " · 1 POSITION STAGED"),
                 "eyebrow"
             ));
-            heading.Add(Text(
-                pendingPosition == null
-                    ? $"Deck {player.DrawPile.Count} · Discard {player.DiscardPile.Count}"
-                    : "Choose a highlighted matching Move",
-                pendingPosition == null ? "muted" : "drop-hint"
-            ));
+            if (pendingPosition == null)
+            {
+                var counts = Element("hand-counts");
+                counts.Add(Text($"Deck {player.DrawPile.Count}", "muted"));
+                _discardPileTarget = Text($"Discard {player.DiscardPile.Count}", "discard-pile-target");
+                counts.Add(_discardPileTarget);
+                heading.Add(counts);
+            }
+            else
+            {
+                heading.Add(Text("Choose a highlighted matching Move", "drop-hint"));
+            }
             zone.Add(heading);
 
             var row = new ScrollView(ScrollViewMode.Horizontal);
@@ -375,12 +387,17 @@ namespace Clave.Presentation
             {
                 var definition = _content.Card(cardId);
                 var row = Element("market-row");
-                row.Add(ActionButton(definition.Name, () => Inspect(definition), "market-card"));
+                var marketCard = ActionButton(definition.Name, () => Inspect(definition), "market-card");
+                row.Add(marketCard);
                 var action = buys.FirstOrDefault(candidate => candidate.CardId == cardId);
                 if (action != null)
                 {
                     var captured = action;
-                    row.Add(ActionButton("Learn", () => ApplyAction(captured), "small-primary"));
+                    row.Add(ActionButton(
+                        "Learn",
+                        () => BuyLessonWithAnimation(captured, definition, marketCard),
+                        "small-primary"
+                    ));
                 }
                 row.AddToClassList($"type-{definition.Type}");
                 parent.Add(row);
@@ -787,6 +804,115 @@ namespace Clave.Presentation
             if (beforeViewer != afterViewer && _engine.State.Status is GameStatus.Setup or GameStatus.Playing)
                 _awaitingPass = true;
             RenderGame();
+        }
+
+        private void BuyLessonWithAnimation(
+            GameAction action,
+            CardDefinition definition,
+            VisualElement sourceCard
+        )
+        {
+            if (_lessonFlightCard != null) return;
+            if (_discardPileTarget == null || sourceCard?.panel == null)
+            {
+                ApplyAction(action);
+                return;
+            }
+
+            var sourceBounds = sourceCard.worldBound;
+            var discardBounds = _discardPileTarget.worldBound;
+            var rootOrigin = _document.rootVisualElement.worldBound.position;
+            var beforeSequence = _engine.State.Sequence;
+            ApplyAction(action);
+            if (_engine.State.Sequence == beforeSequence) return;
+            if (sourceBounds.width <= 1f || sourceBounds.height <= 1f || discardBounds.width <= 1f)
+                return;
+
+            StartLessonFlight(definition, sourceBounds, discardBounds, rootOrigin);
+        }
+
+        private void StartLessonFlight(
+            CardDefinition definition,
+            Rect sourceBounds,
+            Rect discardBounds,
+            Vector2 rootOrigin
+        )
+        {
+            var root = _document.rootVisualElement;
+            var flight = BuildLessonFlightCard(definition);
+            const float cardWidth = 160f;
+            const float cardHeight = 190f;
+            var start = sourceBounds.center - rootOrigin;
+            var destination = discardBounds.center - rootOrigin;
+            flight.style.left = start.x - cardWidth / 2f;
+            flight.style.top = start.y - cardHeight / 2f;
+            flight.style.width = cardWidth;
+            flight.style.height = cardHeight;
+            flight.style.opacity = 0.97f;
+            root.Add(flight);
+            flight.BringToFront();
+
+            _lessonFlightCard = flight;
+            var startedAt = Time.realtimeSinceStartup;
+            _lessonFlightAnimation = flight.schedule.Execute(() =>
+            {
+                if (_lessonFlightCard != flight)
+                {
+                    _lessonFlightAnimation?.Pause();
+                    return;
+                }
+
+                var time = Mathf.Clamp01((Time.realtimeSinceStartup - startedAt) / LessonFlightDuration);
+                var eased = 1f - Mathf.Pow(1f - time, 3f);
+                var center = Vector2.Lerp(start, destination, eased);
+                center.y -= Mathf.Sin(Mathf.PI * time) * 70f;
+                var scale = Mathf.Lerp(1f, 0.28f, eased);
+                var width = cardWidth * scale;
+                var height = cardHeight * scale;
+                flight.style.left = center.x - width / 2f;
+                flight.style.top = center.y - height / 2f;
+                flight.style.width = width;
+                flight.style.height = height;
+                flight.style.opacity = Mathf.Lerp(0.97f, 0.16f, eased);
+
+                if (time >= 1f) CompleteLessonFlight(flight);
+            }).Every(16);
+        }
+
+        private VisualElement BuildLessonFlightCard(CardDefinition definition)
+        {
+            var card = Element("dance-card");
+            card.AddToClassList("lesson-flight-card");
+            card.AddToClassList($"type-{definition.Type}");
+            card.AddToClassList($"tier-{definition.Tier.ToLowerInvariant()}");
+            card.pickingMode = PickingMode.Ignore;
+            card.Add(Text($"{definition.Type.ToUpperInvariant()} · {definition.Tier}", "card-topline"));
+            card.Add(Text(CardGlyph(definition), "card-glyph"));
+            card.Add(Text(definition.Name, "card-name"));
+            card.Add(Text(CardDetail(definition), "card-detail"));
+            if (definition.Style > 0) card.Add(Text($"+{definition.Style} STYLE", "style-pip"));
+            return card;
+        }
+
+        private void CompleteLessonFlight(VisualElement flight)
+        {
+            _lessonFlightAnimation?.Pause();
+            _lessonFlightAnimation = null;
+            if (_lessonFlightCard == flight) _lessonFlightCard = null;
+            flight.RemoveFromHierarchy();
+
+            var target = _discardPileTarget;
+            if (target == null) return;
+            target.AddToClassList("receiving");
+            target.schedule.Execute(() => target.RemoveFromClassList("receiving")).ExecuteLater(320);
+        }
+
+        private void CancelLessonFlight()
+        {
+            _lessonFlightAnimation?.Pause();
+            _lessonFlightAnimation = null;
+            _lessonFlightCard?.RemoveFromHierarchy();
+            _lessonFlightCard = null;
         }
 
         private void ShowSignal(GameAction action)

@@ -45,7 +45,7 @@ export function DanceCard({
   selected?: boolean;
   disabled?: boolean;
   actionLabel?: string | undefined;
-  onAction?: (() => void) | undefined;
+  onAction?: React.MouseEventHandler<HTMLButtonElement> | undefined;
   onSignal?: (() => void) | undefined;
   onInspect?: (() => void) | undefined;
   draggable?: boolean;

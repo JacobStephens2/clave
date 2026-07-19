@@ -92,6 +92,26 @@ test("opens with a sequential Position-then-Move drag instead of pair buttons", 
   await expect(page.locator(".hand-heading strong")).toHaveText("2 cards");
 });
 
+test("animates a purchased lesson card into the discard pile", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  await finishSetup(page);
+  await page.getByRole("button", { name: "Dance the basic" }).click();
+
+  const beginnerLessons = page.locator(".market-section").filter({ hasText: "Beginner supply" });
+  const learnButtons = beginnerLessons.getByRole("button", { name: "Learn · $1" });
+  expect(await learnButtons.count()).toBeGreaterThan(0);
+  await learnButtons.first().click();
+
+  const flight = page.locator(".lesson-card-flight.flying");
+  const discardPile = page.locator(".discard-pile-target");
+  await expect(flight).toBeVisible();
+  await expect(discardPile).toHaveText("Discard 1");
+  await expect(discardPile).toHaveClass(/receiving/);
+  await expect(flight).toBeHidden({ timeout: 2_000 });
+  await expect(discardPile).not.toHaveClass(/receiving/);
+});
+
 test("keeps a readable hand in a 13-inch laptop viewport and enlarges cards", async ({ page }) => {
   await page.setViewportSize({ width: 1482, height: 1139 });
   await page.goto("/");

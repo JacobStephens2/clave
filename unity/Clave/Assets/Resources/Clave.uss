@@ -318,6 +318,35 @@
   padding-top: 4px;
 }
 
+.hand-counts {
+  flex-direction: row;
+  align-items: center;
+}
+
+.hand-counts > * {
+  margin-left: 10px;
+}
+
+.discard-pile-target {
+  min-height: 24px;
+  padding: 4px 8px;
+  background-color: rgba(217, 164, 65, 0.08);
+  color: rgb(217, 164, 65);
+  border-width: 1px;
+  border-color: rgba(217, 164, 65, 0.3);
+  font-size: 9px;
+  letter-spacing: 1px;
+  -unity-font-style: bold;
+  -unity-text-align: middle-center;
+}
+
+.discard-pile-target.receiving {
+  background-color: rgba(72, 177, 143, 0.24);
+  color: rgb(247, 234, 209);
+  border-width: 2px;
+  border-color: rgb(72, 177, 143);
+}
+
 .hand-scroll {
   flex-grow: 1;
 }
@@ -350,6 +379,26 @@
   opacity: 0.96;
   border-width: 2px 2px 2px 7px;
   border-color: rgb(217, 164, 65);
+}
+
+.dance-card.lesson-flight-card {
+  position: absolute;
+  opacity: 0.97;
+  border-width: 2px 2px 2px 7px;
+  border-color: rgb(217, 164, 65);
+}
+
+.lesson-flight-card .card-name {
+  font-size: 15px;
+}
+
+.lesson-flight-card .card-detail {
+  font-size: 9px;
+}
+
+.lesson-flight-card .card-glyph {
+  font-size: 28px;
+  margin-top: 6px;
 }
 
 .dance-card {
