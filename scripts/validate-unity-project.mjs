@@ -108,8 +108,13 @@ for (const dragFeature of [
   "PointerUpEvent",
   "worldBound.Contains",
   "PlayDroppedCard",
+  "_pendingOpenPositionInstanceId",
+  "CancelStagedPosition",
 ]) {
   if (!presentation.includes(dragFeature)) fail(`Unity presentation is missing drag feature ${dragFeature}.`);
+}
+if (presentation.includes("BuildDropChoiceOverlay")) {
+  fail("Unity opening drag flow must not fall back to a click-choice dialog.");
 }
 
 const csharpFiles = fs

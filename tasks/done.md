@@ -12,3 +12,4 @@
 - [x] Keep enough of the player hand above the fold to read cards without scrolling
 - [x] Build and verify a macOS-first Unity 6.5 + C# hot-seat version of Clave (2026-07-19): deterministic headless engine, data-driven shared content, readable no-scroll hand, click-to-enlarge cards, local save/resume, native macOS build, compiled C# verification, and Unity EditMode tests
 - [x] Add drag-and-drop card play from the Unity hand to the dance floor (2026-07-19): playable-card affordance, live card preview, valid-drop highlighting, deterministic opening-pair choice, native interaction smoke test, and save/undo verification
+- [x] Make Unity opening play a sequential Position-then-Move drag flow without a click-choice dialog (2026-07-19): staged Position floor slot, compatible-Move-only follow-up, cancel-to-hand control, hidden opening-pair buttons, native two-drag verification, and unchanged atomic engine action

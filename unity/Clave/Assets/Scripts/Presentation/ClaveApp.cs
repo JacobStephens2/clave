@@ -29,8 +29,7 @@ namespace Clave.Presentation
         private int _dragPointerId = -1;
         private bool _dragActive;
         private string _suppressCardClickInstanceId;
-        private List<GameAction> _dropChoices;
-        private string _dropCardName;
+        private string _pendingOpenPositionInstanceId;
         private readonly HashSet<string> _selectedDiscards = new(StringComparer.Ordinal);
         private const float DragThreshold = 8f;
 
@@ -122,6 +121,7 @@ namespace Clave.Presentation
             _visibleRole = Role.Lead;
             _awaitingPass = true;
             _error = null;
+            _pendingOpenPositionInstanceId = null;
             _selectedDiscards.Clear();
             GamePersistence.Save(_engine);
             RenderGame();
@@ -135,6 +135,7 @@ namespace Clave.Presentation
                 _visibleRole = ViewerRole();
                 _awaitingPass = _engine.State.Status is GameStatus.Setup or GameStatus.Playing;
                 _error = null;
+                _pendingOpenPositionInstanceId = null;
                 _selectedDiscards.Clear();
                 RenderGame();
             }
@@ -160,6 +161,7 @@ namespace Clave.Presentation
         private void RenderGame()
         {
             var state = _engine.State;
+            ValidatePendingOpening(state);
             var root = Root();
             var shell = Element("game-shell");
             root.Add(shell);
@@ -183,7 +185,6 @@ namespace Clave.Presentation
                 root.Add(BuildPassOverlay(state));
             if (_signalPeek && state.Signal != null) root.Add(BuildSignalOverlay(state));
             if (_inspectedCard != null) root.Add(BuildCardInspector(_inspectedCard));
-            if (_dropChoices is { Count: > 0 }) root.Add(BuildDropChoiceOverlay());
         }
 
         private VisualElement BuildHeader(GameState state)
@@ -244,19 +245,20 @@ namespace Clave.Presentation
         {
             var floor = Element("dance-floor");
             _floorDropZone = floor;
+            var pendingPosition = PendingOpenPosition(state);
             var acceptsDrop = state.Player(_visibleRole).Hand.Any(instance => DropActionsFor(instance.InstanceId).Count > 0);
             if (acceptsDrop) floor.AddToClassList("accepts-card-drop");
             var heading = Element("section-heading");
             heading.Add(Text("ON THE FLOOR", "eyebrow"));
             heading.Add(Text(
                 acceptsDrop
-                    ? "Drag a highlighted card here"
+                    ? pendingPosition == null ? "Drag a highlighted Position here" : "Now drag a matching Move here"
                     : state.ActiveRole == _visibleRole ? "Your 8-count" : $"{RoleName(state.ActiveRole)}'s 8-count",
                 acceptsDrop ? "drop-hint" : "muted"
             ));
             floor.Add(heading);
             var cards = Element("table-cards");
-            cards.Add(TableSlot("POSITION", state.Table.Position));
+            cards.Add(TableSlot("POSITION", state.Table.Position ?? pendingPosition, pendingPosition != null));
             cards.Add(Text("→", "connector"));
             cards.Add(TableSlot("LAST MOVE", state.Table.Move?.Card));
             cards.Add(Text("✦", "connector"));
@@ -268,12 +270,28 @@ namespace Clave.Presentation
         private VisualElement BuildActions(GameState state)
         {
             var area = Element("actions-area");
-            area.Add(Text(ActionHeading(state), "section-title"));
+            var pendingPosition = PendingOpenPosition(state);
+            var openingDrag = state.Status == GameStatus.Playing
+                && state.Phase == TurnPhase.Dance
+                && state.Table.Position == null;
+            area.Add(Text(
+                pendingPosition != null
+                    ? "OPENING · DRAG A MATCHING MOVE"
+                    : openingDrag ? "OPENING · DRAG A POSITION" : ActionHeading(state),
+                "section-title"
+            ));
             var actions = Element("action-buttons");
-            foreach (var action in _engine.LegalActions(_visibleRole).Where(ShowInActionStrip))
+            if (pendingPosition != null)
             {
-                var captured = action;
-                actions.Add(ActionButton(ActionLabel(captured), () => ApplyAction(captured), ActionClass(captured)));
+                actions.Add(ActionButton("Return Position to hand", CancelStagedPosition, "secondary"));
+            }
+            else
+            {
+                foreach (var action in _engine.LegalActions(_visibleRole).Where(ShowInActionStrip))
+                {
+                    var captured = action;
+                    actions.Add(ActionButton(ActionLabel(captured), () => ApplyAction(captured), ActionClass(captured)));
+                }
             }
             area.Add(actions);
             return area;
@@ -283,14 +301,27 @@ namespace Clave.Presentation
         {
             var zone = Element("hand-zone");
             var player = state.Player(_visibleRole);
+            var pendingPosition = PendingOpenPosition(state);
+            var visibleHand = player.Hand
+                .Where(instance => instance.InstanceId != _pendingOpenPositionInstanceId)
+                .ToList();
             var heading = Element("section-heading");
-            heading.Add(Text($"{RoleName(_visibleRole).ToUpperInvariant()} HAND · {player.Hand.Count} CARDS", "eyebrow"));
-            heading.Add(Text($"Deck {player.DrawPile.Count} · Discard {player.DiscardPile.Count}", "muted"));
+            heading.Add(Text(
+                $"{RoleName(_visibleRole).ToUpperInvariant()} HAND · {visibleHand.Count} CARDS"
+                    + (pendingPosition == null ? "" : " · 1 POSITION STAGED"),
+                "eyebrow"
+            ));
+            heading.Add(Text(
+                pendingPosition == null
+                    ? $"Deck {player.DrawPile.Count} · Discard {player.DiscardPile.Count}"
+                    : "Choose a highlighted matching Move",
+                pendingPosition == null ? "muted" : "drop-hint"
+            ));
             zone.Add(heading);
 
             var row = new ScrollView(ScrollViewMode.Horizontal);
             row.AddToClassList("hand-scroll");
-            foreach (var instance in player.Hand)
+            foreach (var instance in visibleHand)
             {
                 var definition = _content.Card(instance.CardId);
                 row.Add(BuildCard(definition, instance, state.Phase == TurnPhase.Freshen));
@@ -552,8 +583,24 @@ namespace Clave.Presentation
         private List<GameAction> DropActionsFor(string instanceId)
         {
             if (_engine == null) return new List<GameAction>();
-            return _engine
-                .LegalActions(_visibleRole)
+            var legalActions = _engine.LegalActions(_visibleRole);
+            if (_engine.State.Table.Position == null)
+            {
+                return legalActions
+                    .Where(action =>
+                        action.Type == GameActionType.PlayOpen
+                        && (
+                            string.IsNullOrEmpty(_pendingOpenPositionInstanceId)
+                                ? action.PositionInstanceId == instanceId
+                                : action.PositionInstanceId == _pendingOpenPositionInstanceId
+                                    && action.MoveInstanceId == instanceId
+                        )
+                    )
+                    .OrderBy(action => action.StableKey, StringComparer.Ordinal)
+                    .ToList();
+            }
+
+            return legalActions
                 .Where(action => ActionUsesCard(action, instanceId))
                 .OrderBy(action => action.StableKey, StringComparer.Ordinal)
                 .ToList();
@@ -582,47 +629,57 @@ namespace Clave.Presentation
                 return;
             }
 
-            var labelledChoices = choices.GroupBy(ActionLabel, StringComparer.Ordinal).Select(group => group.First()).ToList();
-            if (labelledChoices.Count == 1)
+            if (
+                _engine.State.Table.Position == null
+                && string.IsNullOrEmpty(_pendingOpenPositionInstanceId)
+                && choices.Any(action => action.PositionInstanceId == instance.InstanceId)
+            )
             {
-                ApplyAction(labelledChoices[0]);
+                _pendingOpenPositionInstanceId = instance.InstanceId;
+                _error = null;
+                RenderGame();
                 return;
             }
 
-            _dropChoices = labelledChoices;
-            _dropCardName = definition.Name;
-            RenderGame();
-        }
-
-        private VisualElement BuildDropChoiceOverlay()
-        {
-            var overlay = Element("overlay");
-            var dialog = Element("drop-dialog");
-            dialog.Add(Text("CHOOSE THE PLAY", "eyebrow"));
-            dialog.Add(Text($"Play {_dropCardName}", "section-title"));
-            dialog.Add(Text("This card has more than one legal way onto the floor.", "body-copy"));
-            foreach (var action in _dropChoices)
+            if (choices.Count != 1)
             {
-                var captured = action;
-                dialog.Add(ActionButton(ActionLabel(captured), () => ChooseDroppedAction(captured), "drop-choice"));
+                _error = $"{definition.Name} did not resolve to exactly one legal floor play.";
+                RenderGame();
+                return;
             }
-            dialog.Add(ActionButton("Cancel", CancelDroppedAction, "secondary"));
-            overlay.Add(dialog);
-            return overlay;
+
+            ApplyAction(choices[0]);
         }
 
-        private void ChooseDroppedAction(GameAction action)
+        private void CancelStagedPosition()
         {
-            _dropChoices = null;
-            _dropCardName = null;
-            ApplyAction(action);
-        }
-
-        private void CancelDroppedAction()
-        {
-            _dropChoices = null;
-            _dropCardName = null;
+            _pendingOpenPositionInstanceId = null;
+            _error = null;
             RenderGame();
+        }
+
+        private CardInstance PendingOpenPosition(GameState state)
+        {
+            if (string.IsNullOrEmpty(_pendingOpenPositionInstanceId)) return null;
+            return state.Player(_visibleRole).Hand.FirstOrDefault(instance =>
+                instance.InstanceId == _pendingOpenPositionInstanceId
+            );
+        }
+
+        private void ValidatePendingOpening(GameState state)
+        {
+            if (string.IsNullOrEmpty(_pendingOpenPositionInstanceId)) return;
+            var pending = state.Player(_visibleRole).Hand.FirstOrDefault(instance =>
+                instance.InstanceId == _pendingOpenPositionInstanceId
+            );
+            if (
+                state.Status != GameStatus.Playing
+                || state.Phase != TurnPhase.Dance
+                || state.ActiveRole != _visibleRole
+                || state.Table.Position != null
+                || pending == null
+                || _content.Card(pending.CardId).Type != "position"
+            ) _pendingOpenPositionInstanceId = null;
         }
 
         private static bool IsInteractiveControl(VisualElement target)
@@ -644,12 +701,17 @@ namespace Clave.Presentation
 
         private static Vector2 PointerPosition(Vector3 position) => new(position.x, position.y);
 
-        private VisualElement TableSlot(string label, CardInstance instance)
+        private VisualElement TableSlot(string label, CardInstance instance, bool staged = false)
         {
             var slot = Element("table-slot");
-            slot.Add(Text(label, "slot-label"));
+            if (staged) slot.AddToClassList("staged-slot");
+            slot.Add(Text(staged ? $"{label} · STAGED" : label, "slot-label"));
             if (instance == null) slot.Add(Text("—", "empty-slot"));
-            else slot.Add(BuildCard(_content.Card(instance.CardId)));
+            else
+            {
+                slot.Add(BuildCard(_content.Card(instance.CardId)));
+                if (staged) slot.Add(Text("WAITING FOR MOVE", "staged-badge"));
+            }
             return slot;
         }
 
@@ -717,6 +779,7 @@ namespace Clave.Presentation
                 return;
             }
             _error = null;
+            _pendingOpenPositionInstanceId = null;
             _selectedDiscards.Clear();
             GamePersistence.Save(_engine);
             var afterViewer = ViewerRole();
@@ -771,6 +834,7 @@ namespace Clave.Presentation
         private void BackHome()
         {
             _engine = null;
+            _pendingOpenPositionInstanceId = null;
             _inspectedCard = null;
             _signalPeek = false;
             _awaitingPass = false;
@@ -785,7 +849,8 @@ namespace Clave.Presentation
 
         private static bool ShowInActionStrip(GameAction action)
         {
-            return action.Type is not GameActionType.SignalCard
+            return action.Type is not GameActionType.PlayOpen
+                and not GameActionType.SignalCard
                 and not GameActionType.ClearSignal
                 and not GameActionType.BuyLesson
                 and not GameActionType.LearnFromPartner;
