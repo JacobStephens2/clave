@@ -27,6 +27,31 @@ test("carries the card artwork into the home-screen visual system", async ({ pag
   await expect(page.locator(".home")).toHaveCSS("background-color", "rgb(8, 27, 37)");
 });
 
+test("keeps the Opening Hands instruction inside its song banner", async ({ page }, testInfo) => {
+  await page.setViewportSize(
+    testInfo.project.name === "mobile-chrome"
+      ? { width: 412, height: 839 }
+      : { width: 1440, height: 700 },
+  );
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  await acceptPass(page, "Lead");
+
+  const instruction = page.getByText("Check for a matching Position and Move.");
+  await expect(instruction).toBeVisible();
+  expect(
+    await instruction.evaluate((element) => {
+      const banner = element.closest(".song-card");
+      if (!banner) return false;
+      const instructionBounds = element.getBoundingClientRect();
+      const bannerBounds = banner.getBoundingClientRect();
+      return (
+        instructionBounds.top >= bannerBounds.top && instructionBounds.bottom <= bannerBounds.bottom
+      );
+    }),
+  ).toBe(true);
+});
+
 test("plays a complete sixteen-count hot-seat game", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Pass & play/ }).click();

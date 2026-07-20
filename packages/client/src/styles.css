@@ -2660,6 +2660,18 @@ body {
   .song-card {
     min-height: 0;
   }
+  .song-card.waiting {
+    padding-block: 8px;
+  }
+  .song-card.waiting h3 {
+    margin-block: 2px;
+    font-size: clamp(18px, 2.4vh, 24px);
+    line-height: 1.05;
+  }
+  .song-card.waiting p {
+    font-size: clamp(10px, 1.4vh, 13px);
+    line-height: 1.25;
+  }
   .dance-table {
     min-height: 0;
     overflow: hidden;
