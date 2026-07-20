@@ -4,23 +4,32 @@ import type { CardView } from "@clave/engine";
 function cardDetails(card: DanceCardDefinition): {
   type: string;
   detail: string;
+  requirement: string;
   style: number | null;
 } {
   switch (card.type) {
     case "position":
-      return { type: "Position", detail: card.position, style: null };
+      return { type: "Position", detail: card.position, requirement: card.position, style: null };
     case "move":
-      return { type: "Move", detail: card.positions.join(" · "), style: card.style };
+      return {
+        type: "Move",
+        detail: card.positions.join(" · "),
+        requirement: card.positions.join(" / "),
+        style: card.style,
+      };
     case "flourish":
       return {
         type: card.pose ? "Flourish · Pose" : "Flourish",
         detail: card.positions === "any" ? "Any position" : card.positions.join(" · "),
+        requirement: card.positions === "any" ? "Any position" : card.positions.join(" / "),
         style: card.style,
       };
     case "recovery":
       return {
         type: "Recovery",
         detail: `Stumble costs ${card.connectionCost} Connection`,
+        requirement:
+          card.connectionCost === 0 ? "No Connection cost" : `−${card.connectionCost} Connection`,
         style: null,
       };
   }
@@ -35,6 +44,7 @@ export function DanceCard({
   onAction,
   onSignal,
   onInspect,
+  onSelect,
   draggable = false,
   dragging = false,
   onDragStart,
@@ -48,6 +58,7 @@ export function DanceCard({
   onAction?: React.MouseEventHandler<HTMLButtonElement> | undefined;
   onSignal?: (() => void) | undefined;
   onInspect?: (() => void) | undefined;
+  onSelect?: (() => void) | undefined;
   draggable?: boolean;
   dragging?: boolean;
   onDragStart?: React.DragEventHandler<HTMLElement> | undefined;
@@ -55,29 +66,56 @@ export function DanceCard({
 }) {
   const card = "card" in value ? value.card : value;
   const details = cardDetails(card);
+  const selectable = Boolean(onSelect);
   return (
     <article
-      className={`dance-card ${card.type} tier-${card.tier.toLowerCase()} ${compact ? "compact" : ""} ${selected ? "selected" : ""} ${disabled ? "disabled" : ""} ${onInspect ? "inspectable" : ""} ${draggable ? "playable" : ""} ${dragging ? "dragging" : ""}`}
-      tabIndex={onInspect ? 0 : undefined}
-      aria-label={onInspect ? `${card.name}. Click to view larger.` : undefined}
+      className={`dance-card ${card.type} tier-${card.tier.toLowerCase()} ${compact ? "compact" : ""} ${selected ? "selected" : ""} ${selectable ? "selectable" : ""} ${disabled ? "disabled" : ""} ${onInspect ? "inspectable" : ""} ${draggable ? "playable" : ""} ${dragging ? "dragging" : ""}`}
+      data-card-instance-id={"card" in value ? value.instanceId : undefined}
+      role={selectable ? "button" : undefined}
+      tabIndex={onSelect || onInspect ? 0 : undefined}
+      aria-pressed={selectable ? selected : undefined}
+      aria-label={
+        selectable
+          ? `${card.name}. ${selected ? "Selected for discard." : "Click to select for discard."}`
+          : onInspect
+            ? `${card.name}. Click to view larger.`
+            : undefined
+      }
       draggable={draggable}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onClick={(event) => {
         if ((event.target as HTMLElement).closest("button")) return;
-        onInspect?.();
+        if (onSelect) onSelect();
+        else onInspect?.();
       }}
       onKeyDown={(event) => {
-        if (onInspect && (event.key === "Enter" || event.key === " ")) {
+        if ((onSelect || onInspect) && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
-          onInspect();
+          if (onSelect) onSelect();
+          else onInspect?.();
         }
       }}
     >
       <div className="card-topline">
-        <span>{details.type}</span>
-        <span>{card.tier}</span>
+        <span className="card-type-top">{details.type}</span>
+        <span className="card-requirement-top" title={details.requirement}>
+          {details.requirement}
+        </span>
+        {details.style === null ? (
+          <span aria-hidden="true" />
+        ) : (
+          <span className="card-style-top" aria-label={`${details.style} Style`}>
+            +{details.style}
+            <small>Style</small>
+          </span>
+        )}
       </div>
+      {selectable && selected && (
+        <span className="discard-selection-badge" aria-hidden="true">
+          ✓ Selected for discard
+        </span>
+      )}
       <div className="card-art" aria-hidden="true">
         <span className="card-art-fallback">
           {card.type === "position"
@@ -100,12 +138,6 @@ export function DanceCard({
       </div>
       <h4>{card.name}</h4>
       <p>{details.detail}</p>
-      {details.style !== null && (
-        <div className="style-pip" aria-label={`${details.style} Style`}>
-          +{details.style}
-          <small>style</small>
-        </div>
-      )}
       {(onAction || onSignal) && (
         <div className="card-actions">
           {onAction && (

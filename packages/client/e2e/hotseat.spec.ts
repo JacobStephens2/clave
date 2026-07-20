@@ -79,6 +79,36 @@ test("restores the exact hot-seat turn after a page reload", async ({ page }) =>
   await expect(page.getByText("Follow hand")).toBeVisible();
 });
 
+test("flies exact Freshen Up selections into the discard pile", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  await finishSetup(page);
+  await page.getByRole("button", { name: "Dance the basic" }).click();
+  await page.getByRole("button", { name: "Finish lessons" }).click();
+
+  const handCards = page.locator(".hand-scroll .dance-card");
+  expect(await handCards.count()).toBe(4);
+  await handCards.nth(0).click();
+  await handCards.nth(1).click();
+
+  await expect(page.locator(".hand-scroll .dance-card.selected")).toHaveCount(2);
+  await expect(page.locator(".discard-selection-badge")).toHaveCount(2);
+  const discardSelected = page.getByRole("button", {
+    name: "Discard 2 selected & end turn",
+  });
+  await expect(discardSelected).toBeEnabled();
+  await discardSelected.click();
+  const flights = page.locator(".freshen-card-flight.flying");
+  const discardPile = page.locator(".discard-pile-target");
+  await expect(flights).toHaveCount(2);
+  await expect(flights.first()).toBeVisible();
+  await expect(discardPile).toHaveText("Discard 2");
+  await expect(discardPile).toHaveClass(/receiving/);
+  await expect(page.locator(".pass-screen")).toHaveCount(0);
+  await expect(flights).toHaveCount(0, { timeout: 3_000 });
+  await expect(page.locator(".pass-screen")).toBeVisible();
+});
+
 test("opens with a sequential Position-then-Move drag instead of pair buttons", async ({
   page,
 }) => {
@@ -95,6 +125,16 @@ test("opens with a sequential Position-then-Move drag instead of pair buttons", 
   await page.goto("/");
   await page.getByRole("button", { name: /Pass & play/ }).click();
   await finishSetup(page);
+
+  const activeSong = page.locator(".song-card:not(.waiting)");
+  const activeRule = activeSong.getByText("+1 Connection if you play a Move worth 2 Style or less");
+  const activeSongBox = await activeSong.boundingBox();
+  const activeRuleBox = await activeRule.boundingBox();
+  expect(activeSongBox).not.toBeNull();
+  expect(activeRuleBox).not.toBeNull();
+  expect(activeRuleBox!.y + activeRuleBox!.height).toBeLessThan(
+    activeSongBox!.y + activeSongBox!.height - 2,
+  );
 
   const floor = page.getByRole("region", {
     name: "Current dance state and card drop area",
@@ -141,6 +181,15 @@ test("animates a lesson into an inspectable discard pile", async ({ page }, test
   await expect(discardPile).toBeFocused();
 
   await page.getByRole("button", { name: "Dance the basic" }).click();
+
+  const lessonHeading = page.locator(".step-heading").filter({ hasText: "Take a lesson" });
+  const lessonEyebrowBox = await lessonHeading.getByText("Take a lesson").boundingBox();
+  const lessonMessageBox = await lessonHeading
+    .getByText("Practice something new—or keep moving")
+    .boundingBox();
+  expect(lessonEyebrowBox).not.toBeNull();
+  expect(lessonMessageBox).not.toBeNull();
+  expect(lessonEyebrowBox!.y + lessonEyebrowBox!.height).toBeLessThanOrEqual(lessonMessageBox!.y);
 
   const beginnerLessons = page.locator(".market-section").filter({ hasText: "Beginner supply" });
   const availableLessons = beginnerLessons.locator(".dance-card.playable");
@@ -220,7 +269,21 @@ test("keeps a readable hand in a 13-inch laptop viewport and enlarges cards", as
   await acceptPass(page, "Lead");
 
   const firstCard = page.locator(".hand-scroll .dance-card").first();
+  const firstMove = page.locator(".hand-scroll .dance-card.move").first();
   const firstArtwork = firstCard.locator(".card-art img");
+  const openingSong = page.locator(".song-card.waiting");
+  const openingInstruction = openingSong.getByText("Check for a matching Position and Move.");
+  const openingSongBox = await openingSong.boundingBox();
+  const openingInstructionBox = await openingInstruction.boundingBox();
+  expect(openingSongBox).not.toBeNull();
+  expect(openingInstructionBox).not.toBeNull();
+  expect(openingInstructionBox!.y + openingInstructionBox!.height).toBeLessThan(
+    openingSongBox!.y + openingSongBox!.height - 2,
+  );
+  await expect(firstMove.locator(".card-requirement-top")).toBeVisible();
+  await expect(firstMove.locator(".card-requirement-top")).not.toHaveText("");
+  await expect(firstMove.locator(".card-style-top")).toContainText("+");
+  await expect(firstMove.locator(".style-pip")).toHaveCount(0);
   await expect(firstArtwork).toBeVisible();
   expect(await firstArtwork.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(512);
   const cardBox = await firstCard.boundingBox();

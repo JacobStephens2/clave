@@ -9,6 +9,7 @@ const roleName = (role: Role) => (role === "lead" ? "Lead" : "Follow");
 type InspectableCard = CardView | DanceCardDefinition;
 type OpeningAction = Extract<GameAction, { type: "PLAY_OPEN" }>;
 type LessonBuyAction = Extract<GameAction, { type: "BUY_LESSON" }>;
+type FreshenAction = Extract<GameAction, { type: "FRESHEN" }>;
 type RoomCopyStatus = "idle" | "copied" | "failed";
 
 interface LessonFlight {
@@ -22,6 +23,24 @@ interface LessonFlight {
   midpointX: number;
   midpointY: number;
   scale: number;
+  flying: boolean;
+}
+
+interface FreshenFlightCard {
+  card: CardView;
+  from: { left: number; top: number; width: number; height: number };
+  deltaX: number;
+  deltaY: number;
+  midpointX: number;
+  midpointY: number;
+  scale: number;
+  delay: number;
+}
+
+interface FreshenFlight {
+  key: number;
+  startingSequence: number;
+  cards: FreshenFlightCard[];
   flying: boolean;
 }
 
@@ -363,12 +382,16 @@ function TurnActions({
   view,
   dispatch,
   selectedDiscards,
+  onFreshen,
+  freshenPending,
   pendingPosition,
   cancelPendingPosition,
 }: {
   view: PlayerSnapshot;
   dispatch: (action: GameAction) => void;
   selectedDiscards: Set<string>;
+  onFreshen: (action: FreshenAction, discardInstanceIds: string[]) => void;
+  freshenPending: boolean;
   pendingPosition: CardView | null;
   cancelPendingPosition: () => void;
 }) {
@@ -529,20 +552,21 @@ function TurnActions({
         <span>4</span>
         <div>
           <small>Freshen up</small>
-          <strong>Discard any cards, then draw to four</strong>
+          <strong>Select cards to discard, then draw to four</strong>
         </div>
       </div>
       <div className="button-row">
         <button
           type="button"
           className="button gold"
-          onClick={() =>
-            freshen && dispatch({ ...freshen, discardInstanceIds: [...selectedDiscards] })
-          }
+          disabled={!freshen || freshenPending}
+          onClick={() => freshen && onFreshen(freshen, [...selectedDiscards])}
         >
-          {selectedDiscards.size
-            ? `Discard ${selectedDiscards.size} & end turn`
-            : "Keep hand & end turn"}
+          {freshenPending
+            ? "Discarding…"
+            : selectedDiscards.size
+              ? `Discard ${selectedDiscards.size} selected & end turn`
+              : "Keep hand & end turn"}
         </button>
         {undo && (
           <button type="button" className="text-button" onClick={() => dispatch(undo)}>
@@ -664,16 +688,11 @@ function Hand({
               value={entry}
               selected={selected}
               disabled={!isOwnTurn}
-              actionLabel={freshen ? (selected ? "Keep" : "Discard") : actionLabel(primary)}
-              onAction={
-                freshen
-                  ? () => toggleDiscard(entry.instanceId)
-                  : primary
-                    ? () => dispatch(primary)
-                    : undefined
-              }
+              actionLabel={freshen ? undefined : actionLabel(primary)}
+              onAction={!freshen && primary ? () => dispatch(primary) : undefined}
               onSignal={signal && view.phase !== "freshen" ? () => dispatch(signal) : undefined}
-              onInspect={() => onInspect(entry)}
+              onInspect={freshen ? undefined : () => onInspect(entry)}
+              onSelect={freshen ? () => toggleDiscard(entry.instanceId) : undefined}
               draggable={draggable}
               dragging={draggingCardId === entry.instanceId}
               onDragStart={
@@ -719,6 +738,44 @@ function LessonCardFlight({
       <DanceCard value={flight.card} compact />
     </div>
   );
+}
+
+function FreshenCardFlights({
+  flight,
+  onComplete,
+}: {
+  flight: FreshenFlight;
+  onComplete: () => void;
+}) {
+  return flight.cards.map((entry, index) => {
+    const style = {
+      left: entry.from.left,
+      top: entry.from.top,
+      width: entry.from.width,
+      height: entry.from.height,
+      "--lesson-flight-x": `${entry.deltaX}px`,
+      "--lesson-flight-y": `${entry.deltaY}px`,
+      "--lesson-flight-mid-x": `${entry.midpointX}px`,
+      "--lesson-flight-mid-y": `${entry.midpointY}px`,
+      "--lesson-flight-scale": String(entry.scale),
+      "--freshen-flight-delay": `${entry.delay}ms`,
+    } as React.CSSProperties & Record<string, string | number>;
+    const isLast = index === flight.cards.length - 1;
+
+    return (
+      <div
+        key={`${flight.key}-${entry.card.instanceId}`}
+        className={`freshen-card-flight ${flight.flying ? "flying" : "waiting"}`}
+        style={style}
+        aria-hidden="true"
+        onAnimationEnd={(event) => {
+          if (isLast && event.target === event.currentTarget) onComplete();
+        }}
+      >
+        <DanceCard value={entry.card} />
+      </div>
+    );
+  });
 }
 
 function GameLog({ view }: { view: PlayerSnapshot }) {
@@ -939,6 +996,7 @@ export function GameScreen() {
   const [draggingLessonKey, setDraggingLessonKey] = useState<string | null>(null);
   const [lessonDropOver, setLessonDropOver] = useState(false);
   const [lessonFlight, setLessonFlight] = useState<LessonFlight | null>(null);
+  const [freshenFlight, setFreshenFlight] = useState<FreshenFlight | null>(null);
   const [dancerDemoOpen, setDancerDemoOpen] = useState(false);
   const [roomCopyStatus, setRoomCopyStatus] = useState<RoomCopyStatus>("idle");
   const discardTargetRef = useRef<HTMLButtonElement>(null);
@@ -949,6 +1007,7 @@ export function GameScreen() {
     sourceCard: HTMLElement;
   } | null>(null);
   const lessonFlightKey = useRef(0);
+  const freshenFlightKey = useRef(0);
   const roomCopyReset = useRef<number | null>(null);
   useEffect(() => {
     setSelectedDiscards(new Set());
@@ -986,6 +1045,24 @@ export function GameScreen() {
     );
     return () => window.clearTimeout(timeout);
   }, [lessonFlight]);
+  useEffect(() => {
+    if (!freshenFlight || freshenFlight.flying || !view) return;
+    if (view.sequence <= freshenFlight.startingSequence) return;
+    const frame = window.requestAnimationFrame(() =>
+      setFreshenFlight((current) =>
+        current?.key === freshenFlight.key ? { ...current, flying: true } : current,
+      ),
+    );
+    return () => window.cancelAnimationFrame(frame);
+  }, [freshenFlight, view]);
+  useEffect(() => {
+    if (!freshenFlight || freshenFlight.flying) return;
+    const timeout = window.setTimeout(
+      () => setFreshenFlight((current) => (current?.key === freshenFlight.key ? null : current)),
+      5_000,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [freshenFlight]);
   const clearSignal = useMemo(
     () => view?.legalActions.find((action) => action.type === "CLEAR_SIGNAL"),
     [view],
@@ -1146,6 +1223,70 @@ export function GameScreen() {
     buyLesson(lesson.card, lesson.action, lesson.sourceCard);
   };
 
+  const freshenUp = (action: FreshenAction, discardInstanceIds: string[]) => {
+    if (!view || freshenFlight) return;
+    if (discardInstanceIds.length === 0) {
+      dispatch({ ...action, discardInstanceIds });
+      return;
+    }
+
+    const discardTarget = discardTargetRef.current;
+    if (!discardTarget) {
+      dispatch({ ...action, discardInstanceIds });
+      return;
+    }
+    const cardElements = new Map(
+      Array.from(
+        document.querySelectorAll<HTMLElement>(".hand-scroll .dance-card[data-card-instance-id]"),
+      ).map((element) => [element.dataset.cardInstanceId, element]),
+    );
+    const selected = new Set(discardInstanceIds);
+    const cards = view.self.hand.filter((card) => selected.has(card.instanceId));
+    const targetRect = discardTarget.getBoundingClientRect();
+    const flightCards = cards.flatMap((card, index) => {
+      const sourceCard = cardElements.get(card.instanceId);
+      if (!sourceCard) return [];
+      const sourceRect = sourceCard.getBoundingClientRect();
+      const deltaX =
+        targetRect.left + targetRect.width / 2 - (sourceRect.left + sourceRect.width / 2);
+      const deltaY =
+        targetRect.top + targetRect.height / 2 - (sourceRect.top + sourceRect.height / 2);
+      const spread = index - (cards.length - 1) / 2;
+      const arcHeight = Math.min(120, Math.abs(deltaY) * 0.2 + 42);
+      return [
+        {
+          card,
+          from: {
+            left: sourceRect.left,
+            top: sourceRect.top,
+            width: sourceRect.width,
+            height: sourceRect.height,
+          },
+          deltaX,
+          deltaY,
+          midpointX: deltaX * 0.62 + spread * 20,
+          midpointY: deltaY * 0.5 - arcHeight - Math.abs(spread) * 6,
+          scale: Math.min(0.42, Math.max(0.2, targetRect.width / sourceRect.width)),
+          delay: index * 90,
+        },
+      ];
+    });
+
+    if (flightCards.length !== discardInstanceIds.length) {
+      dispatch({ ...action, discardInstanceIds });
+      return;
+    }
+    freshenFlightKey.current += 1;
+    setFreshenFlight({
+      key: freshenFlightKey.current,
+      startingSequence: view.sequence,
+      cards: flightCards,
+      flying: false,
+    });
+    setInspectedCard(null);
+    dispatch({ ...action, discardInstanceIds });
+  };
+
   if (!view)
     return (
       <main className="loading-table">
@@ -1228,6 +1369,8 @@ export function GameScreen() {
             view={view}
             dispatch={dispatch}
             selectedDiscards={selectedDiscards}
+            onFreshen={freshenUp}
+            freshenPending={Boolean(freshenFlight)}
             pendingPosition={pendingPosition}
             cancelPendingPosition={() => setPendingOpenPositionId(null)}
           />
@@ -1251,7 +1394,7 @@ export function GameScreen() {
               setFloorDragOver(false);
             }}
             discardTargetRef={discardTargetRef}
-            discardReceiving={Boolean(lessonFlight?.flying)}
+            discardReceiving={Boolean(lessonFlight?.flying || freshenFlight?.flying)}
             acceptsLessonDrop={Boolean(draggingLessonKey)}
             lessonDropOver={lessonDropOver}
             onLessonDragOverChange={setLessonDropOver}
@@ -1285,7 +1428,12 @@ export function GameScreen() {
       {lessonFlight && (
         <LessonCardFlight flight={lessonFlight} onComplete={() => setLessonFlight(null)} />
       )}
-      {passTo && mode === "hotseat" && <PassScreen role={passTo} onReady={acceptPass} />}
+      {freshenFlight && (
+        <FreshenCardFlights flight={freshenFlight} onComplete={() => setFreshenFlight(null)} />
+      )}
+      {passTo && mode === "hotseat" && !freshenFlight && (
+        <PassScreen role={passTo} onReady={acceptPass} />
+      )}
       {view.signal?.role === view.viewerRole && mode === "hotseat" && (
         <div className="signal-peek" role="dialog" aria-modal="true">
           <small>Show only this card to your partner</small>

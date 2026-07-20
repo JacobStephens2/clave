@@ -648,8 +648,12 @@ button {
   border-color: rgba(217, 93, 82, 0.5);
 }
 .song-card.waiting {
-  display: block;
-  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 2px;
+  padding: 10px 22px;
 }
 .song-count {
   border-right: 1px solid var(--line);
@@ -674,17 +678,23 @@ button {
   padding-left: 24px;
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
 }
 .song-card h3 {
   font-family: Georgia, serif;
   font-size: 24px;
+  line-height: 1.05;
   font-weight: 500;
-  margin: 3px 0;
+  margin: 0;
 }
 .song-card p {
   color: #d3c1b5;
   margin: 0;
   font-size: 13px;
+  line-height: 1.2;
 }
 .dance-table {
   min-height: 340px;
@@ -1411,6 +1421,36 @@ button {
     0 0 0 3px var(--coral),
     0 16px 36px #0009;
 }
+.dance-card.selectable {
+  cursor: pointer;
+  user-select: none;
+}
+.dance-card.selectable:not(.selected):hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 0 0 2px rgba(227, 95, 79, 0.72),
+    0 16px 36px rgba(0, 0, 0, 0.4);
+}
+.dance-card.selectable:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+.discard-selection-badge {
+  position: absolute;
+  z-index: 4;
+  top: 32px;
+  left: 12px;
+  padding: 5px 7px;
+  border: 1px solid var(--cream);
+  background: var(--wine);
+  box-shadow: 3px 3px 0 var(--coral);
+  color: var(--cream);
+  font-size: 7px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
 .dance-card.disabled {
   opacity: 0.58;
 }
@@ -1443,14 +1483,43 @@ button {
   padding: 9px;
 }
 .card-topline {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 5px;
   color: currentColor;
   opacity: 0.66;
   font-size: 8px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+}
+.card-type-top {
+  justify-self: start;
+  white-space: nowrap;
+}
+.card-requirement-top {
+  width: 100%;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-style-top {
+  justify-self: end;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  white-space: nowrap;
+}
+.card-style-top small {
+  font-size: 5px;
+  letter-spacing: 0.04em;
+}
+.dance-card.compact .card-topline {
+  gap: 3px;
+  font-size: 7px;
+  letter-spacing: 0.05em;
 }
 .card-art {
   position: relative;
@@ -1522,30 +1591,9 @@ button {
   opacity: 0.68;
   margin: 0;
 }
-.style-pip {
-  position: absolute;
-  right: 9px;
-  bottom: 9px;
-  width: 42px;
-  height: 42px;
-  border: 1px solid currentColor;
-  border-radius: 50%;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  font-family: Georgia, serif;
-  font-size: 15px;
-}
-.style-pip small {
-  font-family: ui-sans-serif, sans-serif;
-  text-transform: uppercase;
-  font-size: 5px;
-  letter-spacing: 0.08em;
-}
 .card-actions {
   margin-top: auto;
   padding-top: 12px;
-  padding-right: 48px;
   display: grid;
   gap: 4px;
 }
@@ -1578,7 +1626,7 @@ button {
   justify-content: space-between;
   min-height: 96px;
 }
-.turn-actions > div:first-child > small,
+.step-heading small,
 .opening-drag-guide > small,
 .learn-partner > small {
   text-transform: uppercase;
@@ -1587,10 +1635,11 @@ button {
   font-size: 8px;
   display: block;
 }
-.turn-actions > div:first-child > strong {
+.step-heading strong {
   font-family: Georgia, serif;
   display: block;
   font-size: 20px;
+  line-height: 1.1;
   font-weight: 500;
 }
 .turn-actions p {
@@ -1603,6 +1652,11 @@ button {
   align-items: center;
   gap: 12px;
   min-width: 190px;
+}
+.step-heading > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
 }
 .step-heading > span {
   font-family: Georgia, serif;
@@ -1751,7 +1805,8 @@ button {
   padding: 10px 2px 18px;
   scrollbar-color: var(--wine) transparent;
 }
-.lesson-card-flight {
+.lesson-card-flight,
+.freshen-card-flight {
   position: fixed;
   z-index: 180;
   margin: 0;
@@ -1761,7 +1816,8 @@ button {
   filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.5));
   will-change: transform, opacity, filter;
 }
-.lesson-card-flight .dance-card {
+.lesson-card-flight .dance-card,
+.freshen-card-flight .dance-card {
   width: 100%;
   height: 100%;
   min-width: 0;
@@ -1770,11 +1826,16 @@ button {
     0 0 0 2px rgba(217, 164, 65, 0.72),
     0 18px 40px rgba(0, 0, 0, 0.5);
 }
-.lesson-card-flight.waiting {
+.lesson-card-flight.waiting,
+.freshen-card-flight.waiting {
   transform: scale(1.02);
 }
 .lesson-card-flight.flying {
   animation: lesson-card-to-discard 720ms cubic-bezier(0.22, 0.72, 0.18, 1) forwards;
+}
+.freshen-card-flight.flying {
+  animation: lesson-card-to-discard 720ms cubic-bezier(0.22, 0.72, 0.18, 1) forwards;
+  animation-delay: var(--freshen-flight-delay);
 }
 @keyframes lesson-card-to-discard {
   0% {
@@ -1975,13 +2036,6 @@ button {
   font-size: 14px;
   line-height: 1.5;
 }
-.card-inspector .style-pip {
-  right: 20px;
-  bottom: 20px;
-  width: 66px;
-  height: 66px;
-  font-size: 24px;
-}
 .inspector-close {
   min-width: 120px;
   min-height: 42px;
@@ -2054,8 +2108,10 @@ button {
   font-size: 20px;
   margin: 8px 0 5px;
 }
-.market-row .dance-card p,
-.market-row .style-pip {
+.market-row .dance-card p {
+  display: none;
+}
+.market-row .card-style-top small {
   display: none;
 }
 .market-row .card-actions {
@@ -2598,7 +2654,6 @@ body {
   border: 2px solid var(--ink);
 }
 
-.style-pip,
 .step-heading > span {
   border-width: 2px;
   border-radius: 44% 56% 47% 53%;
@@ -3049,12 +3104,16 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .lesson-card-flight.flying,
+  .freshen-card-flight.flying,
   .discard-pile-target.receiving,
   .dancer-demo-stage *,
   .dancer-demo-stage *::before,
   .dancer-demo-stage *::after {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
+  }
+  .freshen-card-flight.flying {
+    animation-delay: 0ms !important;
   }
   *,
   *::before,
