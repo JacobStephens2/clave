@@ -69,7 +69,7 @@ describe("v1 content", () => {
       { cardId: "mov_002", count: 1 },
       { cardId: "mov_003", count: 1 },
       { cardId: "mov_004", count: 1 },
-      { cardId: "mov_005", count: 1 },
+      { cardId: "mov_013", count: 1 },
     ]);
 
     const starterIds = new Set(content.decks.starter.map((entry) => entry.cardId));
@@ -79,7 +79,7 @@ describe("v1 content", () => {
           card.type === "move" && starterIds.has(card.id) && card.positions.includes("Closed"),
       )
       .map((card) => card.id);
-    expect(closedMoves).toEqual(["mov_001", "mov_005"]);
+    expect(closedMoves).toEqual(["mov_001", "mov_013"]);
 
     const instances = content.decks.starter.flatMap((entry) =>
       Array.from({ length: entry.count }, (_, copy) => `${entry.cardId}:${copy}`),
@@ -121,7 +121,8 @@ describe("v1 content", () => {
       mov_002: ["Open", "Half-Open"],
       mov_003: ["Open", "Half-Open"],
       mov_004: ["Open", "Half-Open"],
-      mov_005: ["Open", "Closed", "Half-Open", "Half-Closed"],
+      mov_005: ["Open", "Half-Open"],
+      mov_013: ["Closed", "Half-Closed"],
       mov_006: ["Open", "Closed", "Half-Open", "Half-Closed"],
       mov_007: ["Open", "Closed", "Half-Open", "Half-Closed"],
       mov_008: ["Open", "Closed", "Half-Open", "Half-Closed"],

@@ -51,9 +51,17 @@ internal static class Program
     private static void CheckContent()
     {
         Assert(_content.Version == 1, "content version");
-        Assert(_content.Cards.Count == 22, "dance card count");
+        Assert(_content.Cards.Count == 23, "dance card count");
         Assert(_content.Song.Cards.Count == 16, "song card count");
         Assert(_content.Card("mov_003").Name == "Lead Right Turn", "card lookup");
+        Assert(
+            _content.Card("mov_005").Positions.SequenceEqual(new[] { "Open", "Half-Open" }),
+            "open Cross Body Lead entries"
+        );
+        Assert(
+            _content.Card("mov_013").Positions.SequenceEqual(new[] { "Closed", "Half-Closed" }),
+            "closed Cross Body Lead entries"
+        );
     }
 
     private static void CheckRngParity()

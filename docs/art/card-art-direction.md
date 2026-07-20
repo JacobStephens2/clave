@@ -13,11 +13,18 @@ The v1 dance-card set uses original **Afro-Caribbean figurative expressionism**:
 
 ## Generation record
 
-The 22 images were generated on 2026-07-19 with `gpt-image-2`, `quality=high`, and a `1024x1536` source canvas through the repository-independent image-generation CLI bundled with Codex. [open-position-anchor-prompt.txt](open-position-anchor-prompt.txt) is the anchor brief; [card-art-prompts.jsonl](card-art-prompts.jsonl) contains the exact 21-card batch; and [reconnect-retry-prompt.txt](reconnect-retry-prompt.txt) records the successful retry used for `rec_002`.
+The original 22 source images were generated on 2026-07-19 with `gpt-image-2`, `quality=high`, and a `1024x1536` source canvas through the repository-independent image-generation CLI bundled with Codex. [open-position-anchor-prompt.txt](open-position-anchor-prompt.txt) is the anchor brief; [card-art-prompts.jsonl](card-art-prompts.jsonl) contains the exact 21-card batch; and [reconnect-retry-prompt.txt](reconnect-retry-prompt.txt) records the successful retry used for `rec_002`.
 
 The full-resolution working renders are intentionally excluded from Git. Delivery derivatives are keyed directly by the data-driven card IDs:
 
 - Web: `packages/client/public/card-art/<card-id>.webp`, 512×768, quality 84.
 - Unity: `unity/Clave/Assets/Resources/CardArt/<card-id>.png`, 512×768, loaded with `Resources.Load<Texture2D>`.
+
+The later `mov_013` Closed-entry Cross Body Lead split deliberately reuses the
+foundational `mov_005` composition for now: both cards depict the same traveling
+figure, while their names and position tags distinguish the starting handhold. The
+derivative is duplicated under its own ID so the clients retain data-driven artwork
+lookup. A future art pass may replace it with a more visibly framed Closed-position
+setup without changing content or rendering code.
 
 Run `npm run check:art` after adding or changing card content. It requires exactly one valid browser and Unity asset for every card definition and rejects missing, unexpected, undersized, or incorrectly dimensioned files.

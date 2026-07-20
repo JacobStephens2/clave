@@ -33,3 +33,16 @@ data-driven and lets individual handhold requirements remain tactically meaningf
 The starter deck now contains 2 Open Positions, 1 Closed Position, the four basic
 turns, and 1 Cross Body Lead. Cross Body Lead is the starter's reliable bridge out of
 Closed and replaces the third Open Position; the starter remains eight cards.
+
+## 2026-07-19 — Foundational Cross Body Lead is split by entry family
+
+The former all-position **Cross Body Lead** is now two Beginner Move cards. **Cross
+Body Lead — Open** (`mov_005`) lists Open and Half-Open; **Cross Body Lead — Closed**
+(`mov_013`) lists Closed and Half-Closed. Both remain worth 2 Style. This makes the
+starting handhold a visible card choice instead of hiding two distinct setups behind
+one universal card.
+
+The eight-card starter uses the Closed version, preserving its second route from
+Closed alongside Follow Right Turn. Both versions are always available as Beginner
+lessons, and the Lead full deck divides its former two foundational Cross Body Leads
+into one Open and one Closed copy.

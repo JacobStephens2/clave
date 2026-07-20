@@ -11,13 +11,16 @@ The most important gameplay defect was real: the starter deck contained Closed
 Position but no Move that matched Closed, so that Position could not help open a
 phrase and could strand the shared dance before lessons entered circulation.
 
-The correction is to use the existing Cross Body Lead as the starter's bridge rather
-than add a near-duplicate card. The revised starter has 2 Open Positions, 1 Closed
-Position, the four basic turns, and 1 Cross Body Lead. Follow Right Turn and Cross
-Body Lead both match Closed, so Closed now has two genuine partners in the deck.
+The starter correction keeps 2 Open Positions, 1 Closed Position, the four basic
+turns, and a foundational Cross Body Lead. A follow-up content ruling splits that
+figure into **Cross Body Lead — Open** and **Cross Body Lead — Closed** so its entry
+handhold is visible on the card instead of represented by one universal Move. The
+starter carries the Closed version; together with Follow Right Turn it gives Closed
+two genuine partners in the deck. The Open version remains an always-available
+Beginner lesson.
 
-No new production card was added in this pass. The existing twelve Moves already
-cover the important beginner spine; expansion candidates are recorded below for a
+This split adds one production card while preserving the starter, lesson-supply, and
+full-deck copy totals. The remaining expansion candidates are recorded below for a
 later balance-and-art pass.
 
 ## Interpretation used by the game
@@ -78,7 +81,8 @@ therefore game progression and reward bands, not claims of universal syllabus ra
 | Follow Left Turn           | Open                | Open, Half-Open         | Expanded to the one-hand Open variation; no need to claim a Closed start.                                                           |
 | Lead Right Turn            | Open                | Open, Half-Open         | Expanded to the ordinary joined-hand Open variation.                                                                                |
 | Lead Left Turn             | Open                | Open, Half-Open         | Expanded to the ordinary joined-hand Open variation.                                                                                |
-| Cross Body Lead            | Open, Closed        | all four                | Confirmed in Open and Closed. Half-Open and Half-Closed retain one of the connections used to initiate the same pathway.            |
+| Cross Body Lead — Open     | Open, Closed        | Open, Half-Open         | Split variant. The full and one-hand facing entries now have their own explicit foundational CBL card.                              |
+| Cross Body Lead — Closed   | Open, Closed        | Closed, Half-Closed     | Split variant. Full-frame and one-sided-frame entries remain the starter's reliable bridge from Closed-family states.               |
 | Hesitation                 | Closed              | all four                | Expanded. This card represents the block/check or hesitation family built into a Cross Body pathway, not a frozen closed-hold pose. |
 | CBL — Inside Turn          | Open, Closed        | all four                | Expanded for the same entry-path reason as the base CBL; the turn itself supplies the hand-path change.                             |
 | CBL — Outside Turn         | Open, Closed        | all four                | Expanded for the same entry-path reason as the base CBL.                                                                            |
@@ -101,15 +105,15 @@ therefore game progression and reward bands, not claims of universal syllabus ra
 
 | Position    | Compatible Moves in the full card set | Compatible Moves in the starter |
 | ----------- | ------------------------------------: | ------------------------------: |
-| Open        |                                    12 |                               5 |
+| Open        |                                    12 |                               4 |
 | Closed      |                                     5 |                               2 |
-| Half-Open   |                                    12 |                               5 |
+| Half-Open   |                                    12 |                               4 |
 | Half-Closed |                                     4 |                               1 |
 
 The asymmetry is desirable. Open and Half-Open are flexible turn-pattern states;
 Closed and especially Half-Closed are more constrained, but no state is a dead end.
-Cross Body Lead is the universal beginner bridge, while higher-value cards still ask
-the players to manage position deliberately.
+The two foundational Cross Body Lead cards divide that beginner bridge by entry
+family, while higher-value cards still ask the players to manage position deliberately.
 
 Enumerating the 70 possible four-card opening hands, 64 (91.4%) contain at least one
 matching Position/Move pair—the same opening reliability as before the swap. Of the

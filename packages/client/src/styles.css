@@ -484,18 +484,24 @@ button {
 }
 .room-code {
   background: transparent;
-  border: 0;
+  border: 1px solid transparent;
   margin: auto;
   display: grid;
   text-align: center;
   cursor: pointer;
   min-width: 0;
+  padding: 5px 10px;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
 }
 .room-code small {
   color: var(--muted);
   font-size: 8px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  white-space: nowrap;
 }
 .room-code strong {
   font-size: 11px;
@@ -503,6 +509,41 @@ button {
   max-width: 42vw;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.room-code:hover,
+.room-code:focus-visible {
+  border-color: rgba(226, 167, 53, 0.5);
+  background: rgba(226, 167, 53, 0.08);
+}
+.room-code:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.room-code.copied {
+  border-color: rgba(88, 184, 137, 0.7);
+  background: rgba(88, 184, 137, 0.14);
+  transform: translateY(-1px);
+}
+.room-code.copied small {
+  color: #83d9ae;
+}
+.room-code.failed {
+  border-color: rgba(227, 95, 79, 0.72);
+  background: rgba(227, 95, 79, 0.12);
+}
+.room-code.failed small {
+  color: #f49a8f;
+}
+.room-copy-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 .connection-status {
   color: var(--muted);
@@ -1662,7 +1703,21 @@ button {
   align-items: center;
   gap: 5px;
   color: var(--gold);
+  font: inherit;
+  font-size: 9px;
+  text-transform: uppercase;
+  cursor: pointer;
   transform-origin: center;
+}
+.discard-pile-target:hover,
+.discard-pile-target:focus-visible {
+  border-color: var(--gold);
+  background: rgba(217, 164, 65, 0.16);
+  transform: translateY(-1px);
+}
+.discard-pile-target:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 .discard-pile-target::before {
   content: "▱";
@@ -1672,6 +1727,21 @@ button {
 }
 .discard-pile-target.receiving {
   animation: discard-pile-receive 720ms ease-out;
+}
+.discard-pile-target.accepts-lesson-drop {
+  border-color: var(--gold);
+  background: rgba(217, 164, 65, 0.2);
+  box-shadow: 0 0 0 2px rgba(217, 164, 65, 0.16);
+  color: var(--cream);
+}
+.discard-pile-target.lesson-drop-over {
+  border-color: var(--cream);
+  background: var(--teal);
+  box-shadow:
+    0 0 0 3px var(--gold),
+    4px 5px 0 var(--coral);
+  color: var(--ink);
+  transform: translateY(-3px) scale(1.08);
 }
 .hand-scroll {
   display: grid;
@@ -1748,6 +1818,103 @@ button {
   gap: 15px;
   align-content: start;
   min-width: 0;
+}
+.discard-inspector {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(10, 5, 9, 0.88);
+  backdrop-filter: blur(10px);
+}
+.discard-inspector-panel {
+  width: min(1080px, 94vw);
+  max-height: min(86vh, 820px);
+  min-height: 280px;
+  padding: 22px;
+  border: 2px solid var(--gold);
+  background: var(--indigo);
+  box-shadow: 9px 9px 0 var(--coral);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 18px;
+}
+.discard-inspector-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid rgba(244, 226, 186, 0.22);
+}
+.discard-inspector-heading > div {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: 12px;
+}
+.discard-inspector-heading small {
+  grid-column: 1 / -1;
+  color: var(--coral);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.discard-inspector-heading h2 {
+  margin: 2px 0 0;
+  font-family: Georgia, serif;
+  font-size: clamp(24px, 3vw, 38px);
+  font-weight: 500;
+}
+.discard-inspector-heading span {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+.discard-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 220px));
+  justify-content: center;
+  align-content: start;
+  gap: 16px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 8px 14px 4px;
+  scrollbar-color: var(--wine) transparent;
+}
+.discard-card-grid .dance-card {
+  min-width: 0;
+  min-height: 250px;
+  height: 270px;
+}
+.discard-empty {
+  min-height: 220px;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  color: var(--muted);
+}
+.discard-empty > span {
+  color: var(--gold);
+  font-family: Georgia, serif;
+  font-size: 58px;
+  line-height: 1;
+}
+.discard-empty strong {
+  margin-top: 12px;
+  color: var(--cream);
+  font-family: Georgia, serif;
+  font-size: 24px;
+  font-weight: 500;
+}
+.discard-empty p {
+  margin: 7px 0 0;
+  font-size: 11px;
 }
 .card-inspector {
   position: fixed;
@@ -2443,6 +2610,7 @@ body {
 }
 
 .card-inspector,
+.discard-inspector,
 .dancer-demo-overlay {
   background-color: rgba(7, 24, 32, 0.94);
   background-image: radial-gradient(circle at 50% 45%, rgba(22, 143, 145, 0.2), transparent 46%);
@@ -2451,6 +2619,11 @@ body {
 .dancer-demo-dialog {
   border: 3px solid var(--gold);
   background: var(--indigo);
+  box-shadow: 10px 10px 0 var(--coral);
+}
+
+.discard-inspector-panel {
+  border-width: 3px;
   box-shadow: 10px 10px 0 var(--coral);
 }
 
@@ -2502,6 +2675,7 @@ body {
     min-height: 0;
     overflow-x: auto;
     overflow-y: hidden;
+    padding-top: 6px;
   }
   .hand-scroll .dance-card {
     height: 100%;
@@ -2541,6 +2715,13 @@ body {
   }
   .game-sidebar {
     overflow-y: auto;
+  }
+  .hand-zone {
+    overflow: visible;
+  }
+  .hand-scroll {
+    /* Cover both the held-card bleed and the grid's bottom inset so no table shows below them. */
+    height: calc(100% + clamp(102px, 11vh, 126px));
   }
 }
 
@@ -2814,6 +2995,43 @@ body {
   }
   .dance-card.compact p {
     display: none;
+  }
+}
+
+@media (max-width: 740px) {
+  .discard-inspector {
+    padding: 12px;
+  }
+  .discard-inspector-panel {
+    width: 100%;
+    max-height: 92vh;
+    min-height: 260px;
+    padding: 14px;
+    gap: 12px;
+  }
+  .discard-inspector-heading {
+    align-items: start;
+    padding-bottom: 10px;
+  }
+  .discard-inspector-heading > div {
+    display: block;
+  }
+  .discard-inspector-heading h2 {
+    font-size: 24px;
+  }
+  .discard-inspector-heading span {
+    display: block;
+    margin-top: 3px;
+  }
+  .discard-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+    padding-inline: 0;
+  }
+  .discard-card-grid .dance-card {
+    min-width: 0;
+    min-height: 230px;
+    height: 250px;
   }
 }
 

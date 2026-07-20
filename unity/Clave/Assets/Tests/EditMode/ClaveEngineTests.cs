@@ -19,9 +19,11 @@ namespace Clave.Tests
         public void LoadsTheSharedV1Content()
         {
             Assert.That(_content.Version, Is.EqualTo(1));
-            Assert.That(_content.Cards.Count, Is.EqualTo(22));
+            Assert.That(_content.Cards.Count, Is.EqualTo(23));
             Assert.That(_content.Song.Cards.Count, Is.EqualTo(16));
             Assert.That(_content.Card("mov_003").Name, Is.EqualTo("Lead Right Turn"));
+            Assert.That(_content.Card("mov_005").Positions, Is.EqualTo(new[] { "Open", "Half-Open" }));
+            Assert.That(_content.Card("mov_013").Positions, Is.EqualTo(new[] { "Closed", "Half-Closed" }));
         }
 
         [Test]

@@ -43,6 +43,7 @@ export interface PlayerSnapshot {
   self: {
     role: Role;
     hand: CardView[];
+    discard: CardView[];
     drawCount: number;
     discardCount: number;
     money: number;
@@ -142,6 +143,7 @@ export function snapshotFor(
     self: {
       role,
       hand: self.hand.map((entry) => cardView(entry, cards)!),
+      discard: self.discardPile.map((entry) => cardView(entry, cards)!),
       drawCount: self.drawPile.length,
       discardCount: self.discardPile.length,
       money: self.money,

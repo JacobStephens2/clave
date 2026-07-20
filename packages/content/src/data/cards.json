@@ -112,10 +112,18 @@
     },
     {
       "id": "mov_005",
-      "name": "Cross Body Lead",
+      "name": "Cross Body Lead — Open",
       "tier": "B",
       "type": "move",
-      "positions": ["Open", "Closed", "Half-Open", "Half-Closed"],
+      "positions": ["Open", "Half-Open"],
+      "style": 2
+    },
+    {
+      "id": "mov_013",
+      "name": "Cross Body Lead — Closed",
+      "tier": "B",
+      "type": "move",
+      "positions": ["Closed", "Half-Closed"],
       "style": 2
     },
     {
@@ -227,7 +235,7 @@
       { "cardId": "mov_002", "count": 1 },
       { "cardId": "mov_003", "count": 1 },
       { "cardId": "mov_004", "count": 1 },
-      { "cardId": "mov_005", "count": 1 }
+      { "cardId": "mov_013", "count": 1 }
     ],
     "beginnerSupply": [
       "pos_001",
@@ -237,6 +245,7 @@
       "mov_003",
       "mov_004",
       "mov_005",
+      "mov_013",
       "mov_006",
       "rec_001"
     ],
@@ -264,7 +273,8 @@
         { "cardId": "pos_004", "count": 1 },
         { "cardId": "mov_003", "count": 2 },
         { "cardId": "mov_004", "count": 1 },
-        { "cardId": "mov_005", "count": 2 },
+        { "cardId": "mov_005", "count": 1 },
+        { "cardId": "mov_013", "count": 1 },
         { "cardId": "mov_006", "count": 1 },
         { "cardId": "mov_008", "count": 1 },
         { "cardId": "mov_010", "count": 1 },

@@ -34,7 +34,8 @@ happens inside its 8-count.
 | mov_002 | Follow Left Turn               | B    | Open, Half-Open                      | 1     |
 | mov_003 | Lead Right Turn                | B    | Open, Half-Open                      | 1     |
 | mov_004 | Lead Left Turn                 | B    | Open, Half-Open                      | 1     |
-| mov_005 | Cross Body Lead                | B    | Open, Closed, Half-Open, Half-Closed | 2     |
+| mov_005 | Cross Body Lead — Open         | B    | Open, Half-Open                      | 2     |
+| mov_013 | Cross Body Lead — Closed       | B    | Closed, Half-Closed                  | 2     |
 | mov_006 | Hesitation                     | B    | Open, Closed, Half-Open, Half-Closed | 1     |
 | mov_007 | Cross Body Lead — Inside Turn  | I    | Open, Closed, Half-Open, Half-Closed | 3     |
 | mov_008 | Cross Body Lead — Outside Turn | I    | Open, Closed, Half-Open, Half-Closed | 3     |
@@ -76,7 +77,7 @@ Played from hand when you stumble; they replace the normal −2 Connection cost.
 | mov_002 Follow Left Turn  | 1      |
 | mov_003 Lead Right Turn   | 1      |
 | mov_004 Lead Left Turn    | 1      |
-| mov_005 Cross Body Lead   | 1      |
+| mov_013 CBL — Closed      | 1      |
 
 ### Beginner supply (always available, $1)
 
@@ -85,7 +86,8 @@ Played from hand when you stumble; they replace the normal −2 Connection cost.
 | pos_001 Open Position       | 6      |
 | pos_002 Closed Position     | 6      |
 | mov_001–mov_004 (each turn) | 2 each |
-| mov_005 Cross Body Lead     | 4      |
+| mov_005 CBL — Open          | 2      |
+| mov_013 CBL — Closed        | 2      |
 | mov_006 Hesitation          | 3      |
 | rec_001 Return to Basic     | 4      |
 
@@ -154,7 +156,8 @@ applies to the active player's 8-count only.
 | pos_004 Half-Closed Position | 1      |
 | mov_003 Lead Right Turn      | 2      |
 | mov_004 Lead Left Turn       | 1      |
-| mov_005 Cross Body Lead      | 2      |
+| mov_005 CBL — Open           | 1      |
+| mov_013 CBL — Closed         | 1      |
 | mov_006 Hesitation           | 1      |
 | mov_008 CBL — Outside Turn   | 1      |
 | mov_010 Change of Place      | 1      |

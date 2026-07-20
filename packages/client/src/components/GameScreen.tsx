@@ -9,6 +9,7 @@ const roleName = (role: Role) => (role === "lead" ? "Lead" : "Follow");
 type InspectableCard = CardView | DanceCardDefinition;
 type OpeningAction = Extract<GameAction, { type: "PLAY_OPEN" }>;
 type LessonBuyAction = Extract<GameAction, { type: "BUY_LESSON" }>;
+type RoomCopyStatus = "idle" | "copied" | "failed";
 
 interface LessonFlight {
   key: number;
@@ -22,6 +23,28 @@ interface LessonFlight {
   midpointY: number;
   scale: number;
   flying: boolean;
+}
+
+async function copyText(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const previousFocus =
+    document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.readOnly = true;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  textarea.style.pointerEvents = "none";
+  document.body.append(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  previousFocus?.focus();
+  if (!copied) throw new Error("The browser did not copy the room code.");
 }
 
 function actionForCard(actions: GameAction[], instanceId: string): GameAction | undefined {
@@ -238,6 +261,9 @@ function Market({
   view,
   onInspect,
   onBuyLesson,
+  onLessonDragStart,
+  onLessonDragEnd,
+  draggingLessonKey,
   pendingLesson,
 }: {
   view: PlayerSnapshot;
@@ -247,6 +273,13 @@ function Market({
     action: LessonBuyAction,
     sourceButton: HTMLButtonElement,
   ) => void;
+  onLessonDragStart: (
+    card: DanceCardDefinition,
+    action: LessonBuyAction,
+    event: React.DragEvent<HTMLElement>,
+  ) => void;
+  onLessonDragEnd: () => void;
+  draggingLessonKey: string | null;
   pendingLesson: { source: LessonBuyAction["source"]; cardId: string } | null;
 }) {
   const buys = view.legalActions.filter(
@@ -270,15 +303,23 @@ function Market({
           const buy = findBuy(source, card.id);
           const purchasePending =
             pendingLesson?.source === source && pendingLesson.cardId === card.id;
+          const draggable = Boolean(buy && !pendingLesson);
+          const lessonKey = `${source}:${card.id}`;
           return (
             <DanceCard
               key={`${source}-${card.id}-${index}`}
               value={card}
               compact
-              disabled={!buy || purchasePending}
+              disabled={!buy || Boolean(pendingLesson)}
               actionLabel={purchasePending ? "Learning…" : `Learn · $${cost}`}
               onAction={buy ? (event) => onBuyLesson(card, buy, event.currentTarget) : undefined}
               onInspect={() => onInspect(card)}
+              draggable={draggable}
+              dragging={draggingLessonKey === lessonKey}
+              onDragStart={
+                buy && draggable ? (event) => onLessonDragStart(card, buy, event) : undefined
+              }
+              onDragEnd={draggable ? onLessonDragEnd : undefined}
             />
           );
         })}
@@ -526,6 +567,11 @@ function Hand({
   onCardDragEnd,
   discardTargetRef,
   discardReceiving,
+  acceptsLessonDrop,
+  lessonDropOver,
+  onLessonDragOverChange,
+  onLessonDrop,
+  onOpenDiscard,
 }: {
   view: PlayerSnapshot;
   dispatch: (action: GameAction) => void;
@@ -537,8 +583,13 @@ function Hand({
   draggingCardId: string | null;
   onCardDragStart: (instanceId: string, event: React.DragEvent<HTMLElement>) => void;
   onCardDragEnd: () => void;
-  discardTargetRef: React.RefObject<HTMLSpanElement | null>;
+  discardTargetRef: React.RefObject<HTMLButtonElement | null>;
   discardReceiving: boolean;
+  acceptsLessonDrop: boolean;
+  lessonDropOver: boolean;
+  onLessonDragOverChange: (over: boolean) => void;
+  onLessonDrop: (lessonKey: string) => void;
+  onOpenDiscard: () => void;
 }) {
   const isOwnTurn =
     view.activeRole === view.viewerRole ||
@@ -556,13 +607,46 @@ function Hand({
         </div>
         <div>
           <span>Deck {view.self.drawCount}</span>
-          <span
+          <button
+            type="button"
             ref={discardTargetRef}
-            className={`discard-pile-target ${discardReceiving ? "receiving" : ""}`}
-            aria-label={`Discard pile, ${view.self.discardCount} cards`}
+            className={`discard-pile-target ${discardReceiving ? "receiving" : ""} ${acceptsLessonDrop ? "accepts-lesson-drop" : ""} ${lessonDropOver ? "lesson-drop-over" : ""}`}
+            aria-label={
+              acceptsLessonDrop
+                ? "Drop lesson here to buy it"
+                : `View discard pile, ${view.self.discardCount} cards`
+            }
+            aria-haspopup="dialog"
+            onClick={onOpenDiscard}
+            onDragEnter={(event) => {
+              if (!acceptsLessonDrop) return;
+              event.preventDefault();
+              onLessonDragOverChange(true);
+            }}
+            onDragOver={(event) => {
+              if (!acceptsLessonDrop) return;
+              event.preventDefault();
+              event.dataTransfer.dropEffect = "move";
+              onLessonDragOverChange(true);
+            }}
+            onDragLeave={(event) => {
+              if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+              onLessonDragOverChange(false);
+            }}
+            onDrop={(event) => {
+              if (!acceptsLessonDrop) return;
+              event.preventDefault();
+              const lessonKey = event.dataTransfer.getData("application/x-clave-lesson");
+              onLessonDragOverChange(false);
+              if (lessonKey) onLessonDrop(lessonKey);
+            }}
           >
-            Discard {view.self.discardCount}
-          </span>
+            {acceptsLessonDrop
+              ? lessonDropOver
+                ? "Release to learn"
+                : "Drop lesson here"
+              : `Discard ${view.self.discardCount}`}
+          </button>
         </div>
       </div>
       <div className="hand-scroll">
@@ -652,6 +736,79 @@ function GameLog({ view }: { view: PlayerSnapshot }) {
         ))}
       </ol>
     </details>
+  );
+}
+
+function DiscardPileInspector({
+  cards,
+  role,
+  onInspect,
+  onClose,
+}: {
+  cards: CardView[];
+  role: Role;
+  onInspect: (card: CardView) => void;
+  onClose: () => void;
+}) {
+  const closeButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !document.querySelector(".card-inspector")) onClose();
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    closeButton.current?.focus();
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+      if (previousFocus instanceof HTMLElement) previousFocus.focus();
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="discard-inspector"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="discard-inspector-title"
+      onClick={onClose}
+    >
+      <section className="discard-inspector-panel" onClick={(event) => event.stopPropagation()}>
+        <header className="discard-inspector-heading">
+          <div>
+            <small>Most recent first</small>
+            <h2 id="discard-inspector-title">{roleName(role)} discard pile</h2>
+            <span>{cards.length} cards</span>
+          </div>
+          <button ref={closeButton} type="button" className="inspector-close" onClick={onClose}>
+            Close
+          </button>
+        </header>
+        {cards.length > 0 ? (
+          <div className="discard-card-grid">
+            {[...cards].reverse().map((card) => (
+              <DanceCard
+                key={card.instanceId}
+                value={card}
+                compact
+                onInspect={() => onInspect(card)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="discard-empty">
+            <span aria-hidden="true">▱</span>
+            <strong>No cards discarded yet</strong>
+            <p>Cards you play, replace, or freshen away will collect here.</p>
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
 
@@ -775,20 +932,42 @@ export function GameScreen() {
   } = useAppStore();
   const [selectedDiscards, setSelectedDiscards] = useState<Set<string>>(new Set());
   const [inspectedCard, setInspectedCard] = useState<InspectableCard | null>(null);
+  const [discardOpen, setDiscardOpen] = useState(false);
   const [pendingOpenPositionId, setPendingOpenPositionId] = useState<string | null>(null);
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
   const [floorDragOver, setFloorDragOver] = useState(false);
+  const [draggingLessonKey, setDraggingLessonKey] = useState<string | null>(null);
+  const [lessonDropOver, setLessonDropOver] = useState(false);
   const [lessonFlight, setLessonFlight] = useState<LessonFlight | null>(null);
   const [dancerDemoOpen, setDancerDemoOpen] = useState(false);
-  const discardTargetRef = useRef<HTMLSpanElement>(null);
+  const [roomCopyStatus, setRoomCopyStatus] = useState<RoomCopyStatus>("idle");
+  const discardTargetRef = useRef<HTMLButtonElement>(null);
+  const lessonDragRef = useRef<{
+    key: string;
+    card: DanceCardDefinition;
+    action: LessonBuyAction;
+    sourceCard: HTMLElement;
+  } | null>(null);
   const lessonFlightKey = useRef(0);
+  const roomCopyReset = useRef<number | null>(null);
   useEffect(() => {
     setSelectedDiscards(new Set());
     setPendingOpenPositionId(null);
     setDraggingCardId(null);
     setFloorDragOver(false);
+    setDraggingLessonKey(null);
+    setLessonDropOver(false);
+    lessonDragRef.current = null;
+    setDiscardOpen(false);
   }, [view?.sequence, view?.phase, view?.viewerRole, passTo]);
   useEffect(() => setLessonFlight(null), [view?.viewerRole, passTo]);
+  useEffect(() => {
+    setRoomCopyStatus("idle");
+    if (roomCopyReset.current !== null) window.clearTimeout(roomCopyReset.current);
+    return () => {
+      if (roomCopyReset.current !== null) window.clearTimeout(roomCopyReset.current);
+    };
+  }, [onlineSeat?.code]);
   useEffect(() => {
     if (!lessonFlight || lessonFlight.flying || !view) return;
     if (view.sequence <= lessonFlight.startingSequence) return;
@@ -875,13 +1054,28 @@ export function GameScreen() {
     if (action) dispatch(action);
   };
 
+  const copyRoomCode = async () => {
+    if (!onlineSeat) return;
+    if (roomCopyReset.current !== null) window.clearTimeout(roomCopyReset.current);
+    try {
+      await copyText(onlineSeat.code);
+      setRoomCopyStatus("copied");
+    } catch {
+      setRoomCopyStatus("failed");
+    }
+    roomCopyReset.current = window.setTimeout(() => {
+      setRoomCopyStatus("idle");
+      roomCopyReset.current = null;
+    }, 2_400);
+  };
+
   const buyLesson = (
     card: DanceCardDefinition,
     action: LessonBuyAction,
-    sourceButton: HTMLButtonElement,
+    sourceElement: HTMLElement,
   ) => {
     if (!view || lessonFlight) return;
-    const sourceCard = sourceButton.closest<HTMLElement>(".dance-card");
+    const sourceCard = sourceElement.closest<HTMLElement>(".dance-card");
     const discardTarget = discardTargetRef.current;
     if (!sourceCard || !discardTarget) {
       dispatch(action);
@@ -918,6 +1112,40 @@ export function GameScreen() {
     dispatch(action);
   };
 
+  const beginLessonDrag = (
+    card: DanceCardDefinition,
+    action: LessonBuyAction,
+    event: React.DragEvent<HTMLElement>,
+  ) => {
+    if (lessonFlight) {
+      event.preventDefault();
+      return;
+    }
+    const key = `${action.source}:${card.id}`;
+    lessonDragRef.current = { key, card, action, sourceCard: event.currentTarget };
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("application/x-clave-lesson", key);
+    event.dataTransfer.setData("text/plain", card.name);
+    setDraggingLessonKey(key);
+    setLessonDropOver(false);
+    setInspectedCard(null);
+  };
+
+  const endLessonDrag = () => {
+    lessonDragRef.current = null;
+    setDraggingLessonKey(null);
+    setLessonDropOver(false);
+  };
+
+  const dropLesson = (lessonKey: string) => {
+    const lesson = lessonDragRef.current;
+    if (!lesson || lesson.key !== lessonKey) return;
+    lessonDragRef.current = null;
+    setDraggingLessonKey(null);
+    setLessonDropOver(false);
+    buyLesson(lesson.card, lesson.action, lesson.sourceCard);
+  };
+
   if (!view)
     return (
       <main className="loading-table">
@@ -938,15 +1166,43 @@ export function GameScreen() {
           CLAVE
         </button>
         {mode === "online" && onlineSeat ? (
-          <button
-            type="button"
-            className="room-code"
-            onClick={() => void navigator.clipboard?.writeText(onlineSeat.code)}
-            title="Copy room code"
-          >
-            <small>Room · tap to copy</small>
-            <strong>{onlineSeat.code}</strong>
-          </button>
+          <>
+            <button
+              type="button"
+              className={`room-code ${roomCopyStatus}`}
+              data-copy-state={roomCopyStatus}
+              onClick={() => void copyRoomCode()}
+              title="Copy room code"
+              aria-label={
+                roomCopyStatus === "copied"
+                  ? `Room ${onlineSeat.code} copied to clipboard`
+                  : roomCopyStatus === "failed"
+                    ? `Room ${onlineSeat.code} could not be copied. Tap to try again`
+                    : `Copy room code ${onlineSeat.code}`
+              }
+            >
+              <small>
+                {roomCopyStatus === "copied"
+                  ? "Copied!"
+                  : roomCopyStatus === "failed"
+                    ? "Copy failed · tap again"
+                    : "Room · tap to copy"}
+              </small>
+              <strong>{onlineSeat.code}</strong>
+            </button>
+            <span
+              className="room-copy-announcement"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {roomCopyStatus === "copied"
+                ? `Room ${onlineSeat.code} copied to clipboard.`
+                : roomCopyStatus === "failed"
+                  ? `Room ${onlineSeat.code} could not be copied. Tap to try again.`
+                  : ""}
+            </span>
+          </>
         ) : (
           <span className="mode-label">Pass & play</span>
         )}
@@ -996,6 +1252,11 @@ export function GameScreen() {
             }}
             discardTargetRef={discardTargetRef}
             discardReceiving={Boolean(lessonFlight?.flying)}
+            acceptsLessonDrop={Boolean(draggingLessonKey)}
+            lessonDropOver={lessonDropOver}
+            onLessonDragOverChange={setLessonDropOver}
+            onLessonDrop={dropLesson}
+            onOpenDiscard={() => setDiscardOpen(true)}
             toggleDiscard={(id) =>
               setSelectedDiscards((current) => {
                 const next = new Set(current);
@@ -1011,6 +1272,9 @@ export function GameScreen() {
             view={view}
             onInspect={setInspectedCard}
             onBuyLesson={buyLesson}
+            onLessonDragStart={beginLessonDrag}
+            onLessonDragEnd={endLessonDrag}
+            draggingLessonKey={draggingLessonKey}
             pendingLesson={
               lessonFlight ? { source: lessonFlight.source, cardId: lessonFlight.card.id } : null
             }
@@ -1042,6 +1306,14 @@ export function GameScreen() {
       )}
       {inspectedCard && (
         <CardInspector card={inspectedCard} onClose={() => setInspectedCard(null)} />
+      )}
+      {discardOpen && (
+        <DiscardPileInspector
+          cards={view.self.discard}
+          role={view.viewerRole}
+          onInspect={setInspectedCard}
+          onClose={() => setDiscardOpen(false)}
+        />
       )}
       {dancerDemoOpen && <DancerDemo view={view} onClose={() => setDancerDemoOpen(false)} />}
     </main>

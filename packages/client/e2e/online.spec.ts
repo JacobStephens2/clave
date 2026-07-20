@@ -9,7 +9,9 @@ async function finishTurn(page: Page) {
 test("keeps two authoritative screens synchronized through reload and song end", async ({
   browser,
 }) => {
-  const leadContext: BrowserContext = await browser.newContext();
+  const leadContext: BrowserContext = await browser.newContext({
+    permissions: ["clipboard-read", "clipboard-write"],
+  });
   const followContext: BrowserContext = await browser.newContext();
   const lead = await leadContext.newPage();
   const follow = await followContext.newPage();
@@ -18,7 +20,13 @@ test("keeps two authoritative screens synchronized through reload and song end",
   await lead.getByRole("button", { name: /Two devices/ }).click();
   await lead.getByRole("button", { name: "Create room" }).click();
   await expect(lead.locator(".connection-status")).toContainText("connected");
-  const code = (await lead.locator(".room-code strong").textContent())!.trim();
+  const roomCode = lead.locator(".room-code");
+  const code = (await roomCode.locator("strong").textContent())!.trim();
+  await roomCode.click();
+  await expect(roomCode).toContainText("Copied!");
+  await expect(roomCode).toHaveAccessibleName(`Room ${code} copied to clipboard`);
+  await expect(lead.getByRole("status")).toHaveText(`Room ${code} copied to clipboard.`);
+  await expect.poll(() => lead.evaluate(() => navigator.clipboard.readText())).toBe(code);
 
   await follow.goto("/");
   await follow.getByRole("button", { name: /Two devices/ }).click();

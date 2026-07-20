@@ -68,7 +68,7 @@ lessons to learn new cards.
    - 2 × Open Position, 1 × Closed Position
    - 1 × Follow Right Turn, 1 × Follow Left Turn
    - 1 × Lead Right Turn, 1 × Lead Left Turn
-   - 1 × Cross Body Lead
+   - 1 × Cross Body Lead — Closed
 3. Each player shuffles their deck and draws a hand of **4 cards**.
    _Mulligan:_ if your opening hand contains no Position card with a matching Move
    card, you may reveal it, shuffle it back, and draw a new hand once.
@@ -141,10 +141,10 @@ position and a matching move.
 A stumble replaces only the **Dance** step of the turn. Unless Connection reaches 0,
 the player may still take a lesson and must still freshen up normally.
 
-> **Example.** The position is Closed. Ana plays **Cross Body Lead** (tags: Open,
-> Closed — it matches) for 2 Style, then transitions by playing **Open Position** on
-> top of Closed, and flourishes the move with **Arm Overhead** for 1 more Style. Three
-> cards, 3 Style, and the couple now stands in Open.
+> **Example.** The position is Closed. Ana plays **Cross Body Lead — Closed** (tags:
+> Closed, Half-Closed — it matches) for 2 Style, then transitions by playing **Open
+> Position** on top of Closed, and flourishes the move with **Arm Overhead** for 1 more
+> Style. Three cards, 3 Style, and the couple now stands in Open.
 
 ## 7. The Song
 

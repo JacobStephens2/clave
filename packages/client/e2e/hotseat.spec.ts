@@ -101,24 +101,56 @@ test("opens with a sequential Position-then-Move drag instead of pair buttons", 
   await expect(page.locator(".hand-heading strong")).toHaveText("2 cards");
 });
 
-test("animates a purchased lesson card into the discard pile", async ({ page }) => {
+test("animates a lesson into an inspectable discard pile", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Pass & play/ }).click();
   await finishSetup(page);
+
+  const discardPile = page.locator(".discard-pile-target");
+  await discardPile.click();
+  const emptyDialog = page.getByRole("dialog", { name: "Lead discard pile" });
+  await expect(emptyDialog).toBeVisible();
+  await expect(emptyDialog.getByText("No cards discarded yet")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(emptyDialog).toBeHidden();
+  await expect(discardPile).toBeFocused();
+
   await page.getByRole("button", { name: "Dance the basic" }).click();
 
   const beginnerLessons = page.locator(".market-section").filter({ hasText: "Beginner supply" });
-  const learnButtons = beginnerLessons.getByRole("button", { name: "Learn · $1" });
-  expect(await learnButtons.count()).toBeGreaterThan(0);
-  await learnButtons.first().click();
+  const availableLessons = beginnerLessons.locator(".dance-card.playable");
+  expect(await availableLessons.count()).toBeGreaterThan(0);
+  const learnedCard = availableLessons.first();
+  const learnedCardName = await learnedCard.locator("h4").innerText();
+  const learnButton = learnedCard.getByRole("button", { name: "Learn · $1" });
+  await expect(learnButton).toBeEnabled();
+  if (testInfo.project.name === "mobile-chrome") await learnButton.click();
+  else await learnedCard.dragTo(discardPile);
 
   const flight = page.locator(".lesson-card-flight.flying");
-  const discardPile = page.locator(".discard-pile-target");
   await expect(flight).toBeVisible();
   await expect(discardPile).toHaveText("Discard 1");
   await expect(discardPile).toHaveClass(/receiving/);
   await expect(flight).toBeHidden({ timeout: 2_000 });
   await expect(discardPile).not.toHaveClass(/receiving/);
+
+  await discardPile.click();
+  const dialog = page.getByRole("dialog", { name: "Lead discard pile" });
+  await expect(dialog).toBeVisible();
+  const discardedCards = dialog.locator(".discard-card-grid .dance-card");
+  await expect(discardedCards).toHaveCount(1);
+  await expect(discardedCards.locator("h4")).toHaveText(learnedCardName);
+
+  await discardedCards.click();
+  const cardDetail = page.locator(".card-inspector");
+  await expect(cardDetail).toBeVisible();
+  await expect(cardDetail.locator("h4")).toHaveText(learnedCardName);
+  await page.keyboard.press("Escape");
+  await expect(cardDetail).toBeHidden();
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+  await expect(discardPile).toBeFocused();
 });
 
 test("previews animated Position, Move, and Flourish choreography", async ({ page }) => {
@@ -167,9 +199,14 @@ test("keeps a readable hand in a 13-inch laptop viewport and enlarges cards", as
   await expect(firstArtwork).toBeVisible();
   expect(await firstArtwork.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(512);
   const cardBox = await firstCard.boundingBox();
+  const cardNameBox = await firstCard.locator("h4").boundingBox();
   expect(cardBox).not.toBeNull();
+  expect(cardNameBox).not.toBeNull();
   expect(cardBox!.y).toBeLessThan(900);
-  expect(cardBox!.y + cardBox!.height).toBeLessThanOrEqual(1139);
+  expect(cardNameBox!.y + cardNameBox!.height).toBeLessThanOrEqual(1139);
+  expect(cardBox!.y + cardBox!.height).toBeGreaterThan(1139 + 32);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(1139);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
 
   await firstCard.click({ position: { x: 70, y: 80 } });
   const enlarged = page.locator(".card-inspector .dance-card");
