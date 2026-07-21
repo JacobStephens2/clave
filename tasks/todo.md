@@ -2,3 +2,4 @@
 - [ ] Phase 3 human gate (clave-plan): play a complete hot-seat game on one Android phone and one MacBook, kill/reload mid-game on the phone, and log a digital playtest with Mel
 - [ ] Phase 4 physical/operations gate (clave-plan): play on two home-Wi-Fi devices and drill a mid-game server kill plus ENGINE_VERSION upgrade resume
 - [ ] Phase 5 launch (clave-plan): deploy the supplied Apache/Certbot + systemd service to clave.dance, cut over and verify the playclave.com redirect, run the three-device smoke matrix, latency/reconnect/crash/upgrade/restore drills, and complete the 10-item launch checklist
+- [ ] Implement the authenticated admin.clave.dance room console from docs/plans/admin-ui-plan.md, including sanitized read models, coordinated room lifecycle controls, audit logging, and verified backup-before-clear
