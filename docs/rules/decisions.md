@@ -18,7 +18,7 @@ v1 of Clave includes the lessons module.
 
 A stumble replaces only step 2, **Dance**. If the stumble does not reduce Connection
 to 0, the active player continues to step 3 (the optional lesson) and step 4
-(freshen up). This keeps “no other dance cards” scoped to the dance step and avoids a
+(cleanup). This keeps “no other dance cards” scoped to the dance step and avoids a
 bad-hand death spiral. Connection reaching 0 still ends the game immediately.
 
 ## 2026-07-19 — Position tags describe entry compatibility
@@ -46,3 +46,32 @@ The eight-card starter uses the Closed version, preserving its second route from
 Closed alongside Follow Right Turn. Both versions are always available as Beginner
 lessons, and the Lead full deck divides its former two foundational Cross Body Leads
 into one Open and one Closed copy.
+
+## 2026-07-20 — The song begins in Open Position
+
+Before either player shuffles, the Lead places one Open Position from their starter
+deck on the floor. It remains a Lead-owned card and is discarded normally when a
+transition, stumble, or phrase ending clears it. The first turn therefore follows the
+normal established-floor order: **Move, optional Position, optional Flourish**. This
+starting card is not a Position played during that turn.
+
+Only the beginning of the game receives this preset Position. A later empty floor—at
+the second phrase or after a stumble—still requires an atomic matching Position + Move
+opening. Opening-hand mulligans now check for a Move compatible with the visible Open
+Position. The digital floor is displayed as Move → Position → Flourish to teach the
+usual play sequence; an empty-floor Position may still be staged in the middle slot
+before its matching Move is supplied.
+
+## 2026-07-20 — End-of-turn cleanup discards the whole hand
+
+At the end of every turn, the active player discards **all** cards remaining in their
+hand and draws a new hand of four. There is no choice to retain cards or discard only
+some of them. If the draw pile runs out, the discard pile is shuffled and drawing
+continues, following the standard deck-building cleanup rhythm exemplified by
+Dominion.
+
+This ruling replaces the former optional “Freshen Up” selection. A surviving stumble
+still proceeds through the optional lesson and mandatory cleanup; only the contents
+of cleanup have changed. The web client commits cleanup when the player finishes the
+lesson step and animates the entire remaining hand into the discard pile before the
+privacy handoff appears.

@@ -5,7 +5,7 @@ import { applyOk, readyGame, setHand } from "./helpers.js";
 describe("undo · FR-13", () => {
   it("restores the active player's turn checkpoint, including score, hand, table, market, and RNG", () => {
     let state = readyGame();
-    setHand(state, "lead", ["pos_001", "mov_005", "pos_002", "flo_001"]);
+    setHand(state, "lead", ["mov_005", "pos_002", "flo_001", "rec_001"]);
     state.checkpoint = {
       ...state.checkpoint!,
       players: structuredClone(state.players),
@@ -17,12 +17,16 @@ describe("undo · FR-13", () => {
       turnDance: structuredClone(state.turnDance),
     };
     const checkpointHash = hashCanonical(state.checkpoint);
-    const [position, move] = state.players.lead.hand;
+    const [move, position] = state.players.lead.hand;
     state = applyOk(state, {
-      type: "PLAY_OPEN",
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: move!.instanceId,
+    });
+    state = applyOk(state, {
+      type: "TRANSITION",
       role: "lead",
       positionInstanceId: position!.instanceId,
-      moveInstanceId: move!.instanceId,
     });
     state = applyOk(state, { type: "END_DANCE", role: "lead" });
     state.players.lead.money = 5;

@@ -10,7 +10,6 @@ function progress(actions: GameAction[]): GameAction {
     actions.find((action) => action.type === "PLAY_MOVE") ??
     actions.find((action) => action.type === "END_DANCE") ??
     actions.find((action) => action.type === "END_LESSON") ??
-    actions.find((action) => action.type === "FRESHEN") ??
     actions[0]!
   );
 }
@@ -31,10 +30,8 @@ describe("engine properties", () => {
           state = result.state;
           expect(state.shared.connection).toBeGreaterThanOrEqual(0);
           expect(state.shared.connection).toBeLessThanOrEqual(content.rules.maximumConnection);
-          if (state.phase !== "freshen") {
-            expect(state.players.lead.hand.length).toBeLessThanOrEqual(content.rules.handSize);
-            expect(state.players.follow.hand.length).toBeLessThanOrEqual(content.rules.handSize);
-          }
+          expect(state.players.lead.hand.length).toBeLessThanOrEqual(content.rules.handSize);
+          expect(state.players.follow.hand.length).toBeLessThanOrEqual(content.rules.handSize);
           steps += 1;
         }
         expect(["completed", "lost"]).toContain(state.status);

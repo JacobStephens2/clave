@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { CardIdSchema, PositionSchema, SongIdSchema } from "@clave/content";
 
-export const ENGINE_VERSION = 1;
+export const ENGINE_VERSION = 3;
 export const RoleSchema = z.enum(["lead", "follow"]);
 export type Role = z.infer<typeof RoleSchema>;
 
@@ -117,7 +117,7 @@ export const GameStateSchema = z.object({
   terminalReason: z.string().nullable(),
   activeRole: RoleSchema,
   setupRole: RoleSchema,
-  phase: z.enum(["mulligan", "dance", "lesson", "freshen", "terminal"]),
+  phase: z.enum(["mulligan", "dance", "lesson", "terminal"]),
   songIndex: z.number().int().min(-1).max(15),
   currentSongId: SongIdSchema.nullable(),
   players: z.object({ lead: PlayerStateSchema, follow: PlayerStateSchema }),
@@ -157,7 +157,6 @@ export const GameActionSchema = z.discriminatedUnion("type", [
   }),
   ActorSchema.extend({ type: z.literal("LEARN_FROM_PARTNER"), cardId: CardIdSchema }),
   ActorSchema.extend({ type: z.literal("END_LESSON") }),
-  ActorSchema.extend({ type: z.literal("FRESHEN"), discardInstanceIds: z.array(z.string()) }),
   ActorSchema.extend({ type: z.literal("SIGNAL_CARD"), instanceId: z.string() }),
   ActorSchema.extend({ type: z.literal("CLEAR_SIGNAL") }),
   ActorSchema.extend({ type: z.literal("UNDO_TURN") }),

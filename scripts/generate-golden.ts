@@ -1,4 +1,5 @@
 import { content, contentBytes, contentHash, hashCanonical } from "@clave/content";
+import { writeFileSync } from "node:fs";
 import {
   ENGINE_VERSION,
   applyAction,
@@ -43,7 +44,6 @@ function run(seed: number, strategy: Strategy) {
       if (purchase) take(purchase);
     }
     take({ type: "END_LESSON", role });
-    take({ type: "FRESHEN", role, discardInstanceIds: [] });
   }
   return {
     id: `${strategy}-${seed}`,
@@ -58,16 +58,21 @@ function run(seed: number, strategy: Strategy) {
   };
 }
 
-console.log(
-  JSON.stringify(
-    [
-      run(101, "basic"),
-      run(202, "basic"),
-      run(303, "stumble-heavy"),
-      run(404, "connection-loss"),
-      run(505, "maximum-lessons"),
-    ],
-    null,
-    2,
-  ),
-);
+const output = `${JSON.stringify(
+  [
+    run(101, "basic"),
+    run(202, "basic"),
+    run(303, "stumble-heavy"),
+    run(404, "connection-loss"),
+    run(505, "maximum-lessons"),
+  ],
+  null,
+  2,
+)}\n`;
+
+if (process.argv.includes("--write"))
+  writeFileSync(
+    new URL("../packages/engine/fixtures/golden-replays.json", import.meta.url),
+    output,
+  );
+else process.stdout.write(output);

@@ -11,16 +11,22 @@ describe("setup · rulebook §4", () => {
     expect(left.activeRole).toBe("lead");
     expect(left.players.lead.hand).toHaveLength(content.rules.handSize);
     expect(left.players.follow.hand).toHaveLength(content.rules.handSize);
-    expect(left.players.lead.hand.length + left.players.lead.drawPile.length).toBe(8);
+    expect(left.players.lead.hand.length + left.players.lead.drawPile.length).toBe(7);
+    expect(
+      left.players.lead.hand.length +
+        left.players.lead.drawPile.length +
+        Number(left.table.position?.owner === "lead"),
+    ).toBe(8);
+    expect(left.table.position).toMatchObject({ cardId: "pos_001", owner: "lead" });
     expect(left.shared).toEqual({ connection: 4, style: 0 });
     expect(left.market.intermediateDisplay).toHaveLength(3);
     expect(left.market.advancedDisplay).toHaveLength(0);
     expect(left.songIndex).toBe(-1);
   });
 
-  it("permits one mulligan only when no Position has a matching Move", () => {
+  it("permits one mulligan only when no Move matches the starting Open Position", () => {
     let state = createGame({ seed: 8, content });
-    setHand(state, "lead", ["mov_001", "mov_002", "mov_003", "mov_004"]);
+    setHand(state, "lead", ["pos_001", "pos_002", "mov_013", "rec_001"]);
     expect(legalActions(state, "lead", content).some((action) => action.type === "MULLIGAN")).toBe(
       true,
     );
@@ -39,5 +45,9 @@ describe("setup · rulebook §4", () => {
     expect(state.activeRole).toBe("lead");
     expect(state.songIndex).toBe(0);
     expect(state.players.lead.money).toBe(1);
+    expect(state.table.position).toMatchObject({ cardId: "pos_001", owner: "lead" });
+    const openingActions = legalActions(state, "lead", content);
+    expect(openingActions.some((action) => action.type === "PLAY_MOVE")).toBe(true);
+    expect(openingActions.some((action) => action.type === "PLAY_OPEN")).toBe(false);
   });
 });

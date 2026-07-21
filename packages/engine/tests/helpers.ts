@@ -27,8 +27,7 @@ export function finishTurn(
   const role = state.activeRole;
   state = applyOk(state, danceAction);
   if (state.status !== "playing") return state;
-  state = applyOk(state, { type: "END_LESSON", role });
-  return applyOk(state, { type: "FRESHEN", role, discardInstanceIds: [] });
+  return applyOk(state, { type: "END_LESSON", role });
 }
 
 export function playBasicGame(seed = 42): { state: GameState; actions: GameAction[] } {
@@ -43,7 +42,6 @@ export function playBasicGame(seed = 42): { state: GameState; actions: GameActio
     const turn: GameAction[] = [
       { type: "END_DANCE", role },
       { type: "END_LESSON", role },
-      { type: "FRESHEN", role, discardInstanceIds: [] },
     ];
     for (const action of turn) {
       state = applyOk(state, action);

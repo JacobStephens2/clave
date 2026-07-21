@@ -135,11 +135,12 @@ Rule-section references are to `docs/rules/game-rules.md`.
   home Wi-Fi is assumed.
 - AI partner / single-player; accounts, matchmaking, spectators; analytics beyond
   the §6 game-event model.
-- In-app music playback, and **music synchronization of any kind**. No bundling of
-  the Oscar D'León recording (rights) and no original soundtrack yet. Playback is
-  ambient (see D7): the couple plays the track on a speaker; the game is turn-based
-  and untimed; the rulebook's "8-count" is a thematic game unit, not a literal
-  synchronized span of the recording.
+- Bundled music files, original soundtracks, and **music synchronization of any
+  kind**. The app may start and pause the official Spotify embed for the Oscar
+  D'León recording, but never hosts or distributes the recording itself. Playback
+  remains ambient (see D7): the game is turn-based and untimed; the rulebook's
+  "8-count" is a thematic game unit, not a literal synchronized span of the
+  recording.
 - Additional songs and dance styles, and the general content-pack/fusion machinery.
   Content stays data-driven (see D6) so a second song is cheap later, but no
   multi-style abstraction is built.
@@ -244,17 +245,25 @@ the engine. Content is hashed (SHA-256 over a canonical serialization with stabl
 key order), and the bytes travel with every game's resume envelope so tuning
 releases can never corrupt a game in progress.
 
-**D7. Audio: out of the app, and explicitly ambient — the game does not synchronize
-with the recording.** Alternatives: bundle the recording (licensing problem, even
-for a private deploy it means distributing the file); commission/generate an
-original track (scope); synchronized playback (rejected — the rulebook defines a
-turn-based, untimed game of 16 thematic "8-counts", while the actual recording is
-3:42 ≈ 89 musical 8-counts per `0-dance.md`; a ~30-minute game cannot track a
-4-minute track, and no requirement asks it to). The v1 experience: play the record
-on a speaker — once, looped, or as a playlist, at the couple's whim — while the
-song *deck* sequences the arc of the song thematically. The Phase 0 couch gate
-tests exactly this experience before any code exists. Confirmed acceptable by
-Jacob, 2026-07-18.
+**D7. Audio: an official external embed, explicitly ambient — the game does not
+synchronize with the recording.** The web UI may control Spotify's licensed embed
+for the 3:42 Oscar D'León recording and links to the same track as a fallback. It
+does not store, proxy, cache, or distribute audio, and playback state is local UI
+state rather than a game action or shared-room event. Alternatives: bundle the
+recording (licensing problem, even for a private deploy it means distributing the
+file); commission/generate an original track (scope); synchronized playback
+(rejected — the rulebook defines a turn-based, untimed game of 16 thematic
+"8-counts", while the actual recording is 3:42 ≈ 89 musical 8-counts per
+`0-dance.md`; a ~30-minute game cannot track a 4-minute track). The experience:
+start the recording from Clave or another music app and play it on one speaker —
+once, looped, or as a playlist, at the couple's whim — while the song *deck*
+sequences its arc thematically. The Phase 0 couch gate tests exactly this ambient
+experience. Speaker playback confirmed acceptable by Jacob, 2026-07-18; official
+embed control added to scope by Jacob, 2026-07-20. Short interface cues are also
+allowed: the client synthesizes restrained card-paper, clave-click, lesson,
+stumble, handoff, and result sounds locally with the Web Audio API. They have no
+engine or multiplayer state, require no asset license or download, and use an
+independent device-saved SFX preference that defaults on.
 
 **D8. Hosting: the stephens.page Linux server behind its existing Apache reverse
 proxy with Certbot TLS, at `clave.dance`, as a systemd service.** Resolved
@@ -279,7 +288,7 @@ Alternatives considered: LAN-only hosting on the Mac (works for home play but ad
 
 - **`packages/engine`** — headless TS. Owns: card/deck/market/song types and state;
   the action set (play position/move/flourish, basic, stumble with optional recovery,
-  buy lesson, learn-from-partner, signal-reveal, freshen-up/end-turn, mulligan,
+  buy lesson, learn-from-partner, signal-reveal, mandatory whole-hand cleanup/end-turn, mulligan,
   undo); `applyAction(state, action) → state | RuleError`; `legalActions(state,
   role)`; `snapshotFor(state, role)` (hides partner hand and both deck orders);
   phrase/song scoring; seeded PRNG (seed in initial state; RNG used only for
@@ -455,9 +464,9 @@ client screen skeletons (Phase 3) may start against snapshot fixtures once
 
 Scope: FR-9, FR-12, the UI surface of FR-1–FR-8 and FR-13, and the hot-seat half of
 FR-11: the envelope persists to localStorage after every committed action, and the
-Home screen offers resume — Android Chrome evicts background tabs aggressively, and
-switching to a music app mid-game is the documented usage pattern, so this is not
-optional polish. Engine runs in-browser; pass-the-device screen guards hand
+Home screen offers resume — Android Chrome evicts background tabs aggressively,
+and players may still switch to a music app when the official embed is unavailable,
+so this is not optional polish. Engine runs in-browser; pass-the-device screen guards hand
 privacy; phone-portrait layout first, laptop layout second. Playwright drives one
 full scripted game plus a mid-game reload that must resume. **Gate:** a complete
 Llorarás game played pass-and-play on one Android phone and on a MacBook; a
@@ -519,7 +528,7 @@ irreversible steps exist in this plan.
 ### Phase 6 — Post-v1 menu (unscheduled, pick by appetite after the §6 review)
 
 No-lessons variant (§11 — decks already defined); a second song deck (data-only,
-per D6); original soundtrack + in-app audio; AI partner for solo practice; and —
+per D6); a bundled or original soundtrack; AI partner for solo practice; and —
 only if its gate fires (D2) — the Rust core port validated against the
 golden-replay corpus, followed by the native clients from
 `docs/clave-tech-stack.md`.
@@ -635,6 +644,6 @@ No open questions remain. Resolution log:
 | ID | Question | Resolution |
 | --- | --- | --- |
 | OQ-1 | Is the Linux server internet-reachable with a domain and TLS frontend? | **Resolved 2026-07-18; frontend corrected 2026-07-19.** Reachable (it serves stephens.page). Its existing Apache/Certbot frontend will proxy `clave.dance`; `playclave.com` redirects after its DNS cutover. DNS via Porkbun or Cloudflare DNS-only. Details in D8. |
-| OQ-2 | Stumble-turn semantics: may the stumbling player still take a lesson and freshen up? | **Resolved 2026-07-18: yes.** A stumble replaces only turn step 2 (Dance); steps 1, 3, and 4 proceed. Rationale: §6's literal text ("no other *dance* cards"), avoiding a bad-hand death spiral, and the "recovery is a skill" pillar. Recorded in `docs/rules/decisions.md` at Phase 0(b), enforced by `engine/tests/dancing.test.ts` in Phase 2. |
-| OQ-3 | Is speaker-played music acceptable for v1 evenings (no in-app audio)? | **Resolved 2026-07-18: yes**, confirmed by Jacob; playback model made explicit (ambient, unsynchronized — D7) after adversarial review; experience-validated at the Phase 0 couch gate. |
+| OQ-2 | Stumble-turn semantics: may the stumbling player still take a lesson and clean up? | **Resolved 2026-07-18: yes; cleanup revised 2026-07-20.** A stumble replaces only turn step 2 (Dance); steps 1, 3, and 4 proceed. Cleanup now discards the whole remaining hand automatically and draws four. Rationale: §6's literal text ("no other *dance* cards"), avoiding a bad-hand death spiral, and the "recovery is a skill" pillar. Recorded in `docs/rules/decisions.md` and enforced by engine tests. |
+| OQ-3 | Is speaker-played music acceptable for v1 evenings? | **Resolved 2026-07-18: yes**, confirmed by Jacob; playback remains ambient and unsynchronized. **Scope updated 2026-07-20:** Clave may start and pause Spotify's official embed while retaining external-player fallback and never bundling the recording (D7). |
 | — | Adversarial review 2026-07-18 | All six findings adjudicated (2 accepted, 4 partially accepted) plus two new findings accepted; this revision incorporates every accepted change. See `docs/plans/reviews/clave-plan-adjudication-2026-07-18.md`. |

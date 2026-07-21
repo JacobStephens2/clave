@@ -6,6 +6,8 @@ import { applyOk, readyGame, setHand } from "./helpers.js";
 describe("dancing · rulebook §6", () => {
   it("opens atomically, transitions immediately, and flourishes the current move", () => {
     let state = readyGame();
+    state.players.lead.discardPile.push(state.table.position!);
+    state.table.position = null;
     setHand(state, "lead", ["pos_002", "mov_013", "pos_001", "flo_001"]);
     const [closed, move, open, flourish] = state.players.lead.hand;
     state = applyOk(state, {
@@ -33,6 +35,8 @@ describe("dancing · rulebook §6", () => {
 
   it("rejects move-position mismatches and changing position before a move", () => {
     const state = readyGame();
+    state.players.lead.discardPile.push(state.table.position!);
+    state.table.position = null;
     setHand(state, "lead", ["pos_002", "mov_002", "pos_001", "mov_006"]);
     const [closed, openOnlyMove] = state.players.lead.hand;
     const mismatch = applyAction(

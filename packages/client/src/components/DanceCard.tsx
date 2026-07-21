@@ -38,13 +38,12 @@ function cardDetails(card: DanceCardDefinition): {
 export function DanceCard({
   value,
   compact = false,
-  selected = false,
+  fullArtwork = false,
   disabled = false,
   actionLabel,
   onAction,
   onSignal,
   onInspect,
-  onSelect,
   draggable = false,
   dragging = false,
   onDragStart,
@@ -52,13 +51,12 @@ export function DanceCard({
 }: {
   value: CardView | DanceCardDefinition;
   compact?: boolean;
-  selected?: boolean;
+  fullArtwork?: boolean;
   disabled?: boolean;
   actionLabel?: string | undefined;
   onAction?: React.MouseEventHandler<HTMLButtonElement> | undefined;
   onSignal?: (() => void) | undefined;
   onInspect?: (() => void) | undefined;
-  onSelect?: (() => void) | undefined;
   draggable?: boolean;
   dragging?: boolean;
   onDragStart?: React.DragEventHandler<HTMLElement> | undefined;
@@ -66,34 +64,23 @@ export function DanceCard({
 }) {
   const card = "card" in value ? value.card : value;
   const details = cardDetails(card);
-  const selectable = Boolean(onSelect);
   return (
     <article
-      className={`dance-card ${card.type} tier-${card.tier.toLowerCase()} ${compact ? "compact" : ""} ${selected ? "selected" : ""} ${selectable ? "selectable" : ""} ${disabled ? "disabled" : ""} ${onInspect ? "inspectable" : ""} ${draggable ? "playable" : ""} ${dragging ? "dragging" : ""}`}
+      className={`dance-card ${card.type} tier-${card.tier.toLowerCase()} ${compact ? "compact" : ""} ${fullArtwork ? "full-artwork" : ""} ${disabled ? "disabled" : ""} ${onInspect ? "inspectable" : ""} ${draggable ? "playable" : ""} ${dragging ? "dragging" : ""}`}
       data-card-instance-id={"card" in value ? value.instanceId : undefined}
-      role={selectable ? "button" : undefined}
-      tabIndex={onSelect || onInspect ? 0 : undefined}
-      aria-pressed={selectable ? selected : undefined}
-      aria-label={
-        selectable
-          ? `${card.name}. ${selected ? "Selected for discard." : "Click to select for discard."}`
-          : onInspect
-            ? `${card.name}. Click to view larger.`
-            : undefined
-      }
+      tabIndex={onInspect ? 0 : undefined}
+      aria-label={onInspect ? `${card.name}. Click to view larger.` : undefined}
       draggable={draggable}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onClick={(event) => {
         if ((event.target as HTMLElement).closest("button")) return;
-        if (onSelect) onSelect();
-        else onInspect?.();
+        onInspect?.();
       }}
       onKeyDown={(event) => {
-        if ((onSelect || onInspect) && (event.key === "Enter" || event.key === " ")) {
+        if (onInspect && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
-          if (onSelect) onSelect();
-          else onInspect?.();
+          onInspect();
         }
       }}
     >
@@ -111,11 +98,6 @@ export function DanceCard({
           </span>
         )}
       </div>
-      {selectable && selected && (
-        <span className="discard-selection-badge" aria-hidden="true">
-          ✓ Selected for discard
-        </span>
-      )}
       <div className="card-art" aria-hidden="true">
         <span className="card-art-fallback">
           {card.type === "position"

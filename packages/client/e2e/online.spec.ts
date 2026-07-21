@@ -2,8 +2,7 @@ import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
 async function finishTurn(page: Page) {
   await page.getByRole("button", { name: "Dance the basic" }).click();
-  await page.getByRole("button", { name: "Finish lessons" }).click();
-  await page.getByRole("button", { name: "Keep hand & end turn" }).click();
+  await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
 }
 
 test("keeps two authoritative screens synchronized through reload and song end", async ({

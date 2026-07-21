@@ -6,7 +6,7 @@ describe("phrase scoring · rulebook §7", () => {
   it("awards clean, variety, shared flair, and pose finish from content values", () => {
     let state = readyGame();
     state.songIndex = 7;
-    state.phase = "freshen";
+    state.phase = "lesson";
     state.phrase = {
       ...state.phrase,
       stumbled: false,
@@ -15,7 +15,7 @@ describe("phrase scoring · rulebook §7", () => {
       poseOnFinalCount: true,
     };
     const before = state.shared.style;
-    state = applyOk(state, { type: "FRESHEN", role: "lead", discardInstanceIds: [] });
+    state = applyOk(state, { type: "END_LESSON", role: "lead" });
     const expected =
       content.rules.phraseBonuses.clean +
       2 * content.rules.phraseBonuses.varietyPerExtraPosition +

@@ -1,6 +1,9 @@
 import { useState } from "react";
 import type { Role } from "@clave/engine";
 import { useAppStore } from "../store.js";
+import { MusicButton } from "./MusicPlayer.js";
+import { RulesButton } from "./RulesDialog.js";
+import { SoundEffectsButton } from "./SoundEffects.js";
 
 function RoleChoice({
   value,
@@ -54,6 +57,7 @@ export function HomeScreen() {
         <span className="brand-eyebrow">A partner dance game</span>
         <h1>CLAVE</h1>
         <p>Dance the song together.</p>
+        <RulesButton />
       </header>
 
       <section className="home-intro">
@@ -68,6 +72,10 @@ export function HomeScreen() {
             Take turns as Lead and Follow through all sixteen 8-counts of
             <em> Llorarás</em>. Build Style without losing your Connection.
           </p>
+          <div className="home-audio-controls" role="group" aria-label="Audio controls">
+            <MusicButton />
+            <SoundEffectsButton />
+          </div>
         </div>
         <div className="rhythm-mark" aria-hidden="true">
           <img src="/card-art/pos_001.webp" alt="" decoding="async" draggable={false} />

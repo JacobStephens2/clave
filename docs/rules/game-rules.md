@@ -69,13 +69,17 @@ lessons to learn new cards.
    - 1 × Follow Right Turn, 1 × Follow Left Turn
    - 1 × Lead Right Turn, 1 × Lead Left Turn
    - 1 × Cross Body Lead — Closed
-3. Each player shuffles their deck and draws a hand of **4 cards**.
-   _Mulligan:_ if your opening hand contains no Position card with a matching Move
-   card, you may reveal it, shuffle it back, and draw a new hand once.
-4. Set the Connection marker to **4** and Style to **0**. Each player starts with $0.
-5. Build the **song deck**: the 8 cuerpo cards in order on top of the 8 montuno cards
+3. The Lead places one **Open Position** card from their starter deck on the floor.
+   The couple begins the song in Open; this is the current position for the first
+   8-count. The card remains Lead-owned and goes to the Lead's discard pile when it
+   is replaced or the dance state is cleared.
+4. Each player shuffles their remaining deck and draws a hand of **4 cards**.
+   _Mulligan:_ if your opening hand contains no Move card that can be danced from
+   Open, you may reveal it, shuffle it back, and draw a new hand once.
+5. Set the Connection marker to **4** and Style to **0**. Each player starts with $0.
+6. Build the **song deck**: the 8 cuerpo cards in order on top of the 8 montuno cards
    in order, face down.
-6. Lay out the lessons:
+7. Lay out the lessons:
    - the **Beginner lessons** supply, face up in piles;
    - shuffle the **Intermediate lessons** deck and reveal **3 cards** as the market;
    - set the **Advanced lessons** deck aside, face down - it opens when the montuno
@@ -91,8 +95,9 @@ is one 8-count. On your turn, do these steps in order:
 2. **Dance.** Play cards from your hand as described in section 6 — or stumble.
 3. **Take a lesson** _(optional)_. Buy one card from the lessons (section 8). It goes
    to your discard pile.
-4. **Freshen up.** Discard any number of cards from your hand, then draw back up to 4.
-   If your deck is empty, shuffle your discard pile to make a new one.
+4. **Clean up.** Discard **every card remaining in your hand**, then draw a new hand
+   of 4 cards. You may not keep cards between turns. If your deck is empty, shuffle
+   your discard pile to make a new one and continue drawing.
 
 After the 8th song card of a section has been played, the **phrase ends**: score the
 phrase-end bonuses (section 7), move all cards on the table to their owners' discard
@@ -103,6 +108,11 @@ go to section 10.
 
 On your turn you may play **at most two Position cards, one Move card, and one
 Flourish card**, following these rules:
+
+**The first 8-count.** The song begins with the Lead's Open Position already on the
+floor, so the Lead starts by playing a Move from Open. As on any established floor,
+they may then transition to a new Position and add a Flourish. The starting Open card
+does not count as a Position played during that turn.
 
 **Opening a phrase.** If the dance state is empty (start of a phrase, or after a
 stumble), your play must begin with **a Position card and a matching Move card
@@ -139,7 +149,7 @@ After a stumble the state is empty, so the next dance play must open again with 
 position and a matching move.
 
 A stumble replaces only the **Dance** step of the turn. Unless Connection reaches 0,
-the player may still take a lesson and must still freshen up normally.
+the player may still take a lesson and must still clean up normally.
 
 > **Example.** The position is Closed. Ana plays **Cross Body Lead — Closed** (tags:
 > Closed, Half-Closed — it matches) for 2 Style, then transitions by playing **Open

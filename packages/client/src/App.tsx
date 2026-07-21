@@ -1,6 +1,9 @@
 import { useEffect } from "react";
 import { GameScreen } from "./components/GameScreen.js";
 import { HomeScreen } from "./components/HomeScreen.js";
+import { MusicProvider } from "./components/MusicPlayer.js";
+import { RulesProvider } from "./components/RulesDialog.js";
+import { SoundEffectsProvider } from "./components/SoundEffects.js";
 import { useAppStore } from "./store.js";
 
 export function App() {
@@ -12,16 +15,22 @@ export function App() {
   useEffect(() => hydrate(), [hydrate]);
 
   return (
-    <div className="app-shell">
-      {screen === "home" ? <HomeScreen /> : <GameScreen />}
-      {error && (
-        <div className="toast" role="alert">
-          <span>{error}</span>
-          <button type="button" onClick={clearError} aria-label="Dismiss message">
-            ×
-          </button>
-        </div>
-      )}
-    </div>
+    <RulesProvider>
+      <SoundEffectsProvider>
+        <MusicProvider>
+          <div className="app-shell">
+            {screen === "home" ? <HomeScreen /> : <GameScreen />}
+            {error && (
+              <div className="toast" role="alert">
+                <span>{error}</span>
+                <button type="button" onClick={clearError} aria-label="Dismiss message">
+                  ×
+                </button>
+              </div>
+            )}
+          </div>
+        </MusicProvider>
+      </SoundEffectsProvider>
+    </RulesProvider>
   );
 }

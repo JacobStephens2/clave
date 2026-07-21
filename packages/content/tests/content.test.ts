@@ -20,6 +20,14 @@ describe("v1 content", () => {
     expect(count(content.decks.full.lead)).toBe(16);
     expect(count(content.decks.full.follow)).toBe(16);
     expect(content.song.cards).toHaveLength(16);
+    expect(content.rules.startingPosition).toBe("Open");
+    expect(
+      content.decks.starter.some(
+        (entry) =>
+          cardsById[entry.cardId]?.type === "position" &&
+          cardsById[entry.cardId].position === content.rules.startingPosition,
+      ),
+    ).toBe(true);
   });
 
   it("references defined cards and preserves the exact bytes/hash pair", () => {

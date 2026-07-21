@@ -24,7 +24,14 @@ npm run dev
 
 Open `http://localhost:5173`. The client and room server start together. Hot-seat
 games are saved after every accepted action in the browser; online rooms are saved
-transactionally in SQLite.
+transactionally in SQLite. The home screen and song banner can start or pause
+Spotify's official Llorarás embed; Clave does not bundle the copyrighted recording
+or synchronize it to turns. Distinct Move, Position, and Flourish landing cues,
+plus lesson, turn, stumble, and finish feedback, are synthesized locally with the
+Web Audio API; the SFX control is independent of the music player and remembers
+its setting on the device. A responsive **How to play**
+rulebook is available from both the home screen and live table, with its balance
+values read from the same validated content as the engine.
 
 Verification commands:
 
