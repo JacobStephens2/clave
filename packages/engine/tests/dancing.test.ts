@@ -31,6 +31,21 @@ describe("dancing · rulebook §6", () => {
     expect(state.shared.style).toBe(3);
     expect(state.table.position?.cardId).toBe("pos_001");
     expect(state.phrase.flourishedBy.lead).toBe(true);
+    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    expect(state.danceHistory).toEqual([
+      {
+        sequence: state.sequence,
+        phrase: 1,
+        songIndex: 0,
+        role: "lead",
+        outcome: "dance",
+        moveCardId: "mov_013",
+        positionCardId: "pos_001",
+        flourishCardId: "flo_001",
+        fromPosition: "Closed",
+        endingPosition: "Open",
+      },
+    ]);
   });
 
   it("rejects move-position mismatches and changing position before a move", () => {
@@ -71,12 +86,40 @@ describe("dancing · rulebook §6", () => {
     expect(state.phase).toBe("lesson");
     expect(state.status).toBe("playing");
     expect(state.players.lead.money).toBe(1);
+    expect(state.danceHistory).toEqual([
+      expect.objectContaining({
+        phrase: 1,
+        songIndex: 0,
+        role: "lead",
+        outcome: "stumble",
+        moveCardId: null,
+        positionCardId: null,
+        flourishCardId: null,
+      }),
+    ]);
     const lesson = applyAction(
       state,
       { type: "BUY_LESSON", role: "lead", source: "beginner", cardId: "rec_001" },
       content,
     );
     expect(lesson.ok).toBe(true);
+  });
+
+  it("records a basic as a visible 8-count with the carried Position", () => {
+    let state = readyGame();
+    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    expect(state.danceHistory).toEqual([
+      expect.objectContaining({
+        phrase: 1,
+        songIndex: 0,
+        role: "lead",
+        outcome: "basic",
+        moveCardId: null,
+        positionCardId: "pos_001",
+        fromPosition: "Open",
+        endingPosition: "Open",
+      }),
+    ]);
   });
 
   it("applies recovery-card costs from content", () => {

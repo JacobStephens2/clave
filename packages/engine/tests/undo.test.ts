@@ -14,6 +14,7 @@ describe("undo · FR-13", () => {
       market: structuredClone(state.market),
       phrase: structuredClone(state.phrase),
       moveHistory: structuredClone(state.moveHistory),
+      danceHistory: structuredClone(state.danceHistory),
       turnDance: structuredClone(state.turnDance),
     };
     const checkpointHash = hashCanonical(state.checkpoint);
@@ -45,6 +46,7 @@ describe("undo · FR-13", () => {
         market: state.market,
         phrase: state.phrase,
         moveHistory: state.moveHistory,
+        danceHistory: state.danceHistory,
         rngState: state.rngState,
         nextInstance: state.nextInstance,
         turnDance: state.turnDance,

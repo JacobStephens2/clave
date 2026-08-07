@@ -56,7 +56,7 @@ export function DanceCard({
   actionLabel?: string | undefined;
   onAction?: React.MouseEventHandler<HTMLButtonElement> | undefined;
   onSignal?: (() => void) | undefined;
-  onInspect?: (() => void) | undefined;
+  onInspect?: ((source: HTMLElement) => void) | undefined;
   draggable?: boolean;
   dragging?: boolean;
   onDragStart?: React.DragEventHandler<HTMLElement> | undefined;
@@ -75,12 +75,12 @@ export function DanceCard({
       onDragEnd={onDragEnd}
       onClick={(event) => {
         if ((event.target as HTMLElement).closest("button")) return;
-        onInspect?.();
+        onInspect?.(event.currentTarget);
       }}
       onKeyDown={(event) => {
         if (onInspect && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
-          onInspect();
+          onInspect(event.currentTarget);
         }
       }}
     >

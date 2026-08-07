@@ -11,6 +11,19 @@ export interface CardView extends CardInstance {
   card: DanceCard;
 }
 
+export interface DanceComboView {
+  sequence: number;
+  phrase: number;
+  count: number;
+  role: Role;
+  outcome: GameState["danceHistory"][number]["outcome"];
+  move: DanceCard | null;
+  position: DanceCard | null;
+  flourish: DanceCard | null;
+  fromPosition: GameState["danceHistory"][number]["fromPosition"];
+  endingPosition: GameState["danceHistory"][number]["endingPosition"];
+}
+
 export interface PlayerSnapshot {
   engineVersion: number;
   contentHash: string;
@@ -40,6 +53,7 @@ export interface PlayerSnapshot {
     flourishedBy: GameState["phrase"]["flourishedBy"];
     learnedBy: GameState["phrase"]["learnedBy"];
   };
+  danceHistory: DanceComboView[];
   self: {
     role: Role;
     hand: CardView[];
@@ -140,6 +154,18 @@ export function snapshotFor(
       flourishedBy: { ...state.phrase.flourishedBy },
       learnedBy: { ...state.phrase.learnedBy },
     },
+    danceHistory: state.danceHistory.map((entry) => ({
+      sequence: entry.sequence,
+      phrase: entry.phrase,
+      count: (entry.songIndex % (contentSet.song.cards.length / 2)) + 1,
+      role: entry.role,
+      outcome: entry.outcome,
+      move: entry.moveCardId ? (cards[entry.moveCardId] ?? null) : null,
+      position: entry.positionCardId ? (cards[entry.positionCardId] ?? null) : null,
+      flourish: entry.flourishCardId ? (cards[entry.flourishCardId] ?? null) : null,
+      fromPosition: entry.fromPosition,
+      endingPosition: entry.endingPosition,
+    })),
     self: {
       role,
       hand: self.hand.map((entry) => cardView(entry, cards)!),

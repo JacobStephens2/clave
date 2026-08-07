@@ -308,7 +308,7 @@ test("restores the exact hot-seat turn after a page reload", async ({ page }) =>
   await page.reload();
   await page.getByRole("button", { name: "Resume" }).click();
   await acceptPass(page, "Follow");
-  await expect(page.getByText("02")).toBeVisible();
+  await expect(page.locator(".song-count > span")).toHaveText("02");
   await expect(page.getByText("Follow hand")).toBeVisible();
 });
 
@@ -367,6 +367,17 @@ test("starts in Open and presents the floor as Move then Position then Flourish"
   });
   const positionSlot = page.locator('[data-slot="position"]');
   const moveSlot = page.locator('[data-slot="move"]');
+  const phraseHistory = page.getByRole("region", { name: /Phrase choreography/ });
+  const phraseSlots = phraseHistory.locator(".phrase-combo");
+  await expect(phraseSlots).toHaveCount(8);
+  await expect(phraseSlots.nth(0)).toHaveAttribute("data-outcome", "current");
+  const historyWidths = await phraseHistory
+    .locator(".phrase-history-scroll")
+    .evaluate((element) => ({
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+    }));
+  expect(historyWidths.scrollWidth).toBeLessThanOrEqual(historyWidths.clientWidth + 1);
   expect(
     await page
       .locator(".table-slot")
@@ -412,6 +423,23 @@ test("starts in Open and presents the floor as Move then Position then Flourish"
     expect(Math.abs(artwork.frameRatio - artwork.imageRatio)).toBeLessThan(0.02);
     expect(artwork.fullyInsideFloor).toBe(true);
   }
+
+  await page.getByRole("button", { name: "Finish the 8-count" }).click();
+  const firstCombo = phraseSlots.nth(0);
+  await expect(firstCombo).toHaveAttribute("data-outcome", "dance");
+  await expect(firstCombo).toHaveClass(/latest/);
+  await expect(
+    firstCombo.getByRole("button", { name: `move, ${moveName}. View card.`, exact: true }),
+  ).toBeVisible();
+  await expect(
+    firstCombo.getByRole("button", { name: `position, ${positionName}. View card.`, exact: true }),
+  ).toBeVisible();
+  await expect(firstCombo.locator(".combo-thumbnail.flourish.empty")).toBeVisible();
+
+  await firstCombo
+    .getByRole("button", { name: `move, ${moveName}. View card.`, exact: true })
+    .click();
+  await expect(page.locator(".card-inspector .dance-card")).toContainText(moveName);
 });
 
 test("stages Position then matching Move when a stumble empties the floor", async ({ page }) => {
@@ -595,16 +623,21 @@ test("keeps a readable hand in a 13-inch laptop viewport and enlarges cards", as
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
 
   await firstCard.click({ position: { x: 70, y: 80 } });
-  const enlarged = page.locator(".card-inspector .dance-card");
+  const inspector = page.locator(".card-inspector");
+  const enlarged = inspector.locator(".dance-card");
+  await expect(inspector).toHaveAttribute("data-motion-origin", "hand");
+  await expect(inspector).toHaveAttribute("data-motion-state", /opening|open/);
   await expect(enlarged).toBeVisible();
   const enlargedArtwork = enlarged.locator(".card-art img");
   await expect(enlargedArtwork).toBeVisible();
   await expect(enlargedArtwork).toHaveAttribute("src", await firstArtwork.getAttribute("src"));
+  await expect(inspector).toHaveAttribute("data-motion-state", "open");
   const enlargedBox = await enlarged.boundingBox();
   expect(enlargedBox!.width).toBeGreaterThan(cardBox!.width);
   expect(enlargedBox!.height).toBeGreaterThan(cardBox!.height);
   await expect(page.getByRole("button", { name: "Close" })).toBeFocused();
   await page.getByRole("button", { name: "Close" }).click();
+  await expect(inspector).toHaveAttribute("data-motion-state", "closing");
   await expect(enlarged).toBeHidden();
 });
 

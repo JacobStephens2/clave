@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { DanceCard as DanceCardDefinition } from "@clave/content";
 import type { CardView, GameAction, PlayerSnapshot, Role } from "@clave/engine";
 import { useAppStore } from "../store.js";
 import { DanceCard } from "./DanceCard.js";
 import { DancerDemo } from "./DancerDemo.js";
 import { MusicButton } from "./MusicPlayer.js";
+import { PhraseHistory } from "./PhraseHistory.js";
 import { RulesButton } from "./RulesDialog.js";
 import { SoundEffectsButton, useSoundEffects, type SoundEffect } from "./SoundEffects.js";
 
@@ -14,6 +15,16 @@ type OpeningAction = Extract<GameAction, { type: "PLAY_OPEN" }>;
 type LessonBuyAction = Extract<GameAction, { type: "BUY_LESSON" }>;
 type CleanupAction = Extract<GameAction, { type: "END_LESSON" }>;
 type RoomCopyStatus = "idle" | "copied" | "failed";
+
+interface CardInspectionOrigin {
+  element: HTMLElement;
+  rect: { left: number; top: number; width: number; height: number };
+}
+
+interface CardInspection {
+  card: InspectableCard;
+  origin: CardInspectionOrigin | null;
+}
 
 interface LessonFlight {
   key: number;
@@ -614,7 +625,7 @@ function Hand({
 }: {
   view: PlayerSnapshot;
   dispatch: (action: GameAction) => void;
-  onInspect: (card: InspectableCard) => void;
+  onInspect: (card: InspectableCard, source?: HTMLElement) => void;
   pendingPosition: CardView | null;
   draggableCardIds: Set<string>;
   draggingCardId: string | null;
@@ -701,7 +712,7 @@ function Hand({
               actionLabel={actionLabel(primary)}
               onAction={primary ? () => dispatch(primary) : undefined}
               onSignal={signal ? () => dispatch(signal) : undefined}
-              onInspect={() => onInspect(entry)}
+              onInspect={(source) => onInspect(entry, source)}
               draggable={draggable}
               dragging={draggingCardId === entry.instanceId}
               onDragStart={
@@ -878,14 +889,41 @@ function DiscardPileInspector({
   );
 }
 
-function CardInspector({ card, onClose }: { card: InspectableCard; onClose: () => void }) {
+function cardZoomTransform(
+  source: { left: number; top: number; width: number; height: number },
+  target: DOMRect,
+): string {
+  const scaleX = source.width / target.width;
+  const scaleY = source.height / target.height;
+  return `translate(${source.left - target.left}px, ${source.top - target.top}px) scale(${scaleX}, ${scaleY})`;
+}
+
+function CardInspector({
+  inspection,
+  onClosed,
+}: {
+  inspection: CardInspection;
+  onClosed: () => void;
+}) {
   const closeButton = useRef<HTMLButtonElement>(null);
+  const content = useRef<HTMLDivElement>(null);
+  const onClosedRef = useRef(onClosed);
+  const closeRequested = useRef(false);
+  const [motionState, setMotionState] = useState<"opening" | "open" | "closing">("opening");
+
+  onClosedRef.current = onClosed;
+
+  const requestClose = useCallback(() => {
+    if (closeRequested.current) return;
+    closeRequested.current = true;
+    setMotionState("closing");
+  }, []);
 
   useEffect(() => {
     const previousFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") requestClose();
     };
 
     document.body.style.overflow = "hidden";
@@ -897,22 +935,81 @@ function CardInspector({ card, onClose }: { card: InspectableCard; onClose: () =
       window.removeEventListener("keydown", closeOnEscape);
       if (previousFocus instanceof HTMLElement) previousFocus.focus();
     };
-  }, [onClose]);
+  }, [requestClose]);
+
+  useLayoutEffect(() => {
+    if (motionState === "open") return;
+
+    const card = content.current?.querySelector<HTMLElement>(".dance-card");
+    if (!card) return;
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) {
+      if (motionState === "opening") setMotionState("open");
+      else onClosedRef.current();
+      return;
+    }
+
+    const target = card.getBoundingClientRect();
+    const storedOrigin = inspection.origin?.rect;
+    const liveOrigin = inspection.origin?.element.isConnected
+      ? inspection.origin.element.getBoundingClientRect()
+      : null;
+    const origin = liveOrigin ?? storedOrigin;
+    const fromHand = origin ? cardZoomTransform(origin, target) : "translateY(28px) scale(0.86)";
+    const keyframes: Keyframe[] =
+      motionState === "opening"
+        ? [
+            { transform: fromHand, opacity: 0.7, filter: "brightness(0.72)" },
+            { transform: "none", opacity: 1, filter: "brightness(1)" },
+          ]
+        : [
+            { transform: "none", opacity: 1, filter: "brightness(1)" },
+            { transform: fromHand, opacity: 0.62, filter: "brightness(0.72)" },
+          ];
+    const animation = card.animate(keyframes, {
+      duration: motionState === "opening" ? 340 : 260,
+      easing:
+        motionState === "opening"
+          ? "cubic-bezier(0.16, 1, 0.3, 1)"
+          : "cubic-bezier(0.4, 0, 0.8, 0.2)",
+      fill: "both",
+    });
+    let cancelled = false;
+    void animation.finished
+      .then(() => {
+        if (cancelled) return;
+        if (motionState === "opening") setMotionState("open");
+        else onClosedRef.current();
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+      animation.cancel();
+    };
+  }, [inspection.origin, motionState]);
 
   return (
     <div
       className="card-inspector"
+      data-motion-state={motionState}
+      data-motion-origin={inspection.origin ? "hand" : "generic"}
       role="dialog"
       aria-modal="true"
       aria-labelledby="card-inspector-title"
-      onClick={onClose}
+      onClick={requestClose}
     >
-      <div className="card-inspector-content" onClick={(event) => event.stopPropagation()}>
+      <div
+        ref={content}
+        className="card-inspector-content"
+        onClick={(event) => event.stopPropagation()}
+      >
         <span className="inspector-hint" id="card-inspector-title">
           Card detail
         </span>
-        <DanceCard value={card} />
-        <button ref={closeButton} type="button" className="inspector-close" onClick={onClose}>
+        <DanceCard value={inspection.card} />
+        <button ref={closeButton} type="button" className="inspector-close" onClick={requestClose}>
           Close
         </button>
       </div>
@@ -998,7 +1095,7 @@ export function GameScreen() {
     newHotseat,
   } = useAppStore();
   const { play: playSoundEffect } = useSoundEffects();
-  const [inspectedCard, setInspectedCard] = useState<InspectableCard | null>(null);
+  const [inspection, setInspection] = useState<CardInspection | null>(null);
   const [discardOpen, setDiscardOpen] = useState(false);
   const [pendingOpenPositionId, setPendingOpenPositionId] = useState<string | null>(null);
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
@@ -1020,6 +1117,24 @@ export function GameScreen() {
   const cleanupFlightKey = useRef(0);
   const roomCopyReset = useRef<number | null>(null);
   const previousStatus = useRef(view?.status);
+  const inspectCard = (card: InspectableCard, source?: HTMLElement) => {
+    const sourceRect = source?.getBoundingClientRect();
+    setInspection({
+      card,
+      origin:
+        source && sourceRect
+          ? {
+              element: source,
+              rect: {
+                left: sourceRect.left,
+                top: sourceRect.top,
+                width: sourceRect.width,
+                height: sourceRect.height,
+              },
+            }
+          : null,
+    });
+  };
   const dispatch = (action: GameAction) => {
     playSoundEffect(soundForAction(action));
     dispatchAction(action);
@@ -1210,7 +1325,7 @@ export function GameScreen() {
       scale: Math.min(0.52, Math.max(0.28, targetRect.width / sourceRect.width)),
       flying: false,
     });
-    setInspectedCard(null);
+    setInspection(null);
     dispatch(action);
   };
 
@@ -1230,7 +1345,7 @@ export function GameScreen() {
     event.dataTransfer.setData("text/plain", card.name);
     setDraggingLessonKey(key);
     setLessonDropOver(false);
-    setInspectedCard(null);
+    setInspection(null);
   };
 
   const endLessonDrag = () => {
@@ -1307,7 +1422,7 @@ export function GameScreen() {
       cards: flightCards,
       flying: false,
     });
-    setInspectedCard(null);
+    setInspection(null);
     dispatch(action);
   };
 
@@ -1380,9 +1495,10 @@ export function GameScreen() {
       <div className="game-grid">
         <div className="main-table">
           <SongMoment view={view} />
+          <PhraseHistory view={view} onInspect={inspectCard} />
           <DanceTable
             view={view}
-            onInspect={setInspectedCard}
+            onInspect={inspectCard}
             pendingPosition={pendingPosition}
             acceptsDrop={draggableCardIds.size > 0}
             dragOver={floorDragOver}
@@ -1404,7 +1520,7 @@ export function GameScreen() {
           <Hand
             view={view}
             dispatch={dispatch}
-            onInspect={setInspectedCard}
+            onInspect={inspectCard}
             pendingPosition={pendingPosition}
             draggableCardIds={draggableCardIds}
             draggingCardId={draggingCardId}
@@ -1413,7 +1529,7 @@ export function GameScreen() {
               event.dataTransfer.setData("application/x-clave-card", instanceId);
               event.dataTransfer.setData("text/plain", instanceId);
               setDraggingCardId(instanceId);
-              setInspectedCard(null);
+              setInspection(null);
             }}
             onCardDragEnd={() => {
               setDraggingCardId(null);
@@ -1434,7 +1550,7 @@ export function GameScreen() {
         <aside className="game-sidebar">
           <Market
             view={view}
-            onInspect={setInspectedCard}
+            onInspect={inspectCard}
             onBuyLesson={buyLesson}
             onLessonDragStart={beginLessonDrag}
             onLessonDragEnd={endLessonDrag}
@@ -1473,14 +1589,12 @@ export function GameScreen() {
           Signal visible to partner · tap to hide
         </button>
       )}
-      {inspectedCard && (
-        <CardInspector card={inspectedCard} onClose={() => setInspectedCard(null)} />
-      )}
+      {inspection && <CardInspector inspection={inspection} onClosed={() => setInspection(null)} />}
       {discardOpen && (
         <DiscardPileInspector
           cards={view.self.discard}
           role={view.viewerRole}
-          onInspect={setInspectedCard}
+          onInspect={inspectCard}
           onClose={() => setDiscardOpen(false)}
         />
       )}

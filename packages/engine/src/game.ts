@@ -167,6 +167,7 @@ export function createGame(options: CreateGameOptions): GameState {
       privateLessonTakenThisRound: false,
     },
     moveHistory: [],
+    danceHistory: [],
     turnDance: emptyTurnDance(),
     signal: null,
     log: [
@@ -266,6 +267,7 @@ function snapshotCheckpoint(state: GameState): TurnCheckpoint {
     market: state.market,
     phrase: state.phrase,
     moveHistory: state.moveHistory,
+    danceHistory: state.danceHistory,
     rngState: state.rngState,
     nextInstance: state.nextInstance,
     turnDance: state.turnDance,
@@ -429,8 +431,28 @@ function applySongBonus(state: GameState, role: Role, contentSet: ContentSet): v
   log(state, "score", `${song.title} lands: ${rewards.join(" and ")}.`, role);
 }
 
+function recordDanceCombo(state: GameState, role: Role, contentSet: ContentSet): void {
+  const positionCardId = state.table.position?.cardId ?? null;
+  const endingPosition = state.table.position
+    ? positionFor(contentSet, state.table.position)
+    : null;
+  state.danceHistory.push({
+    sequence: state.sequence + 1,
+    phrase: state.phrase.number,
+    songIndex: state.songIndex,
+    role,
+    outcome: state.turnDance.stumbled ? "stumble" : state.turnDance.moveCardId ? "dance" : "basic",
+    moveCardId: state.turnDance.moveCardId,
+    positionCardId,
+    flourishCardId: state.table.flourish?.cardId ?? null,
+    fromPosition: state.turnDance.fromPosition ?? endingPosition,
+    endingPosition,
+  });
+}
+
 function finishDance(state: GameState, role: Role, contentSet: ContentSet): void {
   applySongBonus(state, role, contentSet);
+  recordDanceCombo(state, role, contentSet);
   state.turnDance.canTransition = false;
   state.phase = "lesson";
 }
@@ -532,6 +554,7 @@ function restoreCheckpoint(state: GameState): void {
   state.market = checkpoint.market;
   state.phrase = checkpoint.phrase;
   state.moveHistory = checkpoint.moveHistory;
+  state.danceHistory = checkpoint.danceHistory;
   state.rngState = checkpoint.rngState;
   state.nextInstance = checkpoint.nextInstance;
   state.turnDance = checkpoint.turnDance;
@@ -781,6 +804,7 @@ function handleAction(state: GameState, action: GameAction, contentSet: ContentS
       role,
     );
     if (state.shared.connection === 0) {
+      recordDanceCombo(state, role, contentSet);
       state.status = "lost";
       state.phase = "terminal";
       state.terminalReason = "Connection reached 0.";

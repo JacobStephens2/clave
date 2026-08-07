@@ -1,7 +1,7 @@
 import { content } from "@clave/content";
 import { describe, expect, it } from "vitest";
 import { snapshotFor } from "../src/index.js";
-import { readyGame } from "./helpers.js";
+import { applyOk, readyGame } from "./helpers.js";
 
 describe("visibility and signaling · rulebook §9", () => {
   it("exposes only the viewer's hand and neither deck order", () => {
@@ -29,5 +29,25 @@ describe("visibility and signaling · rulebook §9", () => {
     const partner = snapshotFor(state, "follow", content);
     expect(partner.signal?.card.instanceId).toBe(state.signal.instanceId);
     expect(JSON.stringify(partner)).not.toContain(state.players.lead.hand[1]!.instanceId);
+  });
+
+  it("shows both players the same public phrase choreography without card instances", () => {
+    let state = readyGame();
+    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    const lead = snapshotFor(state, "lead", content);
+    const follow = snapshotFor(state, "follow", content);
+    expect(lead.danceHistory).toEqual(follow.danceHistory);
+    expect(lead.danceHistory).toEqual([
+      expect.objectContaining({
+        phrase: 1,
+        count: 1,
+        role: "lead",
+        outcome: "basic",
+        move: null,
+        position: expect.objectContaining({ id: "pos_001", name: "Open Position" }),
+        flourish: null,
+      }),
+    ]);
+    expect(JSON.stringify(lead.danceHistory)).not.toContain("lead-");
   });
 });

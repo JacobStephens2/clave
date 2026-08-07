@@ -7,6 +7,12 @@ describe("turn loop · rulebook §5", () => {
     expect(state.status).toBe("completed");
     expect(state.songIndex).toBe(15);
     expect(actions.filter((action) => action.type === "END_LESSON")).toHaveLength(16);
+    expect(state.danceHistory).toHaveLength(16);
+    expect(state.danceHistory.filter((entry) => entry.phrase === 1)).toHaveLength(8);
+    expect(state.danceHistory.filter((entry) => entry.phrase === 2)).toHaveLength(8);
+    expect(state.danceHistory.map((entry) => entry.songIndex)).toEqual(
+      Array.from({ length: 16 }, (_, index) => index),
+    );
     expect(state.shared.style).toBeGreaterThanOrEqual(6);
     expect(state.finalScore).toBe(state.shared.style + state.shared.connection);
     expect(state.table.position).toBeNull();

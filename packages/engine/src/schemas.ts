@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { CardIdSchema, PositionSchema, SongIdSchema } from "@clave/content";
 
-export const ENGINE_VERSION = 3;
+export const ENGINE_VERSION = 4;
 export const RoleSchema = z.enum(["lead", "follow"]);
 export type Role = z.infer<typeof RoleSchema>;
 
@@ -68,6 +68,20 @@ export const MoveHistoryEntrySchema = z.object({
 });
 export type MoveHistoryEntry = z.infer<typeof MoveHistoryEntrySchema>;
 
+export const DanceComboHistoryEntrySchema = z.object({
+  sequence: z.number().int().positive(),
+  phrase: z.number().int().min(1).max(2),
+  songIndex: z.number().int().min(0).max(15),
+  role: RoleSchema,
+  outcome: z.enum(["dance", "basic", "stumble"]),
+  moveCardId: CardIdSchema.nullable(),
+  positionCardId: CardIdSchema.nullable(),
+  flourishCardId: CardIdSchema.nullable(),
+  fromPosition: PositionSchema.nullable(),
+  endingPosition: PositionSchema.nullable(),
+});
+export type DanceComboHistoryEntry = z.infer<typeof DanceComboHistoryEntrySchema>;
+
 export const MarketSchema = z.object({
   intermediateDeck: z.array(CardIdSchema),
   intermediateDisplay: z.array(CardIdSchema),
@@ -90,6 +104,7 @@ export const TurnCheckpointSchema = z.object({
   market: MarketSchema,
   phrase: PhraseStatsSchema,
   moveHistory: z.array(MoveHistoryEntrySchema),
+  danceHistory: z.array(DanceComboHistoryEntrySchema).default([]),
   rngState: z.number().int().nonnegative(),
   nextInstance: z.number().int().positive(),
   turnDance: TurnDanceSchema,
@@ -126,6 +141,7 @@ export const GameStateSchema = z.object({
   table: DanceTableSchema,
   phrase: PhraseStatsSchema,
   moveHistory: z.array(MoveHistoryEntrySchema),
+  danceHistory: z.array(DanceComboHistoryEntrySchema).default([]),
   turnDance: TurnDanceSchema,
   signal: SignalSchema,
   log: z.array(LogEntrySchema),
