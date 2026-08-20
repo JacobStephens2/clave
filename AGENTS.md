@@ -34,3 +34,17 @@ engine + hot-seat and two-device play). The governing build plan is
 - `docs/living-documents/1-concept-brief.md` — pitch, pillars, non-goals.
 - `docs/living-documents/0-dance.md` — the Llorarás song/dance structure behind
   the v1 song deck.
+
+# Agent skills
+
+## Issue tracker
+
+Issues live as GitHub issues in `JacobStephens2/clave`, managed with the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+## Triage labels
+
+The five canonical triage roles, using their default label strings. See `docs/agents/triage-labels.md`.
+
+## Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
