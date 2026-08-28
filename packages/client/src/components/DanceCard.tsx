@@ -41,6 +41,7 @@ export function DanceCard({
   fullArtwork = false,
   disabled = false,
   actionLabel,
+  unavailableReason,
   onAction,
   onSignal,
   onInspect,
@@ -54,6 +55,7 @@ export function DanceCard({
   fullArtwork?: boolean;
   disabled?: boolean;
   actionLabel?: string | undefined;
+  unavailableReason?: string | undefined;
   onAction?: React.MouseEventHandler<HTMLButtonElement> | undefined;
   onSignal?: (() => void) | undefined;
   onInspect?: ((source: HTMLElement) => void) | undefined;
@@ -64,12 +66,17 @@ export function DanceCard({
 }) {
   const card = "card" in value ? value.card : value;
   const details = cardDetails(card);
+  const unavailableReasonId =
+    unavailableReason && "instanceId" in value
+      ? `card-unavailable-${value.instanceId.replaceAll(":", "-")}`
+      : undefined;
   return (
     <article
       className={`dance-card ${card.type} tier-${card.tier.toLowerCase()} ${compact ? "compact" : ""} ${fullArtwork ? "full-artwork" : ""} ${disabled ? "disabled" : ""} ${onInspect ? "inspectable" : ""} ${draggable ? "playable" : ""} ${dragging ? "dragging" : ""}`}
       data-card-instance-id={"card" in value ? value.instanceId : undefined}
       tabIndex={onInspect ? 0 : undefined}
       aria-label={onInspect ? `${card.name}. Click to view larger.` : undefined}
+      aria-describedby={unavailableReasonId}
       draggable={draggable}
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
@@ -98,8 +105,8 @@ export function DanceCard({
           </span>
         )}
       </div>
-      <div className="card-art" aria-hidden="true">
-        <span className="card-art-fallback">
+      <div className="card-art">
+        <span className="card-art-fallback" aria-hidden="true">
           {card.type === "position"
             ? "◇"
             : card.type === "move"
@@ -117,6 +124,11 @@ export function DanceCard({
             event.currentTarget.hidden = true;
           }}
         />
+        {unavailableReason && (
+          <span className="card-unavailable-reason" id={unavailableReasonId}>
+            {unavailableReason}
+          </span>
+        )}
       </div>
       <h4>{card.name}</h4>
       <p>{details.detail}</p>
