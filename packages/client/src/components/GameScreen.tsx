@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { DanceCard as DanceCardDefinition } from "@clave/content";
+import type { DanceCard as DanceCardDefinition, Position } from "@clave/content";
 import type { CardView, GameAction, PlayerSnapshot, Role } from "@clave/engine";
 import { useAppStore } from "../store.js";
 import { DanceCard } from "./DanceCard.js";
@@ -94,6 +94,46 @@ function actionLabel(action: GameAction | undefined): string {
   if (action.type === "TRANSITION") return "Transition";
   if (action.type === "PLAY_FLOURISH") return "Flourish";
   return "Dance move";
+}
+
+function alternatives(values: string[]): string {
+  if (values.length < 2) return values[0] ?? "the required Position";
+  if (values.length === 2) return `${values[0]} or ${values[1]}`;
+  return `${values.slice(0, -1).join(", ")}, or ${values.at(-1)}`;
+}
+
+function currentFloorPosition(view: PlayerSnapshot): Position | null {
+  const card = view.table.position?.card;
+  return card?.type === "position" ? card.position : null;
+}
+
+function unavailableReasonForCard(
+  view: PlayerSnapshot,
+  entry: CardView,
+  primary: GameAction | undefined,
+): string | undefined {
+  if (
+    primary ||
+    view.phase !== "dance" ||
+    view.activeRole !== view.viewerRole ||
+    view.turn.moveCardId !== null
+  )
+    return undefined;
+
+  const floorPosition = currentFloorPosition(view);
+  if (!floorPosition) return undefined;
+
+  switch (entry.card.type) {
+    case "move":
+      return entry.card.positions.includes(floorPosition)
+        ? undefined
+        : `Needs ${alternatives(entry.card.positions)} · Floor is ${floorPosition}`;
+    case "position":
+    case "flourish":
+      return "Play a Move first";
+    case "recovery":
+      return "Use with Stumble";
+  }
 }
 
 function soundForAction(action: GameAction): SoundEffect {
@@ -234,15 +274,23 @@ function DanceTable({
   onOpenDancerDemo: () => void;
 }) {
   const opening = view.table.position === null;
+  const canPlayMove = view.legalActions.some((action) => action.type === "PLAY_MOVE");
+  const canPlayPosition = view.legalActions.some((action) => action.type === "TRANSITION");
+  const canPlayFlourish = view.legalActions.some((action) => action.type === "PLAY_FLOURISH");
+  const justPlayedMove = view.turn.moveCardId !== null ? view.table.move : null;
   const floorHint = pendingPosition
     ? "Now drag a highlighted matching Move here"
     : opening && acceptsDrop
       ? "Drag a highlighted Position here"
-      : acceptsDrop
-        ? "Drag a highlighted card here"
-        : view.activeRole === view.viewerRole
-          ? "Your 8-count"
-          : `${roleName(view.activeRole)}’s 8-count`;
+      : acceptsDrop && canPlayMove
+        ? "Drag a highlighted Move here"
+        : acceptsDrop && canPlayPosition
+          ? "Now drag a highlighted Position here"
+          : acceptsDrop && canPlayFlourish
+            ? "Now drag a highlighted Flourish here"
+            : view.activeRole === view.viewerRole
+              ? "Your 8-count"
+              : `${roleName(view.activeRole)}’s 8-count`;
   return (
     <section
       className={`dance-table ${acceptsDrop ? "accepts-card-drop" : ""} ${dragOver ? "drag-over" : ""}`}
@@ -273,7 +321,14 @@ function DanceTable({
       }}
     >
       <div className="table-heading">
-        <span>On the floor</span>
+        <div className="floor-title">
+          <span>On the floor</span>
+          {justPlayedMove && (
+            <strong className="just-played-card" role="status">
+              Just played: {justPlayedMove.card.name}
+            </strong>
+          )}
+        </div>
         <div className="floor-heading-tools">
           <small className={acceptsDrop ? "floor-drop-hint" : ""}>{floorHint}</small>
           <button type="button" className="watch-dancers" onClick={onOpenDancerDemo}>
@@ -492,24 +547,47 @@ function TurnActions({
 
   if (view.phase === "dance") {
     const openings = byType("PLAY_OPEN");
+    const moves = byType("PLAY_MOVE");
+    const transitions = byType("TRANSITION");
+    const flourishes = byType("PLAY_FLOURISH");
     const end = byType("END_DANCE")[0];
     const stumbles = byType("STUMBLE");
     const undo = byType("UNDO_TURN")[0];
+    const establishedFloor = view.table.position !== null;
+    const beforeMove = establishedFloor && view.turn.moveCardId === null;
+    const floorPosition = currentFloorPosition(view);
+    const danceHeading = pendingPosition
+      ? "Complete the opening"
+      : openings.length > 0
+        ? "Drag a Position to the floor"
+        : beforeMove
+          ? "Play a Move first"
+          : transitions.length > 0
+            ? "Move played — add a Position"
+            : flourishes.length > 0
+              ? "Add a Flourish—or finish"
+              : "Finish the 8-count";
+    const danceInstruction = beforeMove
+      ? moves.length > 0
+        ? `Current Position: ${floorPosition}. Play a Move whose top edge includes ${floorPosition}. Or choose Dance the basic or Stumble below.`
+        : `No Move in your hand includes ${floorPosition}. Dance the basic or Stumble below.`
+      : view.turn.moveCardId !== null
+        ? transitions.length > 0 && flourishes.length > 0
+          ? "Your Move is on the floor. Add a highlighted Position or Flourish, or finish."
+          : transitions.length > 0
+            ? "Your Move is on the floor. Add a highlighted Position, or finish the 8-count."
+            : flourishes.length > 0
+              ? "Your Move is on the floor. Add a highlighted Flourish, or finish the 8-count."
+              : "Your Move is on the floor. Finish the 8-count when you’re ready."
+        : null;
     return (
       <div className="turn-actions">
         <div className="step-heading">
           <span>2</span>
           <div>
             <small>Dance</small>
-            <strong>
-              {pendingPosition
-                ? "Complete the opening"
-                : openings.length > 0
-                  ? "Drag a Position to the floor"
-                  : view.turn.cardsPlayed
-                    ? "Build the 8-count"
-                    : "Choose your step"}
-            </strong>
+            <strong>{danceHeading}</strong>
+            {danceInstruction && <span className="dance-step-note">{danceInstruction}</span>}
           </div>
         </div>
         {openings.length > 0 && (
@@ -704,12 +782,14 @@ function Hand({
             (action) => action.type === "SIGNAL_CARD" && action.instanceId === entry.instanceId,
           );
           const draggable = draggableCardIds.has(entry.instanceId);
+          const unavailableReason = unavailableReasonForCard(view, entry, primary);
           return (
             <DanceCard
               key={entry.instanceId}
               value={entry}
               disabled={!isOwnTurn}
               actionLabel={actionLabel(primary)}
+              unavailableReason={unavailableReason}
               onAction={primary ? () => dispatch(primary) : undefined}
               onSignal={signal ? () => dispatch(signal) : undefined}
               onInspect={(source) => onInspect(entry, source)}

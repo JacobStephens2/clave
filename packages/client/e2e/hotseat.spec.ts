@@ -385,14 +385,34 @@ test("starts in Open and presents the floor as Move then Position then Flourish"
   ).toEqual(["move", "position", "flourish"]);
   await expect(positionSlot).toContainText("Open Position");
   await expect(moveSlot.locator(".empty-slot")).toBeVisible();
+  await expect(page.locator(".step-heading strong")).toHaveText("Play a Move first");
+  await expect(
+    page.getByText(
+      "Current Position: Open. Play a Move whose top edge includes Open. Or choose Dance the basic or Stumble below.",
+    ),
+  ).toBeVisible();
+  await expect(floor.getByText("Drag a highlighted Move here", { exact: true })).toBeVisible();
 
   await expect(page.locator(".opening-options")).toHaveCount(0);
   await expect(page.locator(".hand-scroll .dance-card.playable:not(.move)")).toHaveCount(0);
   const move = page.locator(".hand-scroll .dance-card.move.playable").first();
+  await expect(move.locator(".card-unavailable-reason")).toHaveCount(0);
+  const mismatchedMove = page
+    .locator(".hand-scroll .dance-card.move")
+    .filter({ hasText: "Cross Body Lead — Closed" });
+  await expect(mismatchedMove).toContainText("Needs Closed or Half-Closed · Floor is Open");
+  await expect(page.locator(".hand-scroll .dance-card.position").first()).toContainText(
+    "Play a Move first",
+  );
   const moveName = await move.locator("h4").innerText();
   await move.dragTo(floor);
 
   await expect(moveSlot).toContainText(moveName);
+  await expect(page.getByText("Move played — add a Position", { exact: true })).toBeVisible();
+  await expect(floor.getByText(`Just played: ${moveName}`, { exact: true })).toBeVisible();
+  await expect(
+    floor.getByText("Now drag a highlighted Position here", { exact: true }),
+  ).toBeVisible();
   await expect(page.locator(".hand-heading strong")).toHaveText("3 cards");
   const position = page.locator(".hand-scroll .dance-card.position.playable").first();
   const positionName = await position.locator("h4").innerText();
@@ -661,4 +681,45 @@ test("shows readable card content above the fold in a shorter laptop viewport", 
   );
   expect(nameBox!.y + nameBox!.height).toBeLessThanOrEqual(800);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
+});
+
+test("keeps the just-played Move readable on a short desktop floor", async ({ page }) => {
+  await page.setViewportSize({ width: 1494, height: 825 });
+  await page.addInitScript(() => {
+    Object.defineProperty(globalThis.crypto, "getRandomValues", {
+      configurable: true,
+      value: (values: Uint32Array) => {
+        values.fill(1);
+        return values;
+      },
+    });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  await finishSetup(page);
+
+  const move = page.locator(".hand-scroll .dance-card.move.playable").first();
+  const moveName = await move.locator("h4").innerText();
+  const mismatchReason = page
+    .locator(".hand-scroll .dance-card.move")
+    .filter({ hasText: "Cross Body Lead — Closed" })
+    .locator(".card-unavailable-reason");
+  await expect(mismatchReason).toBeVisible();
+  const reasonBox = await mismatchReason.boundingBox();
+  expect(reasonBox).not.toBeNull();
+  expect(reasonBox!.y + reasonBox!.height).toBeLessThanOrEqual(825);
+  await move.getByRole("button", { name: "Dance move" }).click();
+
+  const floorMove = page.locator('[data-slot="move"] .dance-card.full-artwork');
+  await expect(page.getByText(`Just played: ${moveName}`, { exact: true })).toBeVisible();
+  const cardBox = await floorMove.boundingBox();
+  const nameBox = await floorMove.locator("h4").boundingBox();
+  expect(cardBox).not.toBeNull();
+  expect(nameBox).not.toBeNull();
+  expect(cardBox!.width).toBeGreaterThanOrEqual(160);
+  expect(cardBox!.height).toBeGreaterThanOrEqual(48);
+  expect(nameBox!.x).toBeGreaterThanOrEqual(cardBox!.x);
+  expect(nameBox!.x + nameBox!.width).toBeLessThanOrEqual(cardBox!.x + cardBox!.width);
+  expect(nameBox!.y).toBeGreaterThanOrEqual(cardBox!.y);
+  expect(nameBox!.y + nameBox!.height).toBeLessThanOrEqual(cardBox!.y + cardBox!.height);
 });
