@@ -4,6 +4,9 @@ import type { CardView, GameAction, PlayerSnapshot } from "@clave/engine";
  * What the viewer has started but not yet committed on the floor. Today that is
  * only the two-step opening: a Position staged on an empty floor, waiting for
  * one of its matching Moves.
+ *
+ * Every query in this module reconciles the intent it is given, so callers may
+ * pass the intent they stored without reconciling it first.
  */
 export interface TurnIntent {
   readonly stagedPositionId: string | null;
@@ -24,17 +27,20 @@ const isViewersDanceStep = (view: PlayerSnapshot) =>
 const openingActions = (view: PlayerSnapshot) =>
   view.legalActions.filter((action): action is OpeningAction => action.type === "PLAY_OPEN");
 
+/** The hand card a single-card floor action plays, or null for any other action. */
+function floorCardId(action: GameAction): string | null {
+  if (action.type === "PLAY_MOVE") return action.moveInstanceId;
+  if (action.type === "TRANSITION") return action.positionInstanceId;
+  if (action.type === "PLAY_FLOURISH") return action.flourishInstanceId;
+  return null;
+}
+
 /** The single-card floor action a hand card performs once a Position is on the table. */
 export function floorActionFor(
   actions: readonly GameAction[],
   instanceId: string,
 ): GameAction | undefined {
-  return actions.find(
-    (action) =>
-      (action.type === "PLAY_MOVE" && action.moveInstanceId === instanceId) ||
-      (action.type === "TRANSITION" && action.positionInstanceId === instanceId) ||
-      (action.type === "PLAY_FLOURISH" && action.flourishInstanceId === instanceId),
-  );
+  return actions.find((action) => floorCardId(action) === instanceId);
 }
 
 /**
@@ -59,7 +65,7 @@ export function stagedPosition(view: PlayerSnapshot, intent: TurnIntent): CardVi
 }
 
 /** The hand cards the viewer may drag onto the floor right now. */
-export function draggableCardIds(view: PlayerSnapshot, intent: TurnIntent): Set<string> {
+export function floorDraggableIds(view: PlayerSnapshot, intent: TurnIntent): Set<string> {
   const ids = new Set<string>();
   if (!isViewersDanceStep(view)) return ids;
 
@@ -73,9 +79,8 @@ export function draggableCardIds(view: PlayerSnapshot, intent: TurnIntent): Set<
   }
 
   for (const action of view.legalActions) {
-    if (action.type === "PLAY_MOVE") ids.add(action.moveInstanceId);
-    if (action.type === "TRANSITION") ids.add(action.positionInstanceId);
-    if (action.type === "PLAY_FLOURISH") ids.add(action.flourishInstanceId);
+    const id = floorCardId(action);
+    if (id !== null) ids.add(id);
   }
   return ids;
 }
@@ -86,7 +91,7 @@ export function resolveDrop(
   intent: TurnIntent,
   instanceId: string,
 ): DropResolution {
-  if (!draggableCardIds(view, intent).has(instanceId)) return { kind: "ignore" };
+  if (!floorDraggableIds(view, intent).has(instanceId)) return { kind: "ignore" };
 
   if (!view.table.position) {
     const staged = reconcileIntent(view, intent).stagedPositionId;

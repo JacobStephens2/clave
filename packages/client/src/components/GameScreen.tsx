@@ -4,8 +4,8 @@ import type { CardView, GameAction, PlayerSnapshot, Role } from "@clave/engine";
 import { useAppStore } from "../store.js";
 import {
   NO_INTENT,
-  draggableCardIds as draggableCardIdsFor,
   floorActionFor,
+  floorDraggableIds,
   reconcileIntent,
   resolveDrop,
   stagedPosition,
@@ -1176,7 +1176,7 @@ export function GameScreen() {
   const { play: playSoundEffect } = useSoundEffects();
   const [inspection, setInspection] = useState<CardInspection | null>(null);
   const [discardOpen, setDiscardOpen] = useState(false);
-  const [storedIntent, setIntent] = useState<TurnIntent>(NO_INTENT);
+  const [intent, setIntent] = useState<TurnIntent>(NO_INTENT);
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
   const [floorDragOver, setFloorDragOver] = useState(false);
   const [draggingLessonKey, setDraggingLessonKey] = useState<string | null>(null);
@@ -1286,16 +1286,12 @@ export function GameScreen() {
     () => view?.legalActions.find((action) => action.type === "CLEAR_SIGNAL"),
     [view],
   );
-  const intent = useMemo(
-    () => (view ? reconcileIntent(view, storedIntent) : NO_INTENT),
-    [storedIntent, view],
-  );
   const pendingPosition = useMemo(
     () => (view ? stagedPosition(view, intent) : null),
     [intent, view],
   );
   const draggableCardIds = useMemo(
-    () => (view ? draggableCardIdsFor(view, intent) : new Set<string>()),
+    () => (view ? floorDraggableIds(view, intent) : new Set<string>()),
     [intent, view],
   );
 
