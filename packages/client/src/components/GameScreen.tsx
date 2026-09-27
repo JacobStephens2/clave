@@ -2,6 +2,15 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { DanceCard as DanceCardDefinition, Position } from "@clave/content";
 import type { CardView, GameAction, PlayerSnapshot, Role } from "@clave/engine";
 import { useAppStore } from "../store.js";
+import {
+  NO_INTENT,
+  floorActionFor,
+  floorDraggableIds,
+  reconcileIntent,
+  resolveDrop,
+  stagedPosition,
+  type TurnIntent,
+} from "../turn-intent.js";
 import { DanceCard } from "./DanceCard.js";
 import { DancerDemo } from "./DancerDemo.js";
 import { MusicButton } from "./MusicPlayer.js";
@@ -11,7 +20,6 @@ import { SoundEffectsButton, useSoundEffects, type SoundEffect } from "./SoundEf
 
 const roleName = (role: Role) => (role === "lead" ? "Lead" : "Follow");
 type InspectableCard = CardView | DanceCardDefinition;
-type OpeningAction = Extract<GameAction, { type: "PLAY_OPEN" }>;
 type LessonBuyAction = Extract<GameAction, { type: "BUY_LESSON" }>;
 type CleanupAction = Extract<GameAction, { type: "END_LESSON" }>;
 type RoomCopyStatus = "idle" | "copied" | "failed";
@@ -78,15 +86,6 @@ async function copyText(text: string): Promise<void> {
   textarea.remove();
   previousFocus?.focus();
   if (!copied) throw new Error("The browser did not copy the room code.");
-}
-
-function actionForCard(actions: GameAction[], instanceId: string): GameAction | undefined {
-  return actions.find(
-    (action) =>
-      (action.type === "PLAY_MOVE" && action.moveInstanceId === instanceId) ||
-      (action.type === "TRANSITION" && action.positionInstanceId === instanceId) ||
-      (action.type === "PLAY_FLOURISH" && action.flourishInstanceId === instanceId),
-  );
 }
 
 function actionLabel(action: GameAction | undefined): string {
@@ -777,7 +776,7 @@ function Hand({
       </div>
       <div className="hand-scroll">
         {visibleHand.map((entry) => {
-          const primary = actionForCard(view.legalActions, entry.instanceId);
+          const primary = floorActionFor(view.legalActions, entry.instanceId);
           const signal = view.legalActions.find(
             (action) => action.type === "SIGNAL_CARD" && action.instanceId === entry.instanceId,
           );
@@ -1177,7 +1176,7 @@ export function GameScreen() {
   const { play: playSoundEffect } = useSoundEffects();
   const [inspection, setInspection] = useState<CardInspection | null>(null);
   const [discardOpen, setDiscardOpen] = useState(false);
-  const [pendingOpenPositionId, setPendingOpenPositionId] = useState<string | null>(null);
+  const [intent, setIntent] = useState<TurnIntent>(NO_INTENT);
   const [draggingCardId, setDraggingCardId] = useState<string | null>(null);
   const [floorDragOver, setFloorDragOver] = useState(false);
   const [draggingLessonKey, setDraggingLessonKey] = useState<string | null>(null);
@@ -1229,7 +1228,9 @@ export function GameScreen() {
     previousStatus.current = view?.status;
   }, [playSoundEffect, view?.status]);
   useEffect(() => {
-    setPendingOpenPositionId(null);
+    if (view) setIntent((current) => reconcileIntent(view, current));
+  }, [view]);
+  useEffect(() => {
     setDraggingCardId(null);
     setFloorDragOver(false);
     setDraggingLessonKey(null);
@@ -1285,70 +1286,22 @@ export function GameScreen() {
     () => view?.legalActions.find((action) => action.type === "CLEAR_SIGNAL"),
     [view],
   );
-  const openingActions = useMemo(
-    () =>
-      view?.legalActions.filter((action): action is OpeningAction => action.type === "PLAY_OPEN") ??
-      [],
-    [view],
-  );
   const pendingPosition = useMemo(
-    () =>
-      pendingOpenPositionId
-        ? (view?.self.hand.find((entry) => entry.instanceId === pendingOpenPositionId) ?? null)
-        : null,
-    [pendingOpenPositionId, view],
+    () => (view ? stagedPosition(view, intent) : null),
+    [intent, view],
   );
-  const draggableCardIds = useMemo(() => {
-    const ids = new Set<string>();
-    if (
-      !view ||
-      view.status !== "playing" ||
-      view.phase !== "dance" ||
-      view.activeRole !== view.viewerRole
-    )
-      return ids;
-
-    if (!view.table.position) {
-      for (const action of openingActions) {
-        if (pendingOpenPositionId) {
-          if (action.positionInstanceId === pendingOpenPositionId) ids.add(action.moveInstanceId);
-        } else ids.add(action.positionInstanceId);
-      }
-      return ids;
-    }
-
-    for (const action of view.legalActions) {
-      if (action.type === "PLAY_MOVE") ids.add(action.moveInstanceId);
-      if (action.type === "TRANSITION") ids.add(action.positionInstanceId);
-      if (action.type === "PLAY_FLOURISH") ids.add(action.flourishInstanceId);
-    }
-    return ids;
-  }, [openingActions, pendingOpenPositionId, view]);
+  const draggableCardIds = useMemo(
+    () => (view ? floorDraggableIds(view, intent) : new Set<string>()),
+    [intent, view],
+  );
 
   const playDroppedCard = (instanceId: string) => {
-    if (!view || !draggableCardIds.has(instanceId)) return;
-    if (!view.table.position) {
-      if (!pendingOpenPositionId) {
-        if (openingActions.some((action) => action.positionInstanceId === instanceId)) {
-          playSoundEffect("card-position");
-          setPendingOpenPositionId(instanceId);
-        }
-        return;
-      }
-      const opening = openingActions.find(
-        (action) =>
-          action.positionInstanceId === pendingOpenPositionId &&
-          action.moveInstanceId === instanceId,
-      );
-      if (opening) {
-        setPendingOpenPositionId(null);
-        dispatch(opening);
-      }
-      return;
-    }
-
-    const action = actionForCard(view.legalActions, instanceId);
-    if (action) dispatch(action);
+    if (!view) return;
+    const drop = resolveDrop(view, intent, instanceId);
+    if (drop.kind === "ignore") return;
+    setIntent(drop.intent);
+    if (drop.kind === "stage") playSoundEffect("card-position");
+    else dispatch(drop.action);
   };
 
   const copyRoomCode = async () => {
@@ -1594,7 +1547,7 @@ export function GameScreen() {
             pendingPosition={pendingPosition}
             cancelPendingPosition={() => {
               playSoundEffect("undo");
-              setPendingOpenPositionId(null);
+              setIntent(NO_INTENT);
             }}
           />
           <Hand
