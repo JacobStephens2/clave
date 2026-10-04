@@ -6,6 +6,7 @@ import {
   applyAction,
   createGame,
   legalActions,
+  nextRandom,
   type GameAction,
   type GameState,
   type Role,
@@ -74,10 +75,11 @@ function withoutBookkeeping(state: GameState): GameState {
 // dance, flourish, transition, stumble and lesson states rather than only basics.
 function walk(seed: number, visit: (state: GameState) => void): void {
   let state = createGame({ seed, content });
-  let rng = seed >>> 0 || 1;
+  let rng = seed;
   const next = (bound: number): number => {
-    rng = (Math.imul(rng, 1_664_525) + 1_013_904_223) >>> 0;
-    return rng % bound;
+    const random = nextRandom(rng);
+    rng = random.state;
+    return Math.floor(random.value * bound);
   };
   for (
     let steps = 0;

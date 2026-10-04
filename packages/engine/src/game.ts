@@ -197,6 +197,10 @@ function log(
   state.log.push({ sequence: state.sequence + 1, role, kind, message });
 }
 
+function roleName(role: Role): string {
+  return role === "lead" ? "Lead" : "Follow";
+}
+
 function card(contentSet: ContentSet, cardId: string): DanceCard {
   const result = cardsFor(contentSet)[cardId];
   fail(result, "UNKNOWN_CARD", `Unknown card ${cardId}.`);
@@ -212,6 +216,7 @@ function instanceFromHand(player: PlayerState, instanceId: string): CardInstance
 // Effects only: the action's check has already confirmed the card is in hand.
 function removeFromHand(player: PlayerState, instanceId: string): CardInstance {
   const index = player.hand.findIndex((candidate) => candidate.instanceId === instanceId);
+  if (index < 0) throw new Error(`Unchecked effect removed ${instanceId}, which is not in hand.`);
   return player.hand.splice(index, 1)[0]!;
 }
 
@@ -349,7 +354,7 @@ function recordMove(
   log(
     state,
     "dance",
-    `${role === "lead" ? "Lead" : "Follow"} danced ${definition.name} for ${definition.style} Style.`,
+    `${roleName(role)} danced ${definition.name} for ${definition.style} Style.`,
     role,
   );
 }
@@ -574,10 +579,6 @@ type ActionOf<T extends GameAction["type"]> = Extract<GameAction, { type: T }>;
  * clone it is handed.
  */
 type Effect = (state: GameState) => void;
-
-function roleName(role: Role): string {
-  return role === "lead" ? "Lead" : "Follow";
-}
 
 function checkSetupStep(state: GameState, role: Role): void {
   fail(
@@ -872,6 +873,15 @@ function checkStumble(
   };
 }
 
+function privateLessonMarket(
+  market: Market,
+  source: "intermediate" | "advanced",
+): { display: string[]; deck: string[]; size: number } {
+  return source === "intermediate"
+    ? { display: market.intermediateDisplay, deck: market.intermediateDeck, size: 3 }
+    : { display: market.advancedDisplay, deck: market.advancedDeck, size: 2 };
+}
+
 function checkBuyLesson(
   state: GameState,
   { role, source, cardId }: ActionOf<"BUY_LESSON">,
@@ -900,20 +910,19 @@ function checkBuyLesson(
         "ADVANCED_CLOSED",
         "Advanced lessons open in the montuno.",
       );
-    const display =
-      source === "intermediate" ? state.market.intermediateDisplay : state.market.advancedDisplay;
-    fail(display.includes(cardId), "NOT_IN_MARKET", "That card is no longer in the market.");
+    fail(
+      privateLessonMarket(state.market, source).display.includes(cardId),
+      "NOT_IN_MARKET",
+      "That card is no longer in the market.",
+    );
   }
   const lesson = card(contentSet, cardId);
   return (state) => {
     const player = state.players[role];
     if (source !== "beginner") {
-      const display =
-        source === "intermediate" ? state.market.intermediateDisplay : state.market.advancedDisplay;
-      const deck =
-        source === "intermediate" ? state.market.intermediateDeck : state.market.advancedDeck;
+      const { display, deck, size } = privateLessonMarket(state.market, source);
       display.splice(display.indexOf(cardId), 1);
-      refillDisplay(deck, display, source === "intermediate" ? 3 : 2);
+      refillDisplay(deck, display, size);
       state.phrase.privateLessonTakenThisRound = true;
     }
     player.money -= cost;
