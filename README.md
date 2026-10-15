@@ -1,9 +1,13 @@
 # Clave — A Partner Dance Game (Salsa)
 
+[![CI](https://github.com/JacobStephens2/clave/actions/workflows/ci.yml/badge.svg)](https://github.com/JacobStephens2/clave/actions/workflows/ci.yml)
+
+**Play it at [clave.dance](https://clave.dance).**
+
 Clave is a cooperative card game for two players — a Lead and a Follow — who dance
 a salsa song together, one 8-count at a time. Play positions, moves, and
 flourishes; protect your Connection; finish the song with as much Style as you
-can. It is the first entry in the planned *Partner Dance Game* series.
+can. It is the first entry in the planned _Partner Dance Game_ series.
 
 v1 is a single responsive web app with a headless TypeScript engine, hot-seat
 pass-and-play, and server-authoritative two-device rooms. The governing,
@@ -12,6 +16,26 @@ adjudicated build plan is [`docs/plans/clave-plan.md`](docs/plans/clave-plan.md)
 An additional macOS-first Unity 6.5 + C# hot-seat implementation lives in
 [`unity/`](unity/README.md). It is a parallel desktop version and does not replace
 the web v1 or its governing plan.
+
+## Features
+
+- **Two ways to play:** hot-seat pass-and-play on one device, or a two-device room
+  joined by a shared room code. Hot-seat games are saved in the browser after
+  every accepted action; online rooms are saved transactionally in SQLite, and a
+  reloaded device reclaims its seat and resumes the game.
+- **Guided turns:** the table walks each turn through Move → Position →
+  Flourish, explains why a card can't be played on the current floor Position,
+  and supports drag-and-drop as well as tap and keyboard play.
+- **In-app rulebook:** a responsive **How to play** dialog on the home screen and
+  live table, with balance values read from the same validated content as the
+  engine.
+- **Original card artwork** in an Afro-Caribbean figurative-expressionist style;
+  see [`docs/art/card-art-direction.md`](docs/art/card-art-direction.md).
+- **Music and sound:** the home screen and song banner can start or pause
+  Spotify's official Llorarás embed. Clave does not bundle the copyrighted
+  recording or synchronize it to turns. Card landings and lesson, turn, stumble,
+  and finish cues are synthesized locally with the Web Audio API, with a separate
+  SFX toggle that each device remembers.
 
 ## Play locally
 
@@ -22,18 +46,11 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. The client and room server start together. Hot-seat
-games are saved after every accepted action in the browser; online rooms are saved
-transactionally in SQLite. The home screen and song banner can start or pause
-Spotify's official Llorarás embed; Clave does not bundle the copyrighted recording
-or synchronize it to turns. Distinct Move, Position, and Flourish landing cues,
-plus lesson, turn, stumble, and finish feedback, are synthesized locally with the
-Web Audio API; the SFX control is independent of the music player and remembers
-its setting on the device. A responsive **How to play**
-rulebook is available from both the home screen and live table, with its balance
-values read from the same validated content as the engine.
+Open `http://localhost:5173`. The client and room server start together.
+`npm run play` opens the same engine as a terminal game.
 
-Verification commands:
+Verification commands (CI runs tests, typecheck, the Unity checks, and the build
+on every push and pull request):
 
 ```sh
 npm test
@@ -43,8 +60,6 @@ npm run lint
 npm run build
 npm run check:unity
 ```
-
-`npm run play` opens the same engine as a terminal game.
 
 ## Application map
 
@@ -60,7 +75,8 @@ npm run check:unity
 - [`docs/rules/game-rules.md`](docs/rules/game-rules.md) — the rulebook (rules of record)
 - [`docs/rules/decisions.md`](docs/rules/decisions.md) — rules decisions and rulings
 - [`docs/cards/v1-card-list.md`](docs/cards/v1-card-list.md) — the complete v1 card set and the Llorarás song deck
-- [`docs/plans/`](docs/plans/) — the v1 build plan, its adversarial review, and the adjudication
+- [`docs/plans/`](docs/plans/) — the v1 build plan, its adversarial review and adjudication, and the admin console plan
+- [`docs/art/`](docs/art/) — card art direction and the generation prompts
 - [`docs/unity-vs-web-implementation-report.md`](docs/unity-vs-web-implementation-report.md) — comparison of Unity/Hearthstone-style and browser/BGA-style Clave development
 - [`docs/living-documents/1-concept-brief.md`](docs/living-documents/1-concept-brief.md) — pitch, pillars, non-goals
 - [`docs/living-documents/0-dance.md`](docs/living-documents/0-dance.md) — the Llorarás song/dance breakdown behind the v1 song deck
@@ -70,10 +86,20 @@ npm run check:unity
 - [`research/`](research/) — salsa music, dance, and game-design research notes
 - [`tasks/`](tasks/) — working task list (`todo.md`) and log (`done.md`)
 
-## Status (2026-07-18)
+## Status (2026-10-15)
 
-The digital v1 is implemented and passes the automated engine, persistence, build,
-bundle-size, hot-seat, reload-resume, and two-browser online-game checks. The
-human/external launch gates remain: the two physical couch playtests, device smoke
-matrix, production DNS/service deployment, latency/crash/upgrade drills, and backup
-restore drill. Those are tracked in [`tasks/todo.md`](tasks/todo.md).
+The digital v1 is deployed at [clave.dance](https://clave.dance) and passes the
+automated engine, persistence, build, bundle-size, hot-seat, reload-resume, and
+two-browser online-game checks. The remaining launch gates are human and
+operational: the physical couch playtests, the device smoke matrix, the
+latency/crash/upgrade/restore drills, and the `playclave.com` redirect. An
+authenticated room-administration console is planned in
+[`docs/plans/admin-ui-plan.md`](docs/plans/admin-ui-plan.md). All of these are
+tracked in [`tasks/todo.md`](tasks/todo.md); bugs and feature work are tracked in
+[GitHub issues](https://github.com/JacobStephens2/clave/issues).
+
+## License
+
+Copyright © 2026 Jacob Stephens. All rights reserved. The source, rules, and
+artwork are published for reference only; no license to use, copy, modify, or
+distribute them is granted. See [`LICENSE`](LICENSE).
