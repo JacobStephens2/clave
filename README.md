@@ -7,7 +7,7 @@
 Clave is a cooperative card game for two players — a Lead and a Follow — who dance
 a salsa song together, one 8-count at a time. Play positions, moves, and
 flourishes; protect your Connection; finish the song with as much Style as you
-can. It is the first entry in the planned *Partner Dance Game* series.
+can. It is the first entry in the planned _Partner Dance Game_ series.
 
 v1 is a single responsive web app with a headless TypeScript engine, hot-seat
 pass-and-play, and server-authoritative two-device rooms. The governing,
