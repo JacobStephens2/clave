@@ -81,7 +81,7 @@ site configuration and record `apache2ctl -S`. Never replace the
 ## 2. Prepare an immutable application release
 
 Repository:
-`https://github.com/JacobStephens2/clave-partner-dance-game.git`
+`https://github.com/JacobStephens2/clave.git`
 
 Create `/opt/clave/releases/<DEPLOY_COMMIT>` from that exact commit. Do not use a
 later `master` implicitly. Within the release run:
