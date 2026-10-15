@@ -197,6 +197,10 @@ function log(
   state.log.push({ sequence: state.sequence + 1, role, kind, message });
 }
 
+function roleName(role: Role): string {
+  return role === "lead" ? "Lead" : "Follow";
+}
+
 function card(contentSet: ContentSet, cardId: string): DanceCard {
   const result = cardsFor(contentSet)[cardId];
   fail(result, "UNKNOWN_CARD", `Unknown card ${cardId}.`);
@@ -209,9 +213,10 @@ function instanceFromHand(player: PlayerState, instanceId: string): CardInstance
   return instance;
 }
 
+// Effects only: the action's check has already confirmed the card is in hand.
 function removeFromHand(player: PlayerState, instanceId: string): CardInstance {
   const index = player.hand.findIndex((candidate) => candidate.instanceId === instanceId);
-  fail(index >= 0, "CARD_NOT_IN_HAND", "That card is not in your hand.");
+  if (index < 0) throw new Error(`Unchecked effect removed ${instanceId}, which is not in hand.`);
   return player.hand.splice(index, 1)[0]!;
 }
 
@@ -275,7 +280,12 @@ function snapshotCheckpoint(state: GameState): TurnCheckpoint {
   });
 }
 
+function advancedLessonsOpen(state: GameState, contentSet: ContentSet): boolean {
+  return state.songIndex >= contentSet.song.cards.length / 2;
+}
+
 function startTurn(state: GameState, role: Role, contentSet: ContentSet): void {
+  const advancedWereOpen = advancedLessonsOpen(state, contentSet);
   state.activeRole = role;
   state.phase = "dance";
   state.songIndex += 1;
@@ -286,7 +296,7 @@ function startTurn(state: GameState, role: Role, contentSet: ContentSet): void {
   state.turnDance = emptyTurnDance();
   state.signal = null;
   if (role === "lead") state.phrase.privateLessonTakenThisRound = false;
-  if (state.songIndex === contentSet.song.cards.length / 2) {
+  if (!advancedWereOpen && advancedLessonsOpen(state, contentSet)) {
     state.market.advancedDisplay.push(...takeDisplay(state.market.advancedDeck, 2));
     log(state, "system", "The montuno begins. Advanced lessons are now open.");
   }
@@ -344,7 +354,7 @@ function recordMove(
   log(
     state,
     "dance",
-    `${role === "lead" ? "Lead" : "Follow"} danced ${definition.name} for ${definition.style} Style.`,
+    `${roleName(role)} danced ${definition.name} for ${definition.style} Style.`,
     role,
   );
 }
@@ -545,9 +555,8 @@ function newOwnedInstance(state: GameState, role: Role, cardId: string): CardIns
   return { instanceId: `${role}-${state.nextInstance++}`, cardId, owner: role };
 }
 
-function restoreCheckpoint(state: GameState): void {
-  fail(state.checkpoint, "NOTHING_TO_UNDO", "Nothing has been played this turn.");
-  const checkpoint = clone(state.checkpoint);
+function restoreCheckpoint(state: GameState, saved: TurnCheckpoint): void {
+  const checkpoint = clone(saved);
   state.players = checkpoint.players;
   state.table = checkpoint.table;
   state.shared = checkpoint.shared;
@@ -562,43 +571,74 @@ function restoreCheckpoint(state: GameState): void {
   state.phase = "dance";
 }
 
-function handleAction(state: GameState, action: GameAction, contentSet: ContentSet): void {
-  const role = action.role;
-  const player = state.players[role];
+type ActionOf<T extends GameAction["type"]> = Extract<GameAction, { type: T }>;
 
-  if (action.type === "MULLIGAN" || action.type === "CONFIRM_HAND") {
-    fail(
-      state.status === "setup" && state.phase === "mulligan",
-      "WRONG_PHASE",
-      "Opening hands are already settled.",
-    );
-    fail(
-      state.setupRole === role,
-      "NOT_YOUR_SETUP",
-      "It is your partner's turn to check their hand.",
-    );
-    if (action.type === "MULLIGAN") {
-      fail(!player.mulliganUsed, "MULLIGAN_USED", "The one-time mulligan has already been used.");
-      fail(
-        canMulligan(player, contentSet, state.table.position),
-        "MULLIGAN_NOT_ALLOWED",
-        "This hand has a Move for the current Position.",
-      );
-      const shuffled = shuffle([...player.hand, ...player.drawPile], state.rngState);
-      state.rngState = shuffled.state;
-      player.hand = shuffled.items.splice(0, contentSet.rules.handSize);
-      player.drawPile = shuffled.items;
-      player.mulliganUsed = true;
-      log(
-        state,
-        "system",
-        `${role === "lead" ? "Lead" : "Follow"} takes their one mulligan.`,
-        role,
-      );
-      return;
-    }
-    player.ready = true;
-    log(state, "system", `${role === "lead" ? "Lead" : "Follow"} keeps their opening hand.`, role);
+/**
+ * What an action does to a state, run only after its check has passed. The parameter is
+ * named `state` on purpose: it shadows the checked state so an effect can only touch the
+ * clone it is handed.
+ */
+type Effect = (state: GameState) => void;
+
+function checkSetupStep(state: GameState, role: Role): void {
+  fail(
+    state.status === "setup" && state.phase === "mulligan",
+    "WRONG_PHASE",
+    "Opening hands are already settled.",
+  );
+  fail(
+    state.setupRole === role,
+    "NOT_YOUR_SETUP",
+    "It is your partner's turn to check their hand.",
+  );
+}
+
+function checkTurn(state: GameState, role: Role): void {
+  fail(state.status === "playing", "GAME_NOT_PLAYING", "The dance is not active.");
+  fail(state.activeRole === role, "NOT_YOUR_TURN", "It is your partner's turn.");
+}
+
+function checkDanceCardStep(state: GameState): void {
+  fail(
+    state.phase === "dance",
+    "WRONG_PHASE",
+    "Dance cards can only be played during the dance step.",
+  );
+}
+
+function checkMulligan(
+  state: GameState,
+  { role }: ActionOf<"MULLIGAN">,
+  contentSet: ContentSet,
+): Effect {
+  checkSetupStep(state, role);
+  const player = state.players[role];
+  fail(!player.mulliganUsed, "MULLIGAN_USED", "The one-time mulligan has already been used.");
+  fail(
+    canMulligan(player, contentSet, state.table.position),
+    "MULLIGAN_NOT_ALLOWED",
+    "This hand has a Move for the current Position.",
+  );
+  return (state) => {
+    const player = state.players[role];
+    const shuffled = shuffle([...player.hand, ...player.drawPile], state.rngState);
+    state.rngState = shuffled.state;
+    player.hand = shuffled.items.splice(0, contentSet.rules.handSize);
+    player.drawPile = shuffled.items;
+    player.mulliganUsed = true;
+    log(state, "system", `${roleName(role)} takes their one mulligan.`, role);
+  };
+}
+
+function checkConfirmHand(
+  state: GameState,
+  { role }: ActionOf<"CONFIRM_HAND">,
+  contentSet: ContentSet,
+): Effect {
+  checkSetupStep(state, role);
+  return (state) => {
+    state.players[role].ready = true;
+    log(state, "system", `${roleName(role)} keeps their opening hand.`, role);
     if (role === "lead") {
       state.setupRole = "follow";
       state.activeRole = "follow";
@@ -607,153 +647,160 @@ function handleAction(state: GameState, action: GameAction, contentSet: ContentS
       state.setupRole = "lead";
       startTurn(state, "lead", contentSet);
     }
-    return;
-  }
+  };
+}
 
-  fail(state.status === "playing", "GAME_NOT_PLAYING", "The dance is not active.");
-  fail(state.activeRole === role, "NOT_YOUR_TURN", "It is your partner's turn.");
+function checkSignalCard(state: GameState, { role, instanceId }: ActionOf<"SIGNAL_CARD">): Effect {
+  checkTurn(state, role);
+  instanceFromHand(state.players[role], instanceId);
+  return (state) => {
+    state.signal = { role, instanceId };
+    log(state, "signal", `${roleName(role)} reveals one card as a signal.`, role);
+  };
+}
 
-  if (action.type === "SIGNAL_CARD") {
-    instanceFromHand(player, action.instanceId);
-    state.signal = { role, instanceId: action.instanceId };
-    log(
-      state,
-      "signal",
-      `${role === "lead" ? "Lead" : "Follow"} reveals one card as a signal.`,
-      role,
-    );
-    return;
-  }
-  if (action.type === "CLEAR_SIGNAL") {
-    fail(state.signal?.role === role, "NO_SIGNAL", "There is no signal to clear.");
+function checkClearSignal(state: GameState, { role }: ActionOf<"CLEAR_SIGNAL">): Effect {
+  checkTurn(state, role);
+  fail(state.signal?.role === role, "NO_SIGNAL", "There is no signal to clear.");
+  return (state) => {
     state.signal = null;
-    return;
-  }
-  if (action.type === "UNDO_TURN") {
-    restoreCheckpoint(state);
-    log(state, "system", `${role === "lead" ? "Lead" : "Follow"} resets their turn.`, role);
-    return;
-  }
+  };
+}
 
-  if (action.type === "PLAY_OPEN") {
-    fail(
-      state.phase === "dance",
-      "WRONG_PHASE",
-      "Dance cards can only be played during the dance step.",
-    );
-    fail(state.table.position === null, "DANCE_ALREADY_OPEN", "The dance already has a position.");
-    fail(
-      state.turnDance.cardsPlayed === 0,
-      "OPEN_FIRST",
-      "An opening Position and Move must be played together.",
-    );
-    const positionInstance = instanceFromHand(player, action.positionInstanceId);
-    const moveInstance = instanceFromHand(player, action.moveInstanceId);
-    fail(
-      positionInstance.instanceId !== moveInstance.instanceId,
-      "SAME_CARD",
-      "Choose two different cards.",
-    );
-    const position = positionFor(contentSet, positionInstance);
-    const move = moveFor(contentSet, moveInstance);
-    fail(
-      moveMatches(move, position),
-      "POSITION_MISMATCH",
-      `${move.name} cannot be danced from ${position}.`,
-    );
-    state.table.position = removeFromHand(player, action.positionInstanceId);
+function checkUndoTurn(state: GameState, { role }: ActionOf<"UNDO_TURN">): Effect {
+  checkTurn(state, role);
+  fail(state.checkpoint, "NOTHING_TO_UNDO", "Nothing has been played this turn.");
+  return (state) => {
+    restoreCheckpoint(state, state.checkpoint!);
+    log(state, "system", `${roleName(role)} resets their turn.`, role);
+  };
+}
+
+function checkPlayOpen(
+  state: GameState,
+  { role, positionInstanceId, moveInstanceId }: ActionOf<"PLAY_OPEN">,
+  contentSet: ContentSet,
+): Effect {
+  checkTurn(state, role);
+  checkDanceCardStep(state);
+  fail(state.table.position === null, "DANCE_ALREADY_OPEN", "The dance already has a position.");
+  fail(
+    state.turnDance.cardsPlayed === 0,
+    "OPEN_FIRST",
+    "An opening Position and Move must be played together.",
+  );
+  const player = state.players[role];
+  const positionInstance = instanceFromHand(player, positionInstanceId);
+  const moveInstance = instanceFromHand(player, moveInstanceId);
+  fail(
+    positionInstance.instanceId !== moveInstance.instanceId,
+    "SAME_CARD",
+    "Choose two different cards.",
+  );
+  const position = positionFor(contentSet, positionInstance);
+  const move = moveFor(contentSet, moveInstance);
+  fail(
+    moveMatches(move, position),
+    "POSITION_MISMATCH",
+    `${move.name} cannot be danced from ${position}.`,
+  );
+  return (state) => {
+    const player = state.players[role];
+    state.table.position = removeFromHand(player, positionInstanceId);
     state.turnDance.positionsPlayed += 1;
     state.turnDance.cardsPlayed += 1;
-    recordMove(state, role, removeFromHand(player, action.moveInstanceId), position, move);
-    return;
-  }
+    recordMove(state, role, removeFromHand(player, moveInstanceId), position, move);
+  };
+}
 
-  if (action.type === "PLAY_MOVE") {
-    fail(
-      state.phase === "dance",
-      "WRONG_PHASE",
-      "Dance cards can only be played during the dance step.",
+function checkPlayMove(
+  state: GameState,
+  { role, moveInstanceId }: ActionOf<"PLAY_MOVE">,
+  contentSet: ContentSet,
+): Effect {
+  checkTurn(state, role);
+  checkDanceCardStep(state);
+  fail(state.table.position, "OPEN_REQUIRED", "Open with a matching Position and Move first.");
+  fail(state.turnDance.moveCardId === null, "MOVE_LIMIT", "Only one Move may be played per turn.");
+  const move = moveFor(contentSet, instanceFromHand(state.players[role], moveInstanceId));
+  const fromPosition = positionFor(contentSet, state.table.position);
+  fail(
+    moveMatches(move, fromPosition),
+    "POSITION_MISMATCH",
+    `${move.name} cannot be danced from ${fromPosition}.`,
+  );
+  return (state) => {
+    recordMove(
+      state,
+      role,
+      removeFromHand(state.players[role], moveInstanceId),
+      fromPosition,
+      move,
     );
-    fail(state.table.position, "OPEN_REQUIRED", "Open with a matching Position and Move first.");
-    fail(
-      state.turnDance.moveCardId === null,
-      "MOVE_LIMIT",
-      "Only one Move may be played per turn.",
-    );
-    const moveInstance = instanceFromHand(player, action.moveInstanceId);
-    const move = moveFor(contentSet, moveInstance);
-    const fromPosition = positionFor(contentSet, state.table.position);
-    fail(
-      moveMatches(move, fromPosition),
-      "POSITION_MISMATCH",
-      `${move.name} cannot be danced from ${fromPosition}.`,
-    );
-    recordMove(state, role, removeFromHand(player, action.moveInstanceId), fromPosition, move);
-    return;
-  }
+  };
+}
 
-  if (action.type === "TRANSITION") {
-    fail(
-      state.phase === "dance",
-      "WRONG_PHASE",
-      "Dance cards can only be played during the dance step.",
-    );
-    fail(
-      state.turnDance.canTransition,
-      "TRANSITION_WINDOW_CLOSED",
-      "Transition immediately after your Move.",
-    );
-    fail(
-      state.turnDance.positionsPlayed < contentSet.rules.danceLimits.positions,
-      "POSITION_LIMIT",
-      "The Position limit for this turn has been reached.",
-    );
-    const nextInstance = instanceFromHand(player, action.positionInstanceId);
-    const nextPosition = positionFor(contentSet, nextInstance);
-    const previousPosition = state.table.position
-      ? positionFor(contentSet, state.table.position)
-      : null;
+function checkTransition(
+  state: GameState,
+  { role, positionInstanceId }: ActionOf<"TRANSITION">,
+  contentSet: ContentSet,
+): Effect {
+  checkTurn(state, role);
+  checkDanceCardStep(state);
+  fail(
+    state.turnDance.canTransition,
+    "TRANSITION_WINDOW_CLOSED",
+    "Transition immediately after your Move.",
+  );
+  fail(
+    state.turnDance.positionsPlayed < contentSet.rules.danceLimits.positions,
+    "POSITION_LIMIT",
+    "The Position limit for this turn has been reached.",
+  );
+  const nextPosition = positionFor(
+    contentSet,
+    instanceFromHand(state.players[role], positionInstanceId),
+  );
+  const previousPosition = state.table.position
+    ? positionFor(contentSet, state.table.position)
+    : null;
+  return (state) => {
     if (state.table.position)
       state.players[state.table.position.owner].discardPile.push(state.table.position);
-    state.table.position = removeFromHand(player, action.positionInstanceId);
+    state.table.position = removeFromHand(state.players[role], positionInstanceId);
     state.turnDance.cardsPlayed += 1;
     state.turnDance.positionsPlayed += 1;
     state.turnDance.changedPosition ||= previousPosition !== nextPosition;
     state.turnDance.canTransition = false;
-    log(
-      state,
-      "dance",
-      `${role === "lead" ? "Lead" : "Follow"} carries the dance to ${nextPosition}.`,
-      role,
-    );
-    return;
-  }
+    log(state, "dance", `${roleName(role)} carries the dance to ${nextPosition}.`, role);
+  };
+}
 
-  if (action.type === "PLAY_FLOURISH") {
-    fail(
-      state.phase === "dance",
-      "WRONG_PHASE",
-      "Dance cards can only be played during the dance step.",
-    );
-    fail(
-      state.turnDance.moveCardId !== null,
-      "MOVE_REQUIRED",
-      "A Flourish belongs on the Move you played this turn.",
-    );
-    fail(
-      !state.turnDance.flourished,
-      "FLOURISH_LIMIT",
-      "Only one Flourish may be played per turn.",
-    );
-    const flourishInstance = instanceFromHand(player, action.flourishInstanceId);
-    const flourish = flourishFor(contentSet, flourishInstance);
-    const fromPosition = state.turnDance.fromPosition!;
-    fail(
-      flourish.positions === "any" || flourish.positions.includes(fromPosition),
-      "FLOURISH_MISMATCH",
-      `${flourish.name} does not match ${fromPosition}.`,
-    );
-    state.table.flourish = removeFromHand(player, action.flourishInstanceId);
+function checkPlayFlourish(
+  state: GameState,
+  { role, flourishInstanceId }: ActionOf<"PLAY_FLOURISH">,
+  contentSet: ContentSet,
+): Effect {
+  checkTurn(state, role);
+  checkDanceCardStep(state);
+  fail(
+    state.turnDance.moveCardId !== null,
+    "MOVE_REQUIRED",
+    "A Flourish belongs on the Move you played this turn.",
+  );
+  fail(!state.turnDance.flourished, "FLOURISH_LIMIT", "Only one Flourish may be played per turn.");
+  const flourish = flourishFor(
+    contentSet,
+    instanceFromHand(state.players[role], flourishInstanceId),
+  );
+  const fromPosition = state.turnDance.fromPosition!;
+  fail(
+    flourish.positions === "any" || flourish.positions.includes(fromPosition),
+    "FLOURISH_MISMATCH",
+    `${flourish.name} does not match ${fromPosition}.`,
+  );
+  return (state) => {
+    state.table.flourish = removeFromHand(state.players[role], flourishInstanceId);
     state.shared.style += flourish.style;
     state.turnDance.cardsPlayed += 1;
     state.turnDance.flourished = true;
@@ -766,43 +813,51 @@ function handleAction(state: GameState, action: GameAction, contentSet: ContentS
     log(
       state,
       "dance",
-      `${role === "lead" ? "Lead" : "Follow"} adds ${flourish.name} for ${flourish.style} Style.`,
+      `${roleName(role)} adds ${flourish.name} for ${flourish.style} Style.`,
       role,
     );
-    return;
-  }
+  };
+}
 
-  if (action.type === "END_DANCE") {
-    fail(state.phase === "dance", "WRONG_PHASE", "The dance step is already complete.");
-    finishDance(state, role, contentSet);
-    return;
-  }
+function checkEndDance(
+  state: GameState,
+  { role }: ActionOf<"END_DANCE">,
+  contentSet: ContentSet,
+): Effect {
+  checkTurn(state, role);
+  fail(state.phase === "dance", "WRONG_PHASE", "The dance step is already complete.");
+  return (state) => finishDance(state, role, contentSet);
+}
 
-  if (action.type === "STUMBLE") {
-    fail(state.phase === "dance", "WRONG_PHASE", "A stumble replaces the dance step.");
-    fail(
-      state.turnDance.cardsPlayed === 0,
-      "ALREADY_DANCED",
-      "You cannot stumble after playing dance cards.",
-    );
-    let connectionCost = contentSet.rules.stumble.defaultConnectionCost;
-    if (action.recoveryInstanceId !== null) {
-      const recoveryInstance = instanceFromHand(player, action.recoveryInstanceId);
-      const recovery = card(contentSet, recoveryInstance.cardId);
-      fail(recovery.type === "recovery", "NOT_RECOVERY", "Choose a Recovery card.");
-      connectionCost = recovery.connectionCost;
-      player.discardPile.push(removeFromHand(player, action.recoveryInstanceId));
+function checkStumble(
+  state: GameState,
+  { role, recoveryInstanceId }: ActionOf<"STUMBLE">,
+  contentSet: ContentSet,
+): Effect {
+  checkTurn(state, role);
+  fail(state.phase === "dance", "WRONG_PHASE", "A stumble replaces the dance step.");
+  fail(
+    state.turnDance.cardsPlayed === 0,
+    "ALREADY_DANCED",
+    "You cannot stumble after playing dance cards.",
+  );
+  let connectionCost = contentSet.rules.stumble.defaultConnectionCost;
+  if (recoveryInstanceId !== null) {
+    const recoveryInstance = instanceFromHand(state.players[role], recoveryInstanceId);
+    const recovery = card(contentSet, recoveryInstance.cardId);
+    fail(recovery.type === "recovery", "NOT_RECOVERY", "Choose a Recovery card.");
+    connectionCost = recovery.connectionCost;
+  }
+  return (state) => {
+    if (recoveryInstanceId !== null) {
+      const player = state.players[role];
+      player.discardPile.push(removeFromHand(player, recoveryInstanceId));
     }
     discardTable(state);
     addConnection(state, -connectionCost, contentSet);
     state.turnDance.stumbled = true;
     state.phrase.stumbled = true;
-    log(
-      state,
-      "dance",
-      `${role === "lead" ? "Lead" : "Follow"} stumbles and loses ${connectionCost} Connection.`,
-      role,
-    );
+    log(state, "dance", `${roleName(role)} stumbles and loses ${connectionCost} Connection.`, role);
     if (state.shared.connection === 0) {
       recordDanceCombo(state, role, contentSet);
       state.status = "lost";
@@ -815,104 +870,158 @@ function handleAction(state: GameState, action: GameAction, contentSet: ContentS
       return;
     }
     finishDance(state, role, contentSet);
-    return;
-  }
+  };
+}
 
-  if (action.type === "BUY_LESSON") {
-    fail(state.phase === "lesson", "WRONG_PHASE", "Lessons come after the dance step.");
-    fail(!state.turnDance.boughtLesson, "LESSON_LIMIT", "Only one lesson may be bought per turn.");
-    const costs = contentSet.rules.lessonCosts;
-    const cost = costs[action.source];
-    fail(player.money >= cost, "NOT_ENOUGH_MONEY", `This lesson costs $${cost}.`);
-    if (action.source === "beginner") {
+function privateLessonMarket(
+  market: Market,
+  source: "intermediate" | "advanced",
+): { display: string[]; deck: string[]; size: number } {
+  return source === "intermediate"
+    ? { display: market.intermediateDisplay, deck: market.intermediateDeck, size: 3 }
+    : { display: market.advancedDisplay, deck: market.advancedDeck, size: 2 };
+}
+
+function checkBuyLesson(
+  state: GameState,
+  { role, source, cardId }: ActionOf<"BUY_LESSON">,
+  contentSet: ContentSet,
+): Effect {
+  checkTurn(state, role);
+  fail(state.phase === "lesson", "WRONG_PHASE", "Lessons come after the dance step.");
+  fail(!state.turnDance.boughtLesson, "LESSON_LIMIT", "Only one lesson may be bought per turn.");
+  const cost = contentSet.rules.lessonCosts[source];
+  fail(state.players[role].money >= cost, "NOT_ENOUGH_MONEY", `This lesson costs $${cost}.`);
+  if (source === "beginner") {
+    fail(
+      contentSet.decks.beginnerSupply.includes(cardId),
+      "NOT_IN_SUPPLY",
+      "That Beginner card is not available.",
+    );
+  } else {
+    fail(
+      !state.phrase.privateLessonTakenThisRound,
+      "PRIVATE_LESSON_TAKEN",
+      "The private lesson is already taken this round.",
+    );
+    if (source === "advanced")
       fail(
-        contentSet.decks.beginnerSupply.includes(action.cardId),
-        "NOT_IN_SUPPLY",
-        "That Beginner card is not available.",
+        advancedLessonsOpen(state, contentSet),
+        "ADVANCED_CLOSED",
+        "Advanced lessons open in the montuno.",
       );
-    } else {
-      fail(
-        !state.phrase.privateLessonTakenThisRound,
-        "PRIVATE_LESSON_TAKEN",
-        "The private lesson is already taken this round.",
-      );
-      if (action.source === "advanced")
-        fail(
-          state.songIndex >= contentSet.song.cards.length / 2,
-          "ADVANCED_CLOSED",
-          "Advanced lessons open in the montuno.",
-        );
-      const display =
-        action.source === "intermediate"
-          ? state.market.intermediateDisplay
-          : state.market.advancedDisplay;
-      const deck =
-        action.source === "intermediate"
-          ? state.market.intermediateDeck
-          : state.market.advancedDeck;
-      const index = display.indexOf(action.cardId);
-      fail(index >= 0, "NOT_IN_MARKET", "That card is no longer in the market.");
-      display.splice(index, 1);
-      refillDisplay(deck, display, action.source === "intermediate" ? 3 : 2);
+    fail(
+      privateLessonMarket(state.market, source).display.includes(cardId),
+      "NOT_IN_MARKET",
+      "That card is no longer in the market.",
+    );
+  }
+  const lesson = card(contentSet, cardId);
+  return (state) => {
+    const player = state.players[role];
+    if (source !== "beginner") {
+      const { display, deck, size } = privateLessonMarket(state.market, source);
+      display.splice(display.indexOf(cardId), 1);
+      refillDisplay(deck, display, size);
       state.phrase.privateLessonTakenThisRound = true;
     }
     player.money -= cost;
-    player.discardPile.push(newOwnedInstance(state, role, action.cardId));
+    player.discardPile.push(newOwnedInstance(state, role, cardId));
     state.turnDance.boughtLesson = true;
-    log(
-      state,
-      "lesson",
-      `${role === "lead" ? "Lead" : "Follow"} learns ${card(contentSet, action.cardId).name}.`,
-      role,
-    );
-    return;
-  }
+    log(state, "lesson", `${roleName(role)} learns ${lesson.name}.`, role);
+  };
+}
 
-  if (action.type === "LEARN_FROM_PARTNER") {
-    fail(
-      state.phase === "lesson",
-      "WRONG_PHASE",
-      "Learning from your partner happens at the end of your turn.",
-    );
-    fail(
-      !state.phrase.learnedBy[role],
-      "ALREADY_LEARNED",
-      "You have already learned from your partner this phrase.",
-    );
-    const available = state.moveHistory.some(
-      (entry) =>
-        entry.role === otherRole(role) &&
-        entry.phrase === state.phrase.number &&
-        entry.cardId === action.cardId &&
-        entry.songIndex < state.songIndex,
-    );
-    fail(
-      available,
-      "PARTNER_DID_NOT_PLAY",
-      "Your partner has not played that Move earlier this phrase.",
-    );
-    player.discardPile.push(newOwnedInstance(state, role, action.cardId));
+function checkLearnFromPartner(
+  state: GameState,
+  { role, cardId }: ActionOf<"LEARN_FROM_PARTNER">,
+  contentSet: ContentSet,
+): Effect {
+  checkTurn(state, role);
+  fail(
+    state.phase === "lesson",
+    "WRONG_PHASE",
+    "Learning from your partner happens at the end of your turn.",
+  );
+  fail(
+    !state.phrase.learnedBy[role],
+    "ALREADY_LEARNED",
+    "You have already learned from your partner this phrase.",
+  );
+  const available = state.moveHistory.some(
+    (entry) =>
+      entry.role === otherRole(role) &&
+      entry.phrase === state.phrase.number &&
+      entry.cardId === cardId &&
+      entry.songIndex < state.songIndex,
+  );
+  fail(
+    available,
+    "PARTNER_DID_NOT_PLAY",
+    "Your partner has not played that Move earlier this phrase.",
+  );
+  const learned = card(contentSet, cardId);
+  return (state) => {
+    state.players[role].discardPile.push(newOwnedInstance(state, role, cardId));
     state.phrase.learnedBy[role] = true;
     state.turnDance.learnedFromPartner = true;
-    log(
-      state,
-      "lesson",
-      `${role === "lead" ? "Lead" : "Follow"} learns ${card(contentSet, action.cardId).name} from their partner.`,
-      role,
-    );
-    return;
-  }
+    log(state, "lesson", `${roleName(role)} learns ${learned.name} from their partner.`, role);
+  };
+}
 
-  if (action.type === "END_LESSON") {
-    fail(state.phase === "lesson", "WRONG_PHASE", "The lesson step is already complete.");
+function checkEndLesson(
+  state: GameState,
+  { role }: ActionOf<"END_LESSON">,
+  contentSet: ContentSet,
+): Effect {
+  checkTurn(state, role);
+  fail(state.phase === "lesson", "WRONG_PHASE", "The lesson step is already complete.");
+  return (state) => {
+    const player = state.players[role];
     player.discardPile.push(...player.hand);
     player.hand = [];
     drawToHand(state, role, contentSet);
     state.signal = null;
     endPhraseOrTurn(state, role, contentSet);
-    return;
-  }
+  };
+}
 
+/**
+ * The single statement of an action's rules. Throws the `RuleViolation` the reducer reports
+ * when the action may not be taken from `state`, and otherwise returns the action's effect.
+ * Never mutates `state`, so `legalActions` can run it on every candidate.
+ */
+function checkAction(state: GameState, action: GameAction, contentSet: ContentSet): Effect {
+  switch (action.type) {
+    case "MULLIGAN":
+      return checkMulligan(state, action, contentSet);
+    case "CONFIRM_HAND":
+      return checkConfirmHand(state, action, contentSet);
+    case "SIGNAL_CARD":
+      return checkSignalCard(state, action);
+    case "CLEAR_SIGNAL":
+      return checkClearSignal(state, action);
+    case "UNDO_TURN":
+      return checkUndoTurn(state, action);
+    case "PLAY_OPEN":
+      return checkPlayOpen(state, action, contentSet);
+    case "PLAY_MOVE":
+      return checkPlayMove(state, action, contentSet);
+    case "TRANSITION":
+      return checkTransition(state, action, contentSet);
+    case "PLAY_FLOURISH":
+      return checkPlayFlourish(state, action, contentSet);
+    case "END_DANCE":
+      return checkEndDance(state, action, contentSet);
+    case "STUMBLE":
+      return checkStumble(state, action, contentSet);
+    case "BUY_LESSON":
+      return checkBuyLesson(state, action, contentSet);
+    case "LEARN_FROM_PARTNER":
+      return checkLearnFromPartner(state, action, contentSet);
+    case "END_LESSON":
+      return checkEndLesson(state, action, contentSet);
+  }
   const exhaustive: never = action;
   throw new RuleViolation("UNKNOWN_ACTION", `Unknown action ${(exhaustive as GameAction).type}.`);
 }
@@ -932,8 +1041,9 @@ export function applyAction(
       },
     };
   try {
+    const effect = checkAction(state, parsed.data, contentSet);
     const next = clone(state);
-    handleAction(next, parsed.data, contentSet);
+    effect(next);
     next.sequence = state.sequence + 1;
     return { ok: true, state: next };
   } catch (error) {
@@ -943,121 +1053,80 @@ export function applyAction(
   }
 }
 
+function passesCheck(state: GameState, action: GameAction, contentSet: ContentSet): boolean {
+  try {
+    checkAction(state, action, contentSet);
+    return true;
+  } catch (error) {
+    if (error instanceof RuleViolation) return false;
+    throw error;
+  }
+}
+
+/**
+ * Every action `role` could name from where its arguments come from, in `legalActions`' order.
+ * Holds no rule: anything the reducer would reject is left to `checkAction`.
+ */
+function candidateActions(state: GameState, role: Role, contentSet: ContentSet): GameAction[] {
+  if (state.status === "setup")
+    return [
+      { type: "MULLIGAN", role },
+      { type: "CONFIRM_HAND", role },
+    ];
+  const hand = state.players[role].hand.map((entry) => entry.instanceId);
+  const candidates: GameAction[] = [
+    ...hand.map((instanceId): GameAction => ({ type: "SIGNAL_CARD", role, instanceId })),
+    { type: "CLEAR_SIGNAL", role },
+    { type: "UNDO_TURN", role },
+  ];
+  if (state.phase === "dance") {
+    for (const positionInstanceId of hand)
+      for (const moveInstanceId of hand)
+        candidates.push({ type: "PLAY_OPEN", role, positionInstanceId, moveInstanceId });
+    for (const moveInstanceId of hand) candidates.push({ type: "PLAY_MOVE", role, moveInstanceId });
+    for (const positionInstanceId of hand)
+      candidates.push({ type: "TRANSITION", role, positionInstanceId });
+    for (const flourishInstanceId of hand)
+      candidates.push({ type: "PLAY_FLOURISH", role, flourishInstanceId });
+    candidates.push({ type: "STUMBLE", role, recoveryInstanceId: null });
+    for (const recoveryInstanceId of hand)
+      candidates.push({ type: "STUMBLE", role, recoveryInstanceId });
+    candidates.push({ type: "END_DANCE", role });
+  }
+  if (state.phase === "lesson") {
+    for (const cardId of contentSet.decks.beginnerSupply)
+      candidates.push({ type: "BUY_LESSON", role, source: "beginner", cardId });
+    for (const cardId of state.market.intermediateDisplay)
+      candidates.push({ type: "BUY_LESSON", role, source: "intermediate", cardId });
+    for (const cardId of state.market.advancedDisplay)
+      candidates.push({ type: "BUY_LESSON", role, source: "advanced", cardId });
+    const partnerMoves = state.moveHistory
+      .filter((entry) => entry.role === otherRole(role) && entry.phrase === state.phrase.number)
+      .map((entry) => entry.cardId);
+    for (const cardId of new Set(partnerMoves))
+      candidates.push({ type: "LEARN_FROM_PARTNER", role, cardId });
+    candidates.push({ type: "END_LESSON", role });
+  }
+  return candidates;
+}
+
+/**
+ * The reducer accepts an undo whenever a checkpoint exists; the list offers it only once the
+ * turn differs from that checkpoint. This is the one sanctioned reducer/list asymmetry.
+ */
+function turnChanged(state: GameState): boolean {
+  return hashCanonical(snapshotCheckpoint(state)) !== hashCanonical(state.checkpoint);
+}
+
 export function legalActions(
   state: GameState,
   role: Role,
   contentSet: ContentSet = defaultContent,
 ): GameAction[] {
-  if (state.status === "setup") {
-    if (state.setupRole !== role) return [];
-    const actions: GameAction[] = [{ type: "CONFIRM_HAND", role }];
-    if (
-      !state.players[role].mulliganUsed &&
-      canMulligan(state.players[role], contentSet, state.table.position)
-    )
-      actions.unshift({ type: "MULLIGAN", role });
-    return actions;
-  }
-  if (state.status !== "playing" || state.activeRole !== role) return [];
-  const actions: GameAction[] = [];
-  const player = state.players[role];
-  const definitions = cardsFor(contentSet);
-
-  for (const entry of player.hand)
-    actions.push({ type: "SIGNAL_CARD", role, instanceId: entry.instanceId });
-  if (state.signal?.role === role) actions.push({ type: "CLEAR_SIGNAL", role });
-  if (
-    state.checkpoint &&
-    hashCanonical(snapshotCheckpoint(state)) !== hashCanonical(state.checkpoint)
-  )
-    actions.push({ type: "UNDO_TURN", role });
-
-  if (state.phase === "dance") {
-    const positions = player.hand.filter((entry) => definitions[entry.cardId]?.type === "position");
-    const moves = player.hand.filter((entry) => definitions[entry.cardId]?.type === "move");
-    if (!state.table.position) {
-      for (const position of positions) {
-        const positionName = positionFor(contentSet, position);
-        for (const move of moves) {
-          if (moveMatches(moveFor(contentSet, move), positionName)) {
-            actions.push({
-              type: "PLAY_OPEN",
-              role,
-              positionInstanceId: position.instanceId,
-              moveInstanceId: move.instanceId,
-            });
-          }
-        }
-      }
-    } else if (state.turnDance.moveCardId === null) {
-      const currentPosition = positionFor(contentSet, state.table.position);
-      for (const move of moves) {
-        if (moveMatches(moveFor(contentSet, move), currentPosition))
-          actions.push({ type: "PLAY_MOVE", role, moveInstanceId: move.instanceId });
-      }
-    }
-    if (
-      state.turnDance.canTransition &&
-      state.turnDance.positionsPlayed < contentSet.rules.danceLimits.positions
-    ) {
-      for (const position of positions)
-        actions.push({ type: "TRANSITION", role, positionInstanceId: position.instanceId });
-    }
-    if (state.turnDance.moveCardId !== null && !state.turnDance.flourished) {
-      for (const entry of player.hand) {
-        const definition = definitions[entry.cardId];
-        if (
-          definition?.type === "flourish" &&
-          (definition.positions === "any" ||
-            definition.positions.includes(state.turnDance.fromPosition!))
-        ) {
-          actions.push({ type: "PLAY_FLOURISH", role, flourishInstanceId: entry.instanceId });
-        }
-      }
-    }
-    if (state.turnDance.cardsPlayed === 0) {
-      actions.push({ type: "STUMBLE", role, recoveryInstanceId: null });
-      for (const entry of player.hand) {
-        if (definitions[entry.cardId]?.type === "recovery")
-          actions.push({ type: "STUMBLE", role, recoveryInstanceId: entry.instanceId });
-      }
-    }
-    actions.push({ type: "END_DANCE", role });
-  }
-
-  if (state.phase === "lesson") {
-    if (!state.turnDance.boughtLesson) {
-      const costs = contentSet.rules.lessonCosts;
-      if (player.money >= costs.beginner) {
-        for (const cardId of contentSet.decks.beginnerSupply)
-          actions.push({ type: "BUY_LESSON", role, source: "beginner", cardId });
-      }
-      if (!state.phrase.privateLessonTakenThisRound && player.money >= costs.intermediate) {
-        for (const cardId of state.market.intermediateDisplay)
-          actions.push({ type: "BUY_LESSON", role, source: "intermediate", cardId });
-        if (state.songIndex >= contentSet.song.cards.length / 2 && player.money >= costs.advanced) {
-          for (const cardId of state.market.advancedDisplay)
-            actions.push({ type: "BUY_LESSON", role, source: "advanced", cardId });
-        }
-      }
-    }
-    if (!state.phrase.learnedBy[role]) {
-      const learnable = new Set(
-        state.moveHistory
-          .filter(
-            (entry) =>
-              entry.role === otherRole(role) &&
-              entry.phrase === state.phrase.number &&
-              entry.songIndex < state.songIndex,
-          )
-          .map((entry) => entry.cardId),
-      );
-      for (const cardId of learnable) actions.push({ type: "LEARN_FROM_PARTNER", role, cardId });
-    }
-    actions.push({ type: "END_LESSON", role });
-  }
-
-  return actions;
+  return candidateActions(state, role, contentSet).filter(
+    (action) =>
+      passesCheck(state, action, contentSet) && (action.type !== "UNDO_TURN" || turnChanged(state)),
+  );
 }
 
 export function createEnvelope(
