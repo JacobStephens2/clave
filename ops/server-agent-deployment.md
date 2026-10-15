@@ -25,7 +25,7 @@ unrelated service.
   server. Its apex and `www` currently redirect to `https://clave.dance`; do not
   move their DNS to this server as part of an app deployment. See
   [domain-forwarding.md](domain-forwarding.md) for the verified settings and the
-  outstanding permanent-redirect requirement.
+  outstanding permanent-redirect propagation check.
 - Stop and report before changing anything if the observed host differs materially
   from the preflight expectations below.
 
