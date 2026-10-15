@@ -4,6 +4,10 @@
 
 **Play it at [clave.dance](https://clave.dance).**
 
+[playclave.com](https://playclave.com) also forwards there through Porkbun.
+See [the forwarding record](ops/domain-forwarding.md) for its current settings
+and verification.
+
 Clave is a cooperative card game for two players — a Lead and a Follow — who dance
 a salsa song together, one 8-count at a time. Play positions, moves, and
 flourishes; protect your Connection; finish the song with as much Style as you
@@ -92,7 +96,8 @@ The digital v1 is deployed at [clave.dance](https://clave.dance) and passes the
 automated engine, persistence, build, bundle-size, hot-seat, reload-resume, and
 two-browser online-game checks. The remaining launch gates are human and
 operational: the physical couch playtests, the device smoke matrix, the
-latency/crash/upgrade/restore drills, and the `playclave.com` redirect. An
+latency/crash/upgrade/restore drills, and making the working `playclave.com`
+redirect permanent (301) as required by FR-14. An
 authenticated room-administration console is planned in
 [`docs/plans/admin-ui-plan.md`](docs/plans/admin-ui-plan.md). All of these are
 tracked in [`tasks/todo.md`](tasks/todo.md); bugs and feature work are tracked in
