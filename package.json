@@ -27,9 +27,7 @@
     "format:check": "prettier --check \"packages/**/*.{ts,tsx,css,json,html}\" \"scripts/**/*.ts\" \"*.{js,ts,json}\" \".github/**/*.yml\"",
     "check:content": "npm run check -w @clave/content",
     "check:art": "node scripts/check-card-art.mjs",
-    "check:bundle": "tsx scripts/check-bundle-size.ts",
-    "check:unity": "node scripts/validate-unity-project.mjs",
-    "check:unity:csharp": "dotnet run --project unity/Verification/Clave.Engine.Verification.csproj"
+    "check:bundle": "tsx scripts/check-bundle-size.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

@@ -13,20 +13,3 @@ tmp/
 .env
 .env.local
 packages/client/.vite/
-
-# Unity project artifacts
-unity/Clave/[Ll]ibrary/
-unity/Clave/[Tt]emp/
-unity/Clave/[Oo]bj/
-unity/Clave/[Bb]uild/
-unity/Clave/[Bb]uilds/
-unity/Clave/[Ll]ogs/
-unity/Clave/[Uu]ser[Ss]ettings/
-unity/Clave/MemoryCaptures/
-unity/Verification/bin/
-unity/Verification/obj/
-unity/Clave/Assets/StreamingAssets/Content/
-unity/Clave/Assets/StreamingAssets.meta
-unity/Clave/Assets/StreamingAssets/Content.meta
-unity/Clave/Assets/Scenes.meta
-unity/Clave/Assets/Scenes/
