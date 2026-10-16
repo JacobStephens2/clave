@@ -21,9 +21,11 @@ unrelated service.
   that any recently active rooms can be interrupted.
 - Do not overwrite the live SQLite file or copy it while the service is running.
   Use the supplied verified backup job.
-- Do not configure `playclave.com` yet. As of 2026-07-19 it still resolves to
-  Porkbun parking rather than this server. Add its redirect only after both its
-  apex and `www` DNS records point to this server.
+- `playclave.com` forwarding is managed at Porkbun, separately from the game
+  server. Its apex and `www` permanently redirect (301) to `https://clave.dance`,
+  preserving the path; do not move their DNS to this server as part of an app
+  deployment. See [domain-forwarding.md](domain-forwarding.md) for the verified
+  settings.
 - Stop and report before changing anything if the observed host differs materially
   from the preflight expectations below.
 
