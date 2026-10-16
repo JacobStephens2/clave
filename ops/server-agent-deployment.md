@@ -22,10 +22,10 @@ unrelated service.
 - Do not overwrite the live SQLite file or copy it while the service is running.
   Use the supplied verified backup job.
 - `playclave.com` forwarding is managed at Porkbun, separately from the game
-  server. Its apex and `www` currently redirect to `https://clave.dance`; do not
-  move their DNS to this server as part of an app deployment. See
-  [domain-forwarding.md](domain-forwarding.md) for the verified settings and the
-  outstanding permanent-redirect propagation check.
+  server. Its apex and `www` permanently redirect (301) to `https://clave.dance`,
+  preserving the path; do not move their DNS to this server as part of an app
+  deployment. See [domain-forwarding.md](domain-forwarding.md) for the verified
+  settings.
 - Stop and report before changing anything if the observed host differs materially
   from the preflight expectations below.
 
