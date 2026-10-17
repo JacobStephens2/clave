@@ -219,6 +219,13 @@ from a homepage-only smoke test.
 
 ## 7. Subsequent deploys and rollback
 
+Default-branch merges now use the GitHub Actions deployment described in
+[`README.md`](README.md#automatic-releases). CI builds the exact release; the
+server installs runtime dependencies for its own Node version, preserves the
+active-room guard and verified backup, and checks the served commit. The steps
+below remain the manual fallback. Root-owned deployment helper updates still use
+Jacob's administrator SSH connection and `ops/install-deployment.sh`.
+
 For every later release:
 
 1. prepare and fully verify a new immutable release directory;
