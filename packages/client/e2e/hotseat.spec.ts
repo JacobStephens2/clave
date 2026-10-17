@@ -17,6 +17,39 @@ async function finishSetup(page: Page) {
   await acceptPass(page, "Lead");
 }
 
+/** Deals the same cards every game. */
+async function seedDeal(page: Page) {
+  await page.addInitScript(() => {
+    Object.defineProperty(globalThis.crypto, "getRandomValues", {
+      configurable: true,
+      value: (values: Uint32Array) => {
+        values.fill(1);
+        return values;
+      },
+    });
+  });
+}
+
+/** Plays to the Lead's second 8-count, after the Follow's stumble cleared the floor. */
+async function reachEmptyFloor(page: Page) {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  await finishSetup(page);
+  await finishBasicTurn(page);
+  await acceptPass(page, "Follow");
+  await page.getByRole("button", { name: "Stumble · −2 Connection" }).click();
+  await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
+  await acceptPass(page, "Lead");
+}
+
+/** Opens a card's enlarged view by clicking its always-visible top edge, as a person would. */
+async function openCardDetail(page: Page, card: ReturnType<Page["locator"]>) {
+  await card.click({ position: { x: 40, y: 56 } });
+  const detail = page.getByRole("dialog", { name: "Card detail" });
+  await expect(detail).toBeVisible();
+  return detail;
+}
+
 test("carries the card artwork into the home-screen visual system", async ({ page }) => {
   await page.goto("/");
 
@@ -298,6 +331,47 @@ test("plays a complete sixteen-count hot-seat game", async ({ page }) => {
 
   await expect(page.getByText("final score")).toBeVisible();
   await expect(page.getByRole("button", { name: "Dance again" })).toBeVisible();
+  const rating = await page.locator(".terminal-screen h2").innerText();
+  const ladder = page.getByRole("region", { name: "Performance ratings" });
+  await expect(ladder.locator('[aria-current="true"]')).toContainText(rating);
+  await expect(ladder.getByText(/more points? reaches/)).toBeVisible();
+  await expect(page.getByRole("region", { name: /Phrase choreography/ })).toBeVisible();
+});
+
+test("keeps result-screen card details modal and returns focus to the choreography", async ({
+  page,
+}) => {
+  await seedDeal(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  await finishSetup(page);
+  const detail = await openCardDetail(
+    page,
+    page.locator(".hand-scroll .dance-card.move.playable").first(),
+  );
+  await detail.getByRole("button", { name: "Dance move" }).click();
+  await page.getByRole("button", { name: "Finish the 8-count" }).click();
+  await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
+
+  for (const [index, role] of (["Follow", "Lead", "Follow"] as const).entries()) {
+    await acceptPass(page, role);
+    await page.getByRole("button", { name: "Stumble · −2 Connection" }).click();
+    if (index < 2) await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
+  }
+
+  await expect(page.getByRole("heading", { name: "The dance ends here" })).toBeVisible();
+  const historyCard = page.getByRole("button", { name: /^move, .* View card\./ }).first();
+  await historyCard.focus();
+  await page.keyboard.press("Enter");
+  await expect(detail.getByRole("button", { name: "Close" })).toBeFocused();
+  for (let press = 0; press < 6; press += 1) {
+    await page.keyboard.press("Tab");
+    expect(
+      await page.evaluate(() => Boolean(document.activeElement?.closest(".terminal-screen"))),
+    ).toBe(false);
+  }
+  await page.keyboard.press("Escape");
+  await expect(historyCard).toBeFocused();
 });
 
 test("restores the exact hot-seat turn after a page reload", async ({ page }) => {
@@ -512,6 +586,199 @@ test("stages Position then matching Move when a stumble empties the floor", asyn
   await expect(page.locator(".hand-heading strong")).toHaveText("2 cards");
 });
 
+test("opens an empty floor from the enlarged cards without dragging", async ({ page }) => {
+  await seedDeal(page);
+  await reachEmptyFloor(page);
+
+  const positionSlot = page.locator('[data-slot="position"]');
+  const moveSlot = page.locator('[data-slot="move"]');
+
+  let detail = await openCardDetail(page, page.locator(".hand-scroll .dance-card.move").first());
+  await expect(detail.getByText("Stage a Position first")).toBeVisible();
+  await expect(detail.getByRole("button", { name: "Dance move" })).toHaveCount(0);
+  await detail.getByRole("button", { name: "Close" }).click();
+  await expect(detail).toBeHidden();
+
+  const position = page.locator(".hand-scroll .dance-card.position.playable").first();
+  const positionName = await position.locator("h4").innerText();
+  detail = await openCardDetail(page, position);
+  await detail.getByRole("button", { name: "Stage Position" }).click();
+  await expect(detail).toBeHidden();
+  await expect(positionSlot).toHaveClass(/staged-slot/);
+  await expect(positionSlot).toContainText(positionName);
+
+  const move = page.locator(".hand-scroll .dance-card.move.playable").first();
+  const moveName = await move.locator("h4").innerText();
+  detail = await openCardDetail(page, move);
+  await detail.getByRole("button", { name: "Dance move" }).click();
+  await expect(moveSlot).toContainText(moveName);
+  await expect(positionSlot).toContainText(positionName);
+  await expect(positionSlot).not.toHaveClass(/staged-slot/);
+});
+
+test("taps Stage Position and the matching Move on phone cards", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-chrome", "Phone cards show their actions inline.");
+  await seedDeal(page);
+  await reachEmptyFloor(page);
+
+  const positionSlot = page.locator('[data-slot="position"]');
+  const moveSlot = page.locator('[data-slot="move"]');
+  const position = page.locator(".hand-scroll .dance-card.position.playable").first();
+  const positionName = await position.locator("h4").innerText();
+  await position.getByRole("button", { name: "Stage Position" }).tap();
+  await expect(positionSlot).toHaveClass(/staged-slot/);
+  await expect(positionSlot).toContainText(positionName);
+
+  const move = page.locator(".hand-scroll .dance-card.move.playable").first();
+  const moveName = await move.locator("h4").innerText();
+  await move.getByRole("button", { name: "Dance move" }).tap();
+  await expect(moveSlot).toContainText(moveName);
+  await expect(positionSlot).not.toHaveClass(/staged-slot/);
+});
+
+test("offers a lesson from its enlarged card and explains when it cannot", async ({ page }) => {
+  await seedDeal(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  await finishSetup(page);
+
+  await page.locator(".market > summary").click();
+  const lesson = page
+    .locator(".market-section")
+    .filter({ hasText: "Beginner supply" })
+    .locator(".dance-card")
+    .first();
+  let detail = await openCardDetail(page, lesson);
+  await expect(detail.getByText("Learn after you dance this 8-count")).toBeVisible();
+  await expect(detail.getByRole("button", { name: /^Learn/ })).toHaveCount(0);
+  await detail.getByRole("button", { name: "Close" }).click();
+  await expect(detail).toBeHidden();
+
+  await page.getByRole("button", { name: "Dance the basic" }).click();
+  const lessonName = await lesson.locator("h4").innerText();
+  detail = await openCardDetail(page, lesson);
+  await detail.getByRole("button", { name: "Learn · $1" }).click();
+  await expect(detail).toBeHidden();
+  const discardPile = page.locator(".discard-pile-target");
+  await expect(discardPile).toHaveText("Discard 1");
+  await expect(page.locator(".lesson-card-flight")).toHaveCount(0, { timeout: 3_000 });
+  await discardPile.click();
+  await expect(
+    page.getByRole("dialog", { name: "Lead discard pile" }).locator(".dance-card h4"),
+  ).toHaveText(lessonName);
+});
+
+test("shows each score change, a landed song bonus, and a recap at the handoff", async ({
+  page,
+}) => {
+  await seedDeal(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  await finishSetup(page);
+
+  const scoreStatus = page.locator(".hud").getByRole("status");
+  const styleStat = page.locator(".hud-stat").filter({ hasText: "Style" });
+  const connectionStat = page.locator(".hud-stat").filter({ hasText: "Connection" });
+  const move = page.locator(".hand-scroll .dance-card.move.playable").first();
+  const moveName = await move.locator("h4").innerText();
+  const moveStyle = Number((await move.locator(".card-style-top").innerText()).match(/\d+/)![0]);
+  const detail = await openCardDetail(page, move);
+  await detail.getByRole("button", { name: "Dance move" }).click();
+  await expect(styleStat.locator(".hud-delta.up")).toHaveText(`+${moveStyle}`);
+  await expect(scoreStatus).toContainText(`Lead danced ${moveName}`);
+
+  await page.getByRole("button", { name: "Finish the 8-count" }).click();
+  await expect(page.locator(".song-card .song-landed")).toHaveText("Landed · +1 Connection");
+  await expect(connectionStat.locator(".hud-delta.up")).toHaveText("+1");
+  await expect(scoreStatus).toContainText("Connection up 1. Settle in lands: +1 Connection.");
+
+  await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
+  const handoff = page.getByRole("dialog", { name: /Pass to the/ });
+  await expect(handoff).toBeVisible();
+  await expect(handoff.getByText(`Lead danced ${moveName}`)).toBeVisible();
+  await expect(handoff.getByText("Up next · 02 of 16")).toBeVisible();
+  await expect(handoff.getByText(`Style ${moveStyle} · Connection 5`)).toBeVisible();
+});
+
+test("keeps keyboard focus inside each overlay and returns it after", async ({ page }) => {
+  await seedDeal(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  const focusIsBehindOverlay = () =>
+    page.evaluate(() => Boolean(document.activeElement?.closest(".game-header, .hud, .game-grid")));
+  const tabAround = async (presses: number) => {
+    for (let press = 0; press < presses; press += 1) {
+      await page.keyboard.press("Tab");
+      expect(await focusIsBehindOverlay()).toBe(false);
+    }
+  };
+
+  await expect(page.getByRole("button", { name: "I’m the Lead" })).toBeFocused();
+  await tabAround(8);
+  await page.getByRole("button", { name: "I’m the Lead" }).click();
+
+  const card = page.locator(".hand-scroll .dance-card").first();
+  await card.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog", { name: "Card detail" })).toBeVisible();
+  await tabAround(6);
+  await page.keyboard.press("Escape");
+  await expect(card).toBeFocused();
+
+  const watch = page.getByRole("button", { name: "Watch dancers" });
+  await watch.click();
+  const demo = page.getByRole("dialog", { name: "Watch the partnership" });
+  await expect(demo.getByRole("button", { name: "Close" })).toBeFocused();
+  await tabAround(6);
+  await page.keyboard.press("Escape");
+  await expect(demo).toBeHidden();
+  await expect(watch).toBeFocused();
+});
+
+test("plays a card and signals with the keyboard alone", async ({ page }, testInfo) => {
+  await seedDeal(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  await finishSetup(page);
+
+  const move = page.locator(".hand-scroll .dance-card.move.playable").first();
+  const moveName = await move.locator("h4").innerText();
+  await move.focus();
+  await page.keyboard.press("Enter");
+  const detail = page.getByRole("dialog", { name: "Card detail" });
+  await expect(detail.getByRole("button", { name: "Close" })).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Shift+Tab");
+  await expect(detail.getByRole("button", { name: "Dance move" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator('[data-slot="move"]')).toContainText(moveName);
+
+  const signaledCard = page.locator(".hand-scroll .dance-card").first();
+  await signaledCard.focus();
+  await page.keyboard.press("Enter");
+  await detail.getByRole("button", { name: "Signal to partner" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("button", { name: "Hide it again" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(signaledCard).toBeFocused();
+
+  if (testInfo.project.name !== "mobile-chrome") return;
+  // Phone cards show their buttons inline; Enter on one must press it, not open the card.
+  const signal = page
+    .locator(".hand-scroll .dance-card")
+    .first()
+    .getByRole("button", {
+      name: /as a signal/,
+    });
+  await signal.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("Show only this card to your partner")).toBeVisible();
+  await expect(detail).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Hide it again" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(signal).toBeFocused();
+});
+
 test("animates a lesson into an inspectable discard pile", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Pass & play/ }).click();
@@ -641,6 +908,8 @@ test("keeps a readable hand in a 13-inch laptop viewport and enlarges cards", as
   expect(cardBox!.y + cardBox!.height).toBeGreaterThan(1139 + 32);
   expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(1139);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
+  const songTop = async () => (await page.locator(".song-card").boundingBox())!.y;
+  const songTopBeforeDetail = await songTop();
 
   await firstCard.click({ position: { x: 70, y: 80 } });
   const inspector = page.locator(".card-inspector");
@@ -659,6 +928,8 @@ test("keeps a readable hand in a 13-inch laptop viewport and enlarges cards", as
   await page.getByRole("button", { name: "Close" }).click();
   await expect(inspector).toHaveAttribute("data-motion-state", "closing");
   await expect(enlarged).toBeHidden();
+  await expect(firstCard).toBeFocused();
+  expect(await songTop()).toBe(songTopBeforeDetail);
 });
 
 test("shows readable card content above the fold in a shorter laptop viewport", async ({
@@ -708,7 +979,8 @@ test("keeps the just-played Move readable on a short desktop floor", async ({ pa
   const reasonBox = await mismatchReason.boundingBox();
   expect(reasonBox).not.toBeNull();
   expect(reasonBox!.y + reasonBox!.height).toBeLessThanOrEqual(825);
-  await move.getByRole("button", { name: "Dance move" }).click();
+  const detail = await openCardDetail(page, move);
+  await detail.getByRole("button", { name: "Dance move" }).click();
 
   const floorMove = page.locator('[data-slot="move"] .dance-card.full-artwork');
   await expect(page.getByText(`Just played: ${moveName}`, { exact: true })).toBeVisible();

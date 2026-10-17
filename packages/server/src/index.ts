@@ -148,6 +148,25 @@ function broadcast(code: string): void {
   }
 }
 
+/** Whether a seat's partner has yet to claim their seat, is connected now, or has dropped away. */
+function partnerPresence(code: string, role: Role): "absent" | "connected" | "away" {
+  const partner: Role = role === "lead" ? "follow" : "lead";
+  for (const client of clients.values())
+    if (client.code === code && client.role === partner) return "connected";
+  try {
+    return rooms.availableRole(code) === partner ? "absent" : "away";
+  } catch {
+    return "absent";
+  }
+}
+
+function broadcastPresence(code: string): void {
+  for (const [socket, client] of clients) {
+    if (client.code === code)
+      send(socket, { type: "presence", partner: partnerPresence(code, client.role) });
+  }
+}
+
 server.on("upgrade", (request, socket, head) => {
   try {
     const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
@@ -181,6 +200,7 @@ sockets.on("connection", (socket) => {
     type: "snapshot",
     snapshot: rooms.snapshot(client.code, client.role, client.seatToken),
   });
+  broadcastPresence(client.code);
 
   socket.on("message", (raw) => {
     try {
@@ -200,7 +220,10 @@ sockets.on("connection", (socket) => {
       });
     }
   });
-  socket.on("close", () => clients.delete(socket));
+  socket.on("close", () => {
+    clients.delete(socket);
+    broadcastPresence(client.code);
+  });
 });
 
 const maintenance = setInterval(

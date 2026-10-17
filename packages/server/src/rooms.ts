@@ -36,7 +36,9 @@ export class RoomManager {
   }
 
   create(role: Role, test = false): SeatCredentials {
-    if (this.rooms.size >= 50) throw new Error("The dance floor is full. Try again later.");
+    // Only unfinished rooms hold a place; finished or abandoned ones never come back.
+    if (this.database.countActiveRooms() >= 50)
+      throw new Error("The dance floor is full. Try again later.");
     let code = roomCode();
     while (this.database.getRoom(code)) code = roomCode();
     const seatToken = token();

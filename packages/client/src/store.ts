@@ -23,6 +23,9 @@ interface OnlineSeat {
   seatToken: string;
 }
 
+/** The online partner: seat still unclaimed, connected now, or dropped away. */
+export type PartnerPresence = "absent" | "connected" | "away";
+
 interface AppStore {
   screen: "home" | "game";
   mode: "hotseat" | "online" | null;
@@ -32,6 +35,7 @@ interface AppStore {
   passTo: Role | null;
   onlineSeat: OnlineSeat | null;
   connection: "offline" | "connecting" | "connected" | "reconnecting";
+  partnerPresence: PartnerPresence | null;
   error: string | null;
   hasHotseatResume: boolean;
   hasOnlineResume: boolean;
@@ -44,6 +48,7 @@ interface AppStore {
   createOnline: (role: Role) => Promise<void>;
   joinOnline: (code: string, role: Role) => Promise<void>;
   resumeOnline: () => void;
+  forgetOnline: () => void;
   leaveGame: () => void;
   clearError: () => void;
 }
@@ -116,7 +121,11 @@ function closeSocket(): void {
 export const useAppStore = create<AppStore>((set, get) => {
   const connectOnline = (seat: OnlineSeat, reconnecting = false): void => {
     closeSocket();
-    set({ connection: reconnecting ? "reconnecting" : "connecting", error: null });
+    set({
+      connection: reconnecting ? "reconnecting" : "connecting",
+      partnerPresence: null,
+      error: null,
+    });
     const protocol = location.protocol === "https:" ? "wss:" : "ws:";
     const query = new URLSearchParams({
       code: seat.code,
@@ -133,7 +142,9 @@ export const useAppStore = create<AppStore>((set, get) => {
     connectingSocket.addEventListener("message", (event) => {
       try {
         const message = JSON.parse(String(event.data)) as
-          { type: "snapshot"; snapshot: PlayerSnapshot } | { type: "error"; message: string };
+          | { type: "snapshot"; snapshot: PlayerSnapshot }
+          | { type: "presence"; partner: PartnerPresence }
+          | { type: "error"; message: string };
         if (message.type === "snapshot") {
           set({
             snapshot: message.snapshot,
@@ -141,6 +152,8 @@ export const useAppStore = create<AppStore>((set, get) => {
             mode: "online",
             viewerRole: seat.role,
           });
+        } else if (message.type === "presence") {
+          set({ partnerPresence: message.partner });
         } else {
           set({ error: message.message });
         }
@@ -151,6 +164,7 @@ export const useAppStore = create<AppStore>((set, get) => {
     connectingSocket.addEventListener("close", (event) => {
       if (socket !== connectingSocket) return;
       socket = null;
+      set({ partnerPresence: null });
       if (get().mode !== "online" || !get().onlineSeat) return;
       if (event.code === 4401 || event.code === 4409) {
         set({ connection: "offline", error: event.reason || "This seat can no longer reconnect." });
@@ -189,6 +203,7 @@ export const useAppStore = create<AppStore>((set, get) => {
     passTo: null,
     onlineSeat: null,
     connection: "offline",
+    partnerPresence: null,
     error: null,
     hasHotseatResume: false,
     hasOnlineResume: false,
@@ -305,11 +320,14 @@ export const useAppStore = create<AppStore>((set, get) => {
     joinOnline: async (code, role) => {
       set({ error: null });
       try {
-        const response = await fetch(`/api/rooms/${encodeURIComponent(code.trim())}/join`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ role }),
-        });
+        const response = await fetch(
+          `/api/rooms/${encodeURIComponent(code.replace(/\s+/g, ""))}/join`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ role }),
+          },
+        );
         const body = (await response.json()) as OnlineSeat & { error?: string };
         if (!response.ok) throw new Error(body.error ?? "Could not join that room.");
         saveSeat({ code: body.code, role: body.role, seatToken: body.seatToken });
@@ -328,8 +346,19 @@ export const useAppStore = create<AppStore>((set, get) => {
       connectOnline(seat);
     },
 
+    forgetOnline: () => {
+      localStorage.removeItem(ONLINE_KEY);
+      set({ hasOnlineResume: false, onlineSeat: null });
+    },
+
     leaveGame: () => {
+      // A finished room has nothing to return to, so its seat is not offered again.
+      const status = get().snapshot?.status;
+      const finished =
+        get().mode === "online" &&
+        (status === "completed" || status === "lost" || status === "unresumable");
       closeSocket();
+      if (finished) localStorage.removeItem(ONLINE_KEY);
       set({
         screen: "home",
         mode: null,
@@ -337,7 +366,9 @@ export const useAppStore = create<AppStore>((set, get) => {
         envelope: null,
         passTo: null,
         connection: "offline",
+        partnerPresence: null,
         error: null,
+        ...(finished ? { hasOnlineResume: false, onlineSeat: null } : {}),
       });
     },
 

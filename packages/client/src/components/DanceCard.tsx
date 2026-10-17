@@ -1,5 +1,30 @@
 import type { DanceCard as DanceCardDefinition } from "@clave/content";
 import type { CardView } from "@clave/engine";
+import { alternatives } from "../phrasing.js";
+
+/** How the card plays, phrased from its own data for the enlarged card. */
+function rulesText(card: DanceCardDefinition): string {
+  switch (card.type) {
+    case "move":
+      return `Dance it from ${alternatives(card.positions)}: the floor Position must match. Earns ${card.style} Style.`;
+    case "position":
+      return `Right after your Move, transition the couple to ${card.position}. On an empty floor, open with it and a Move that dances from ${card.position}.`;
+    case "flourish": {
+      const from =
+        card.positions === "any"
+          ? "Add it to the Move you danced this 8-count, from any Position."
+          : `Add it to the Move you danced this 8-count when that Move started from ${alternatives(card.positions)}.`;
+      const pose = card.pose
+        ? " A Pose: in a phrase’s final 8-count it earns the Pose finish bonus."
+        : "";
+      return `${from} Earns ${card.style} Style.${pose}`;
+    }
+    case "recovery":
+      return card.connectionCost === 0
+        ? "Play it as you Stumble to lose no Connection."
+        : `Play it as you Stumble to lose only ${card.connectionCost} Connection.`;
+  }
+}
 
 function cardDetails(card: DanceCardDefinition): {
   type: string;
@@ -39,6 +64,7 @@ export function DanceCard({
   value,
   compact = false,
   fullArtwork = false,
+  detailed = false,
   disabled = false,
   actionLabel,
   unavailableReason,
@@ -53,6 +79,8 @@ export function DanceCard({
   value: CardView | DanceCardDefinition;
   compact?: boolean;
   fullArtwork?: boolean;
+  /** The enlarged card: full requirement text plus how the card plays. */
+  detailed?: boolean;
   disabled?: boolean;
   actionLabel?: string | undefined;
   unavailableReason?: string | undefined;
@@ -72,10 +100,14 @@ export function DanceCard({
       : undefined;
   return (
     <article
-      className={`dance-card ${card.type} tier-${card.tier.toLowerCase()} ${compact ? "compact" : ""} ${fullArtwork ? "full-artwork" : ""} ${disabled ? "disabled" : ""} ${onInspect ? "inspectable" : ""} ${draggable ? "playable" : ""} ${dragging ? "dragging" : ""}`}
+      className={`dance-card ${card.type} tier-${card.tier.toLowerCase()} ${compact ? "compact" : ""} ${fullArtwork ? "full-artwork" : ""} ${detailed ? "detailed" : ""} ${disabled ? "disabled" : ""} ${onInspect ? "inspectable" : ""} ${draggable ? "playable" : ""} ${dragging ? "dragging" : ""}`}
       data-card-instance-id={"card" in value ? value.instanceId : undefined}
       tabIndex={onInspect ? 0 : undefined}
-      aria-label={onInspect ? `${card.name}. Click to view larger.` : undefined}
+      aria-label={
+        onInspect
+          ? `${card.name}, ${details.type}, ${details.requirement}${details.style === null ? "" : `, +${details.style} Style`}. Open card details.`
+          : undefined
+      }
       aria-describedby={unavailableReasonId}
       draggable={draggable}
       onDragStart={onDragStart}
@@ -85,6 +117,8 @@ export function DanceCard({
         onInspect?.(event.currentTarget);
       }}
       onKeyDown={(event) => {
+        // Keys pressed on the card's own buttons belong to those buttons.
+        if (event.target !== event.currentTarget) return;
         if (onInspect && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
           onInspect(event.currentTarget);
@@ -132,6 +166,7 @@ export function DanceCard({
       </div>
       <h4>{card.name}</h4>
       <p>{details.detail}</p>
+      {detailed && <p className="card-rules">{rulesText(card)}</p>}
       {(onAction || onSignal) && (
         <div className="card-actions">
           {onAction && (
