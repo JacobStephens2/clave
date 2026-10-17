@@ -4,3 +4,4 @@
 - [ ] Phase 5 launch (clave-plan): complete the remaining deployment verification at clave.dance, run the three-device smoke matrix, latency/reconnect/crash/upgrade/restore drills, and complete the 10-item launch checklist
 - [ ] Implement the authenticated admin.clave.dance room console from docs/plans/admin-ui-plan.md, including sanitized read models, coordinated room lifecycle controls, audit logging, and verified backup-before-clear
 - [ ] Decide whether dragging a Recovery card onto the floor should Stumble (the web client does not allow it: `packages/client/src/turn-intent.ts` `floorDraggableIds`), and record it in docs/rules/decisions.md if it is a ruling (from issue #1)
+- [ ] Automate production deployment from successful default-branch GitHub Actions runs, with restricted SSH access, verified backups, active-room protection, and a verified first release
