@@ -103,7 +103,11 @@ export function DanceCard({
       className={`dance-card ${card.type} tier-${card.tier.toLowerCase()} ${compact ? "compact" : ""} ${fullArtwork ? "full-artwork" : ""} ${detailed ? "detailed" : ""} ${disabled ? "disabled" : ""} ${onInspect ? "inspectable" : ""} ${draggable ? "playable" : ""} ${dragging ? "dragging" : ""}`}
       data-card-instance-id={"card" in value ? value.instanceId : undefined}
       tabIndex={onInspect ? 0 : undefined}
-      aria-label={onInspect ? `${card.name}. Click to view larger.` : undefined}
+      aria-label={
+        onInspect
+          ? `${card.name}, ${details.type}, ${details.requirement}${details.style === null ? "" : `, +${details.style} Style`}. Open card details.`
+          : undefined
+      }
       aria-describedby={unavailableReasonId}
       draggable={draggable}
       onDragStart={onDragStart}
@@ -113,6 +117,8 @@ export function DanceCard({
         onInspect?.(event.currentTarget);
       }}
       onKeyDown={(event) => {
+        // Keys pressed on the card's own buttons belong to those buttons.
+        if (event.target !== event.currentTarget) return;
         if (onInspect && (event.key === "Enter" || event.key === " ")) {
           event.preventDefault();
           onInspect(event.currentTarget);

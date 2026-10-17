@@ -132,6 +132,22 @@ function lessonUnavailableReason(
   return null;
 }
 
+/** What a screen reader hears when the turn or step changes. */
+function turnAnnouncement(view: PlayerSnapshot): string {
+  if (view.status !== "playing") return "";
+  if (view.activeRole !== view.viewerRole) return `${roleName(view.activeRole)}’s 8-count.`;
+  if (view.phase === "lesson") return "Your lesson step: learn a card, or finish your turn.";
+  const song = view.currentSong;
+  return song ? `Your 8-count: ${song.title}. ${song.description}.` : "Your 8-count.";
+}
+
+/** Whether the viewer is the one the game is waiting on. */
+function viewersTurn(view: PlayerSnapshot | null): boolean {
+  if (!view) return false;
+  if (view.status === "setup") return view.setupRole === view.viewerRole;
+  return view.status === "playing" && view.activeRole === view.viewerRole;
+}
+
 function soundForAction(action: GameAction): SoundEffect {
   switch (action.type) {
     case "MULLIGAN":
@@ -235,9 +251,17 @@ function HudDelta({ value, changeKey }: { value: number; changeKey: number }) {
   );
 }
 
-function Hud({ view, change }: { view: PlayerSnapshot; change: ScoreChange | null }) {
+function Hud({
+  view,
+  change,
+  inert,
+}: {
+  view: PlayerSnapshot;
+  change: ScoreChange | null;
+  inert: boolean;
+}) {
   return (
-    <div className="hud" aria-label="Game score">
+    <div className="hud" role="group" aria-label="Game score" inert={inert}>
       <div className="hud-stat connection">
         <small>Connection</small>
         <strong>{view.shared.connection}</strong>
@@ -995,21 +1019,31 @@ function GameLog({ view }: { view: PlayerSnapshot }) {
 function DiscardPileInspector({
   cards,
   role,
+  covered,
   onInspect,
   onClose,
 }: {
   cards: CardView[];
   role: Role;
+  /** An enlarged card sits on top, so this dialog steps out of the tab order. */
+  covered: boolean;
   onInspect: (card: CardView) => void;
   onClose: () => void;
 }) {
   const closeButton = useRef<HTMLButtonElement>(null);
+  // Read during the first render: once this dialog commits, the table behind it turns inert
+  // and the browser moves focus to the body.
+  const [returnFocus] = useState(() => document.activeElement);
+  const onCloseRef = useRef(onClose);
+
+  onCloseRef.current = onClose;
 
   useEffect(() => {
-    const previousFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !document.querySelector(".card-inspector")) onClose();
+      if (event.key === "Escape" && !document.querySelector(".card-inspector")) {
+        onCloseRef.current();
+      }
     };
 
     document.body.style.overflow = "hidden";
@@ -1019,9 +1053,9 @@ function DiscardPileInspector({
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
-      if (previousFocus instanceof HTMLElement) previousFocus.focus();
+      if (returnFocus instanceof HTMLElement) returnFocus.focus();
     };
-  }, [onClose]);
+  }, [returnFocus]);
 
   return (
     <div
@@ -1029,6 +1063,7 @@ function DiscardPileInspector({
       role="dialog"
       aria-modal="true"
       aria-labelledby="discard-inspector-title"
+      inert={covered}
       onClick={onClose}
     >
       <section className="discard-inspector-panel" onClick={(event) => event.stopPropagation()}>
@@ -1099,8 +1134,10 @@ function CardInspector({
     setMotionState("closing");
   }, []);
 
+  // Read during the first render, before the table behind the dialog turns inert.
+  const [returnFocus] = useState(() => document.activeElement);
+
   useEffect(() => {
-    const previousFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") requestClose();
@@ -1113,9 +1150,9 @@ function CardInspector({
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
-      if (previousFocus instanceof HTMLElement) previousFocus.focus();
+      if (returnFocus instanceof HTMLElement) returnFocus.focus();
     };
-  }, [requestClose]);
+  }, [requestClose, returnFocus]);
 
   useLayoutEffect(() => {
     if (motionState === "open") return;
@@ -1217,6 +1254,25 @@ function CardInspector({
   );
 }
 
+function SignalPeek({ card, onHide }: { card: CardView; onHide: () => void }) {
+  const hideButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => hideButton.current?.focus(), []);
+  return (
+    <div
+      className="signal-peek"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="signal-peek-title"
+    >
+      <small id="signal-peek-title">Show only this card to your partner</small>
+      <DanceCard value={card} />
+      <button ref={hideButton} type="button" className="button gold" onClick={onHide}>
+        Hide it again
+      </button>
+    </div>
+  );
+}
+
 function PassScreen({
   role,
   view,
@@ -1232,6 +1288,8 @@ function PassScreen({
     (entry) => entry.sequence === view.sequence && entry.kind === "score" && entry.role === null,
   );
   const nextSong = view.status === "playing" ? view.currentSong : null;
+  const readyButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => readyButton.current?.focus(), []);
   return (
     <div className="pass-screen" role="dialog" aria-modal="true" aria-labelledby="pass-title">
       <div className="pass-orbit" aria-hidden="true">
@@ -1244,7 +1302,7 @@ function PassScreen({
         <em>{roleName(role)}</em>
       </h2>
       <p>When your partner has the screen, tap below.</p>
-      <button type="button" className="button gold" onClick={onReady}>
+      <button ref={readyButton} type="button" className="button gold" onClick={onReady}>
         I’m the {roleName(role)}
       </button>
       {(lastCombo || nextSong) && (
@@ -1469,6 +1527,19 @@ export function GameScreen() {
       playSoundEffect("success");
     previousStatus.current = view?.status;
   }, [playSoundEffect, view?.status]);
+  const myTurn = viewersTurn(view);
+  const wasMyTurn = useRef(myTurn);
+  useEffect(() => {
+    // Online, the partner's device is elsewhere: cue the turn and mark the tab.
+    if (mode !== "online") return;
+    if (myTurn && !wasMyTurn.current) playSoundEffect("turn");
+    wasMyTurn.current = myTurn;
+    const baseTitle = document.title.replace(/^Your turn · /, "");
+    document.title = myTurn ? `Your turn · ${baseTitle}` : baseTitle;
+    return () => {
+      document.title = baseTitle;
+    };
+  }, [mode, myTurn, playSoundEffect]);
   useEffect(() => {
     if (view) setIntent((current) => reconcileIntent(view, current));
   }, [view]);
@@ -1811,9 +1882,15 @@ export function GameScreen() {
       </>
     );
 
+  const passScreenOpen = Boolean(passTo && mode === "hotseat" && !cleanupFlight);
+  const signalPeekOpen = view.signal?.role === view.viewerRole && mode === "hotseat";
+  // While a dialog is up, the table behind it leaves the tab order and the accessibility tree.
+  const overlayOpen =
+    passScreenOpen || signalPeekOpen || Boolean(inspection) || discardOpen || dancerDemoOpen;
+
   return (
     <main className="game">
-      <header className="game-header">
+      <header className="game-header" inert={overlayOpen}>
         <button type="button" className="mini-brand" onClick={leaveGame} aria-label="Return home">
           CLAVE
         </button>
@@ -1863,8 +1940,11 @@ export function GameScreen() {
           {mode === "online" ? connection : "saved on device"}
         </span>
       </header>
-      <Hud view={view} change={latestScoreChange} />
-      <div className="game-grid">
+      <p className="visually-hidden" role="status" aria-live="polite">
+        {turnAnnouncement(view)}
+      </p>
+      <Hud view={view} change={latestScoreChange} inert={overlayOpen} />
+      <div className="game-grid" inert={overlayOpen}>
         <div className="main-table">
           <SongMoment view={view} />
           <PhraseHistory view={view} onInspect={inspectCard} />
@@ -1939,21 +2019,9 @@ export function GameScreen() {
       {cleanupFlight && (
         <CleanupCardFlights flight={cleanupFlight} onComplete={() => setCleanupFlight(null)} />
       )}
-      {passTo && mode === "hotseat" && !cleanupFlight && (
-        <PassScreen role={passTo} view={view} onReady={acceptPass} />
-      )}
-      {view.signal?.role === view.viewerRole && mode === "hotseat" && (
-        <div className="signal-peek" role="dialog" aria-modal="true">
-          <small>Show only this card to your partner</small>
-          <DanceCard value={view.signal.card} />
-          <button
-            type="button"
-            className="button gold"
-            onClick={() => clearSignal && dispatch(clearSignal)}
-          >
-            Hide it again
-          </button>
-        </div>
+      {passScreenOpen && passTo && <PassScreen role={passTo} view={view} onReady={acceptPass} />}
+      {signalPeekOpen && view.signal && (
+        <SignalPeek card={view.signal.card} onHide={() => clearSignal && dispatch(clearSignal)} />
       )}
       {view.signal?.role === view.viewerRole && mode === "online" && clearSignal && (
         <button type="button" className="signal-live" onClick={() => dispatch(clearSignal)}>
@@ -1971,6 +2039,7 @@ export function GameScreen() {
         <DiscardPileInspector
           cards={view.self.discard}
           role={view.viewerRole}
+          covered={Boolean(inspection)}
           onInspect={inspectCard}
           onClose={() => setDiscardOpen(false)}
         />

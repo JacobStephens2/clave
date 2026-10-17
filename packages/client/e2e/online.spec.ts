@@ -40,8 +40,20 @@ test("keeps two authoritative screens synchronized through reload and song end",
 
   for (let count = 1; count <= 16; count += 1) {
     const active = count % 2 === 1 ? lead : follow;
-    await finishTurn(active);
     const partner = count % 2 === 1 ? follow : lead;
+    if (count === 1) {
+      await expect(lead).toHaveTitle(/^Your turn · Clave/);
+      await expect(follow).not.toHaveTitle(/Your turn/);
+      await expect(follow.getByRole("status").filter({ hasText: "Lead’s 8-count" })).toHaveCount(1);
+    }
+    await finishTurn(active);
+    if (count === 1) {
+      await expect(follow).toHaveTitle(/^Your turn · Clave/);
+      await expect(lead).not.toHaveTitle(/Your turn/);
+      await expect(
+        follow.getByRole("status").filter({ hasText: /^Your 8-count: Open invitation/ }),
+      ).toHaveCount(1);
+    }
     if (count === 4) {
       await partner.reload();
       await partner.getByRole("button", { name: "Reconnect" }).click();

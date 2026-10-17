@@ -3662,6 +3662,15 @@ body {
   color: rgba(8, 27, 37, 0.7);
 }
 
+.resume-strip.network-resume {
+  background: var(--turquoise);
+  border-color: var(--ink);
+}
+
+.resume-strip.network-resume small {
+  color: var(--ink);
+}
+
 .resume-strip .text-button {
   color: rgba(8, 27, 37, 0.78);
 }
@@ -3738,7 +3747,7 @@ body {
 
 .hud-stat > span,
 .hud-stat strong span {
-  color: rgba(8, 27, 37, 0.58);
+  color: rgba(8, 27, 37, 0.74);
 }
 
 .connection-meter i {
@@ -3856,8 +3865,23 @@ body {
     8px 9px 0 var(--coral);
 }
 
+.dance-card.inspectable:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--ink),
+    0 0 0 6px #fff8e7,
+    8px 9px 0 var(--coral);
+}
+
 .card-art {
   border: 2px solid var(--ink);
+}
+
+.step-heading small,
+.setup-heading small,
+.opening-drag-guide > small,
+.learn-partner > small {
+  color: #f08e86;
 }
 
 .step-heading > span {

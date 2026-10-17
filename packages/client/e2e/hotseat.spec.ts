@@ -664,6 +664,73 @@ test("shows each score change, a landed song bonus, and a recap at the handoff",
   await expect(handoff.getByText(`Style ${moveStyle} · Connection 5`)).toBeVisible();
 });
 
+test("keeps keyboard focus inside each overlay and returns it after", async ({ page }) => {
+  await seedDeal(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  const focusIsBehindOverlay = () =>
+    page.evaluate(() => Boolean(document.activeElement?.closest(".game-header, .hud, .game-grid")));
+  const tabAround = async (presses: number) => {
+    for (let press = 0; press < presses; press += 1) {
+      await page.keyboard.press("Tab");
+      expect(await focusIsBehindOverlay()).toBe(false);
+    }
+  };
+
+  await expect(page.getByRole("button", { name: "I’m the Lead" })).toBeFocused();
+  await tabAround(8);
+  await page.getByRole("button", { name: "I’m the Lead" }).click();
+
+  const card = page.locator(".hand-scroll .dance-card").first();
+  await card.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("dialog", { name: "Card detail" })).toBeVisible();
+  await tabAround(6);
+  await page.keyboard.press("Escape");
+  await expect(card).toBeFocused();
+
+  const watch = page.getByRole("button", { name: "Watch dancers" });
+  await watch.click();
+  const demo = page.getByRole("dialog", { name: "Watch the partnership" });
+  await expect(demo.getByRole("button", { name: "Close" })).toBeFocused();
+  await tabAround(6);
+  await page.keyboard.press("Escape");
+  await expect(demo).toBeHidden();
+  await expect(watch).toBeFocused();
+});
+
+test("plays a card and signals with the keyboard alone", async ({ page }, testInfo) => {
+  await seedDeal(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  await finishSetup(page);
+
+  const move = page.locator(".hand-scroll .dance-card.move.playable").first();
+  const moveName = await move.locator("h4").innerText();
+  await move.focus();
+  await page.keyboard.press("Enter");
+  const detail = page.getByRole("dialog", { name: "Card detail" });
+  await expect(detail.getByRole("button", { name: "Close" })).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Shift+Tab");
+  await expect(detail.getByRole("button", { name: "Dance move" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator('[data-slot="move"]')).toContainText(moveName);
+
+  if (testInfo.project.name !== "mobile-chrome") return;
+  // Phone cards show their buttons inline; Enter on one must press it, not open the card.
+  const signal = page
+    .locator(".hand-scroll .dance-card")
+    .first()
+    .getByRole("button", {
+      name: /as a signal/,
+    });
+  await signal.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("Show only this card to your partner")).toBeVisible();
+  await expect(detail).toHaveCount(0);
+});
+
 test("animates a lesson into an inspectable discard pile", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Pass & play/ }).click();
