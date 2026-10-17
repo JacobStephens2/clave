@@ -1,4 +1,5 @@
 import type { CardView, GameAction, PlayerSnapshot } from "@clave/engine";
+import { alternatives } from "./phrasing.js";
 
 /**
  * What the viewer has started but not yet committed on the floor. Today that is
@@ -85,7 +86,44 @@ export function floorDraggableIds(view: PlayerSnapshot, intent: TurnIntent): Set
   return ids;
 }
 
-/** What dropping a hand card on the floor does: stage it, play an action, or nothing. */
+/**
+ * Why a hand card cannot go to the floor on the viewer's dance step, or null when it can,
+ * or when no explanation applies.
+ */
+export function unavailableReason(
+  view: PlayerSnapshot,
+  intent: TurnIntent,
+  instanceId: string,
+): string | null {
+  if (!isViewersDanceStep(view) || view.turn.moveCardId !== null) return null;
+  if (floorDraggableIds(view, intent).has(instanceId)) return null;
+  const card = view.self.hand.find((entry) => entry.instanceId === instanceId)?.card;
+  if (!card) return null;
+  const floor = view.table.position?.card;
+  const staged = stagedPosition(view, intent)?.card;
+
+  switch (card.type) {
+    case "move":
+      if (floor?.type === "position")
+        return card.positions.includes(floor.position)
+          ? null
+          : `Needs ${alternatives(card.positions)} · Floor is ${floor.position}`;
+      if (staged?.type === "position")
+        return `Needs ${alternatives(card.positions)} · ${staged.position} is staged`;
+      return "Stage a Position first";
+    case "position":
+      if (floor) return "Play a Move first";
+      return staged
+        ? "A Position is already staged"
+        : `No Move in hand dances from ${card.position}`;
+    case "flourish":
+      return "Play a Move first";
+    case "recovery":
+      return "Use with Stumble";
+  }
+}
+
+/** What playing a hand card to the floor, by drop or tap, does: stage it, play an action, or nothing. */
 export function resolveDrop(
   view: PlayerSnapshot,
   intent: TurnIntent,

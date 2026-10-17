@@ -2938,11 +2938,13 @@ button {
   will-change: transform, opacity, filter;
 }
 .card-inspector[data-motion-state="opening"] .inspector-hint,
-.card-inspector[data-motion-state="opening"] .inspector-close {
+.card-inspector[data-motion-state="opening"] .inspector-note,
+.card-inspector[data-motion-state="opening"] .inspector-actions {
   animation: card-inspector-controls-in 180ms 110ms ease-out both;
 }
 .card-inspector[data-motion-state="closing"] .inspector-hint,
-.card-inspector[data-motion-state="closing"] .inspector-close {
+.card-inspector[data-motion-state="closing"] .inspector-note,
+.card-inspector[data-motion-state="closing"] .inspector-actions {
   animation: card-inspector-controls-out 100ms ease-in both;
 }
 @keyframes card-inspector-backdrop-in {
@@ -3020,6 +3022,42 @@ button {
   font-size: 11px;
   font-weight: 800;
   cursor: pointer;
+}
+.inspector-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-width: min(86vw, 430px);
+}
+.inspector-actions .button {
+  min-height: 42px;
+}
+.inspector-note {
+  max-width: min(86vw, 430px);
+  margin: 0;
+  padding: 7px 12px;
+  border: 1px solid rgba(227, 95, 79, 0.55);
+  background: rgba(227, 95, 79, 0.12);
+  color: var(--cream);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+}
+.dance-card.detailed .card-topline {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+.dance-card.detailed .card-requirement-top {
+  overflow: visible;
+  white-space: normal;
+}
+.hand-heading .hand-play-hint {
+  display: none;
+}
+.dance-card.detailed .card-rules {
+  margin-top: 12px;
+  opacity: 0.86;
 }
 .market,
 .game-log {
@@ -3704,13 +3742,13 @@ body {
   }
   .dance-table {
     min-height: 0;
-    overflow: hidden;
+    overflow: clip;
   }
   .hand-zone {
     min-height: 0;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
-    overflow: hidden;
+    overflow: clip;
   }
   .hand-scroll {
     height: 100%;
@@ -3722,6 +3760,13 @@ body {
   .hand-scroll .dance-card {
     height: 100%;
     min-height: 220px;
+  }
+  /* The held hand clips each card's lower edge, so its actions live in the enlarged card. */
+  .hand-scroll .card-actions {
+    visibility: hidden;
+  }
+  .hand-heading .hand-play-hint {
+    display: inline;
   }
   .hand-scroll .dance-card p {
     font-size: 10px;
@@ -3839,13 +3884,14 @@ body {
 }
 
 @media (min-width: 1001px) and (min-height: 700px) {
+  /* Clip rather than hide: a focused, partly clipped hand card must not scroll the table. */
   .game {
     height: 100vh;
-    overflow: hidden;
+    overflow: clip;
   }
   .game-grid {
     height: calc(100vh - 136px);
-    overflow: hidden;
+    overflow: clip;
     align-items: stretch;
   }
   .game-sidebar {

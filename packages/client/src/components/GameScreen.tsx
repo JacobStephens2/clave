@@ -4,11 +4,12 @@ import type { CardView, GameAction, PlayerSnapshot, Role } from "@clave/engine";
 import { useAppStore } from "../store.js";
 import {
   NO_INTENT,
-  floorActionFor,
   floorDraggableIds,
   reconcileIntent,
   resolveDrop,
   stagedPosition,
+  unavailableReason,
+  type DropResolution,
   type TurnIntent,
 } from "../turn-intent.js";
 import { DanceCard } from "./DanceCard.js";
@@ -32,6 +33,15 @@ interface CardInspectionOrigin {
 interface CardInspection {
   card: InspectableCard;
   origin: CardInspectionOrigin | null;
+  /** The market row a lesson card was opened from, so the enlarged card can offer it. */
+  lessonSource?: LessonBuyAction["source"] | undefined;
+}
+
+interface InspectorAction {
+  label: string;
+  primary: boolean;
+  /** Receives the enlarged card element, the origin for any card flight. */
+  run: (enlargedCard: HTMLElement | null) => void;
 }
 
 interface LessonFlight {
@@ -95,10 +105,10 @@ function actionLabel(action: GameAction | undefined): string {
   return "Dance move";
 }
 
-function alternatives(values: string[]): string {
-  if (values.length < 2) return values[0] ?? "the required Position";
-  if (values.length === 2) return `${values[0]} or ${values[1]}`;
-  return `${values.slice(0, -1).join(", ")}, or ${values.at(-1)}`;
+/** The button label for playing a hand card to the floor, or undefined when it cannot go. */
+function playLabel(play: DropResolution | null): string | undefined {
+  if (!play || play.kind === "ignore") return undefined;
+  return play.kind === "stage" ? "Stage Position" : actionLabel(play.action);
 }
 
 function currentFloorPosition(view: PlayerSnapshot): Position | null {
@@ -106,33 +116,20 @@ function currentFloorPosition(view: PlayerSnapshot): Position | null {
   return card?.type === "position" ? card.position : null;
 }
 
-function unavailableReasonForCard(
+/** Why the viewer cannot take a lesson from `source` right now, or null when nothing explains it. */
+function lessonUnavailableReason(
   view: PlayerSnapshot,
-  entry: CardView,
-  primary: GameAction | undefined,
-): string | undefined {
-  if (
-    primary ||
-    view.phase !== "dance" ||
-    view.activeRole !== view.viewerRole ||
-    view.turn.moveCardId !== null
-  )
-    return undefined;
-
-  const floorPosition = currentFloorPosition(view);
-  if (!floorPosition) return undefined;
-
-  switch (entry.card.type) {
-    case "move":
-      return entry.card.positions.includes(floorPosition)
-        ? undefined
-        : `Needs ${alternatives(entry.card.positions)} · Floor is ${floorPosition}`;
-    case "position":
-    case "flourish":
-      return "Play a Move first";
-    case "recovery":
-      return "Use with Stumble";
-  }
+  source: LessonBuyAction["source"],
+): string | null {
+  const cost = view.rules.lessonCosts[source];
+  if (view.status !== "playing" || view.activeRole !== view.viewerRole)
+    return "Learn on your turn, after you dance";
+  if (view.phase === "dance") return "Learn after you dance this 8-count";
+  if (view.turn.boughtLesson) return "You already took a lesson this turn";
+  if (source !== "beginner" && !view.market.privateLessonAvailable)
+    return "Private lesson already taken this round";
+  if (view.self.money < cost) return `Costs $${cost} · you have $${view.self.money}`;
+  return null;
 }
 
 function soundForAction(action: GameAction): SoundEffect {
@@ -396,7 +393,11 @@ function Market({
   pendingLesson,
 }: {
   view: PlayerSnapshot;
-  onInspect: (card: InspectableCard) => void;
+  onInspect: (
+    card: InspectableCard,
+    source: HTMLElement,
+    lessonSource: LessonBuyAction["source"],
+  ) => void;
   onBuyLesson: (
     card: DanceCardDefinition,
     action: LessonBuyAction,
@@ -442,7 +443,7 @@ function Market({
               disabled={!buy || Boolean(pendingLesson)}
               actionLabel={purchasePending ? "Learning…" : `Learn · $${cost}`}
               onAction={buy ? (event) => onBuyLesson(card, buy, event.currentTarget) : undefined}
-              onInspect={() => onInspect(card)}
+              onInspect={(element) => onInspect(card, element, source)}
               draggable={draggable}
               dragging={draggingLessonKey === lessonKey}
               onDragStart={
@@ -558,7 +559,7 @@ function TurnActions({
     const danceHeading = pendingPosition
       ? "Complete the opening"
       : openings.length > 0
-        ? "Drag a Position to the floor"
+        ? "Open the floor with a Position"
         : beforeMove
           ? "Play a Move first"
           : transitions.length > 0
@@ -594,8 +595,8 @@ function TurnActions({
             <small>Opening play</small>
             <span>
               {pendingPosition
-                ? `${pendingPosition.card.name} is staged. Drag a highlighted matching Move next.`
-                : "Start with any highlighted Position in your hand."}
+                ? `${pendingPosition.card.name} is staged. Play a highlighted matching Move next.`
+                : "Stage any highlighted Position from your hand, then add a Move that dances from it."}
             </span>
           </div>
         )}
@@ -685,7 +686,9 @@ function TurnActions({
 
 function Hand({
   view,
+  intent,
   dispatch,
+  onPlayCard,
   onInspect,
   pendingPosition,
   draggableCardIds,
@@ -701,7 +704,9 @@ function Hand({
   onOpenDiscard,
 }: {
   view: PlayerSnapshot;
+  intent: TurnIntent;
   dispatch: (action: GameAction) => void;
+  onPlayCard: (instanceId: string) => void;
   onInspect: (card: InspectableCard, source?: HTMLElement) => void;
   pendingPosition: CardView | null;
   draggableCardIds: Set<string>;
@@ -729,6 +734,9 @@ function Hand({
           <small>{roleName(view.viewerRole)} hand</small>
           <strong>{visibleHand.length} cards</strong>
           {pendingPosition && <span>1 Position staged</span>}
+          {draggableCardIds.size > 0 && (
+            <span className="hand-play-hint">Drag a highlighted card or click it to play</span>
+          )}
         </div>
         <div>
           <span>Deck {view.self.drawCount}</span>
@@ -776,20 +784,19 @@ function Hand({
       </div>
       <div className="hand-scroll">
         {visibleHand.map((entry) => {
-          const primary = floorActionFor(view.legalActions, entry.instanceId);
           const signal = view.legalActions.find(
             (action) => action.type === "SIGNAL_CARD" && action.instanceId === entry.instanceId,
           );
           const draggable = draggableCardIds.has(entry.instanceId);
-          const unavailableReason = unavailableReasonForCard(view, entry, primary);
+          const label = playLabel(draggable ? resolveDrop(view, intent, entry.instanceId) : null);
           return (
             <DanceCard
               key={entry.instanceId}
               value={entry}
               disabled={!isOwnTurn}
-              actionLabel={actionLabel(primary)}
-              unavailableReason={unavailableReason}
-              onAction={primary ? () => dispatch(primary) : undefined}
+              actionLabel={label}
+              unavailableReason={unavailableReason(view, intent, entry.instanceId) ?? undefined}
+              onAction={label ? () => onPlayCard(entry.instanceId) : undefined}
               onSignal={signal ? () => dispatch(signal) : undefined}
               onInspect={(source) => onInspect(entry, source)}
               draggable={draggable}
@@ -979,9 +986,13 @@ function cardZoomTransform(
 
 function CardInspector({
   inspection,
+  actions,
+  note,
   onClosed,
 }: {
   inspection: CardInspection;
+  actions: InspectorAction[];
+  note: string | null;
   onClosed: () => void;
 }) {
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -1087,10 +1098,30 @@ function CardInspector({
         <span className="inspector-hint" id="card-inspector-title">
           Card detail
         </span>
-        <DanceCard value={inspection.card} />
-        <button ref={closeButton} type="button" className="inspector-close" onClick={requestClose}>
-          Close
-        </button>
+        <DanceCard value={inspection.card} detailed />
+        {note && <p className="inspector-note">{note}</p>}
+        <div className="inspector-actions">
+          {actions.map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              className={`button ${action.primary ? "gold" : "outline"}`}
+              onClick={() =>
+                action.run(content.current?.querySelector<HTMLElement>(".dance-card") ?? null)
+              }
+            >
+              {action.label}
+            </button>
+          ))}
+          <button
+            ref={closeButton}
+            type="button"
+            className="inspector-close"
+            onClick={requestClose}
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1196,10 +1227,15 @@ export function GameScreen() {
   const cleanupFlightKey = useRef(0);
   const roomCopyReset = useRef<number | null>(null);
   const previousStatus = useRef(view?.status);
-  const inspectCard = (card: InspectableCard, source?: HTMLElement) => {
+  const inspectCard = (
+    card: InspectableCard,
+    source?: HTMLElement,
+    lessonSource?: LessonBuyAction["source"],
+  ) => {
     const sourceRect = source?.getBoundingClientRect();
     setInspection({
       card,
+      lessonSource,
       origin:
         source && sourceRect
           ? {
@@ -1295,7 +1331,7 @@ export function GameScreen() {
     [intent, view],
   );
 
-  const playDroppedCard = (instanceId: string) => {
+  const playToFloor = (instanceId: string) => {
     if (!view) return;
     const drop = resolveDrop(view, intent, instanceId);
     if (drop.kind === "ignore") return;
@@ -1459,6 +1495,76 @@ export function GameScreen() {
     dispatch(action);
   };
 
+  const returnStagedPosition = () => {
+    playSoundEffect("undo");
+    setIntent(NO_INTENT);
+  };
+
+  /** What the enlarged card offers, read from the live snapshot so it never goes stale. */
+  const inspectorControls = (
+    current: CardInspection,
+    view: PlayerSnapshot,
+  ): { actions: InspectorAction[]; note: string | null } => {
+    const closeThen = (run: () => void) => () => {
+      setInspection(null);
+      run();
+    };
+    if (current.lessonSource) {
+      const source = current.lessonSource;
+      const card = "card" in current.card ? current.card.card : current.card;
+      const buy = view.legalActions.find(
+        (action): action is LessonBuyAction =>
+          action.type === "BUY_LESSON" && action.source === source && action.cardId === card.id,
+      );
+      if (!buy || lessonFlight) return { actions: [], note: lessonUnavailableReason(view, source) };
+      return {
+        actions: [
+          {
+            label: `Learn · $${view.rules.lessonCosts[source]}`,
+            primary: true,
+            run: (enlargedCard) => {
+              if (enlargedCard) buyLesson(card, buy, enlargedCard);
+              else closeThen(() => dispatch(buy))();
+            },
+          },
+        ],
+        note: null,
+      };
+    }
+
+    const instanceId = "instanceId" in current.card ? current.card.instanceId : null;
+    if (!instanceId || !view.self.hand.some((entry) => entry.instanceId === instanceId))
+      return { actions: [], note: null };
+    if (pendingPosition?.instanceId === instanceId)
+      return {
+        actions: [
+          {
+            label: "Return Position to hand",
+            primary: false,
+            run: closeThen(returnStagedPosition),
+          },
+        ],
+        note: "Staged on the floor, waiting for a matching Move",
+      };
+
+    const actions: InspectorAction[] = [];
+    const label = playLabel(
+      draggableCardIds.has(instanceId) ? resolveDrop(view, intent, instanceId) : null,
+    );
+    if (label)
+      actions.push({ label, primary: true, run: closeThen(() => playToFloor(instanceId)) });
+    const signal = view.legalActions.find(
+      (action) => action.type === "SIGNAL_CARD" && action.instanceId === instanceId,
+    );
+    if (signal)
+      actions.push({
+        label: "Signal to partner",
+        primary: false,
+        run: closeThen(() => dispatch(signal)),
+      });
+    return { actions, note: unavailableReason(view, intent, instanceId) };
+  };
+
   if (!view)
     return (
       <main className="loading-table">
@@ -1536,7 +1642,7 @@ export function GameScreen() {
             acceptsDrop={draggableCardIds.size > 0}
             dragOver={floorDragOver}
             onDragOverChange={setFloorDragOver}
-            onCardDrop={playDroppedCard}
+            onCardDrop={playToFloor}
             onOpenDancerDemo={() => setDancerDemoOpen(true)}
           />
           <TurnActions
@@ -1545,14 +1651,13 @@ export function GameScreen() {
             onCleanup={cleanupTurn}
             cleanupPending={Boolean(cleanupFlight)}
             pendingPosition={pendingPosition}
-            cancelPendingPosition={() => {
-              playSoundEffect("undo");
-              setIntent(NO_INTENT);
-            }}
+            cancelPendingPosition={returnStagedPosition}
           />
           <Hand
             view={view}
+            intent={intent}
             dispatch={dispatch}
+            onPlayCard={playToFloor}
             onInspect={inspectCard}
             pendingPosition={pendingPosition}
             draggableCardIds={draggableCardIds}
@@ -1622,7 +1727,13 @@ export function GameScreen() {
           Signal visible to partner · tap to hide
         </button>
       )}
-      {inspection && <CardInspector inspection={inspection} onClosed={() => setInspection(null)} />}
+      {inspection && (
+        <CardInspector
+          inspection={inspection}
+          {...inspectorControls(inspection, view)}
+          onClosed={() => setInspection(null)}
+        />
+      )}
       {discardOpen && (
         <DiscardPileInspector
           cards={view.self.discard}
