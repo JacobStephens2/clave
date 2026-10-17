@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ENGINE_VERSION } from "@clave/engine";
+import { ENGINE_VERSION, type GameAction } from "@clave/engine";
 import { RoomDatabase } from "../src/database.js";
 import { RoomManager } from "../src/rooms.js";
 
@@ -47,6 +47,27 @@ describe("authoritative room persistence", () => {
     expect(() =>
       rooms.action(lead.code, "lead", lead.seatToken, 9, { type: "CONFIRM_HAND", role: "lead" }),
     ).toThrow(/ahead/);
+    database.close();
+  });
+
+  it("frees a finished room's place on the floor", () => {
+    const database = new RoomDatabase(":memory:");
+    const rooms = new RoomManager(database);
+    const seats = Array.from({ length: 50 }, () => rooms.create("lead", true));
+    expect(() => rooms.create("lead", true)).toThrow(/full/);
+
+    const lead = seats[0]!;
+    const follow = rooms.join(lead.code, "follow");
+    const play = (role: "lead" | "follow", token: string, action: GameAction) =>
+      rooms.action(lead.code, role, token, rooms.snapshot(lead.code, role, token).sequence, action);
+    play("lead", lead.seatToken, { type: "CONFIRM_HAND", role: "lead" });
+    play("follow", follow.seatToken, { type: "CONFIRM_HAND", role: "follow" });
+    play("lead", lead.seatToken, { type: "STUMBLE", role: "lead", recoveryInstanceId: null });
+    play("lead", lead.seatToken, { type: "END_LESSON", role: "lead" });
+    play("follow", follow.seatToken, { type: "STUMBLE", role: "follow", recoveryInstanceId: null });
+    expect(rooms.snapshot(lead.code, "lead", lead.seatToken).status).toBe("lost");
+
+    expect(() => rooms.create("lead", true)).not.toThrow();
     database.close();
   });
 

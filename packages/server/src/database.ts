@@ -113,6 +113,14 @@ export class RoomDatabase {
     return row ? this.mapRoom(row) : null;
   }
 
+  countActiveRooms(): number {
+    return (
+      this.db.prepare("SELECT COUNT(*) AS n FROM rooms WHERE terminal_event IS NULL").get() as {
+        n: number;
+      }
+    ).n;
+  }
+
   listActiveRooms(): RoomRecord[] {
     return (
       this.db.prepare("SELECT * FROM rooms WHERE terminal_event IS NULL").all() as RawRoom[]

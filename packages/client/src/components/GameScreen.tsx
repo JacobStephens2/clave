@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { DanceCard as DanceCardDefinition, Position } from "@clave/content";
 import type { CardView, GameAction, PlayerSnapshot, Role } from "@clave/engine";
-import { useAppStore } from "../store.js";
+import { useAppStore, type PartnerPresence } from "../store.js";
 import {
   NO_INTENT,
   floorDraggableIds,
@@ -603,6 +603,65 @@ function Market({
   );
 }
 
+/** The header chip: where the game is saved, or how the room and the partner are doing. */
+function connectionStatus(
+  mode: "hotseat" | "online" | null,
+  connection: "offline" | "connecting" | "connected" | "reconnecting",
+  partner: PartnerPresence | null,
+): { state: string; long: string; short: string } {
+  if (mode !== "online") return { state: "local", long: "Saved on device", short: "Saved" };
+  if (connection === "connecting")
+    return { state: "connecting", long: "Connecting…", short: "Connecting" };
+  if (connection === "reconnecting")
+    return { state: "reconnecting", long: "Reconnecting…", short: "Reconnecting" };
+  if (connection === "offline") return { state: "offline", long: "Offline", short: "Offline" };
+  if (partner === "away")
+    return { state: "partner-away", long: "Partner away", short: "Partner away" };
+  if (partner === "absent")
+    return { state: "partner-absent", long: "Waiting for partner", short: "Waiting" };
+  return partner === "connected"
+    ? { state: "connected", long: "Partner here", short: "Partner here" }
+    : { state: "connected", long: "Connected", short: "Online" };
+}
+
+function InvitePartner({ code }: { code: string }) {
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const grouped = code.match(/.{1,4}/g)?.join(" ") ?? code;
+  const link = `${location.origin}/#join=${code}`;
+  const share = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Dance Clave with me",
+          text: `Join my room: ${grouped}`,
+          url: link,
+        });
+        return;
+      }
+      await copyText(link);
+      setShareStatus("copied");
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === "AbortError")) setShareStatus("failed");
+    }
+  };
+  return (
+    <section className="invite-partner" aria-labelledby="invite-partner-title">
+      <div>
+        <small id="invite-partner-title">Invite your partner</small>
+        <strong className="invite-code">{grouped}</strong>
+        <span>On their device: Two devices → Join with this code, or open your invite link.</span>
+      </div>
+      <button type="button" className="button gold" onClick={() => void share()}>
+        {shareStatus === "copied"
+          ? "Link copied"
+          : shareStatus === "failed"
+            ? "Copy failed · try again"
+            : "Share invite link"}
+      </button>
+    </section>
+  );
+}
+
 function TurnActions({
   view,
   dispatch,
@@ -610,6 +669,8 @@ function TurnActions({
   cleanupPending,
   pendingPosition,
   cancelPendingPosition,
+  invite,
+  partnerAway,
 }: {
   view: PlayerSnapshot;
   dispatch: (action: GameAction) => void;
@@ -617,6 +678,10 @@ function TurnActions({
   cleanupPending: boolean;
   pendingPosition: CardView | null;
   cancelPendingPosition: () => void;
+  /** The room code to share while the partner's seat is still empty. */
+  invite: string | null;
+  /** The online partner's device has dropped away. */
+  partnerAway: boolean;
 }) {
   const actions = view.legalActions;
   const byType = <T extends GameAction["type"]>(type: T) =>
@@ -626,13 +691,23 @@ function TurnActions({
     const confirm = byType("CONFIRM_HAND")[0];
     if (!confirm)
       return (
-        <div className="turn-actions waiting-actions">
-          <strong>Waiting for {roleName(view.setupRole)}</strong>
-          <span>Your hand stays private.</span>
+        <div className={`turn-actions waiting-actions ${invite ? "with-invite" : ""}`}>
+          {invite && <InvitePartner code={invite} />}
+          <strong>
+            {invite
+              ? `Waiting for the ${roleName(view.setupRole)} to join`
+              : partnerAway
+                ? `${roleName(view.setupRole)} stepped away`
+                : `Waiting for ${roleName(view.setupRole)}`}
+          </strong>
+          <span>
+            {partnerAway ? "The dance resumes when they reconnect." : "Your hand stays private."}
+          </span>
         </div>
       );
     return (
-      <div className="turn-actions">
+      <div className={`turn-actions ${invite ? "with-invite" : ""}`}>
+        {invite && <InvitePartner code={invite} />}
         <div className="setup-heading">
           <small>Opening hand</small>
           <strong>Ready to dance?</strong>
@@ -654,8 +729,14 @@ function TurnActions({
   if (view.activeRole !== view.viewerRole)
     return (
       <div className="turn-actions waiting-actions">
-        <strong>{roleName(view.activeRole)} is dancing</strong>
-        <span>Watch the floor, not their hand.</span>
+        <strong>
+          {roleName(view.activeRole)} {partnerAway ? "stepped away" : "is dancing"}
+        </strong>
+        <span>
+          {partnerAway
+            ? "The dance resumes when they reconnect."
+            : "Watch the floor, not their hand."}
+        </span>
       </div>
     );
 
@@ -1460,6 +1541,7 @@ export function GameScreen() {
     passTo,
     onlineSeat,
     connection,
+    partnerPresence,
     dispatch: dispatchAction,
     acceptPass: acceptPassAction,
     leaveGame,
@@ -1882,6 +1964,7 @@ export function GameScreen() {
       </>
     );
 
+  const status = connectionStatus(mode, connection, partnerPresence);
   const passScreenOpen = Boolean(passTo && mode === "hotseat" && !cleanupFlight);
   const signalPeekOpen = view.signal?.role === view.viewerRole && mode === "hotseat";
   // While a dialog is up, the table behind it leaves the tab order and the accessibility tree.
@@ -1936,10 +2019,30 @@ export function GameScreen() {
           <span className="mode-label">Pass & play</span>
         )}
         <RulesButton compact />
-        <span className={`connection-status ${connection}`}>
-          {mode === "online" ? connection : "saved on device"}
+        <span
+          className={`connection-status ${status.state}`}
+          data-connection={mode === "online" ? connection : "local"}
+          data-partner={
+            mode === "online" && connection === "connected"
+              ? (partnerPresence ?? "unknown")
+              : undefined
+          }
+        >
+          <span className="status-long">{status.long}</span>
+          <span className="status-short" aria-hidden="true">
+            {status.short}
+          </span>
         </span>
       </header>
+      {mode === "online" && connection !== "connected" && (
+        <p className="reconnect-banner" role="status">
+          {connection === "offline"
+            ? "This seat is offline. Head home to reconnect or start a new room."
+            : connection === "connecting"
+              ? "Connecting to your room…"
+              : "Reconnecting to your room… your moves will wait."}
+        </p>
+      )}
       <p className="visually-hidden" role="status" aria-live="polite">
         {turnAnnouncement(view)}
       </p>
@@ -1965,6 +2068,10 @@ export function GameScreen() {
             cleanupPending={Boolean(cleanupFlight)}
             pendingPosition={pendingPosition}
             cancelPendingPosition={returnStagedPosition}
+            invite={
+              mode === "online" && partnerPresence === "absent" ? (onlineSeat?.code ?? null) : null
+            }
+            partnerAway={mode === "online" && partnerPresence === "away"}
           />
           <Hand
             view={view}

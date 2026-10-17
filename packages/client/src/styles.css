@@ -1079,8 +1079,93 @@ button {
   background: #58b889;
   margin-right: 7px;
 }
-.connection-status.reconnecting {
+.connection-status.reconnecting,
+.connection-status.connecting {
   color: #e3ac69;
+}
+.connection-status.partner-absent {
+  color: var(--gold);
+}
+.connection-status.partner-away,
+.connection-status.offline {
+  color: #f08e86;
+}
+.connection-status.partner-absent::before,
+.connection-status.partner-away::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 7px;
+  background: currentColor;
+}
+.connection-status.partner-absent::before {
+  animation: presence-wait 1.6s ease-in-out infinite;
+}
+@keyframes presence-wait {
+  50% {
+    opacity: 0.25;
+  }
+}
+.connection-status .status-short {
+  display: none;
+}
+.reconnect-banner {
+  position: fixed;
+  z-index: 95;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  margin: 0;
+  padding: 9px 16px;
+  border: 2px solid var(--ink);
+  background: #e3ac69;
+  color: var(--ink);
+  box-shadow: 4px 4px 0 rgba(4, 13, 18, 0.72);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+.turn-actions.with-invite {
+  flex-wrap: wrap;
+}
+.invite-partner {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 18px;
+  padding: 10px 12px;
+  border: 1px dashed rgba(226, 167, 53, 0.6);
+  background: rgba(226, 167, 53, 0.08);
+  text-align: left;
+}
+.invite-partner > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.invite-partner small {
+  color: var(--gold);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.invite-partner .invite-code {
+  color: var(--cream);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 17px;
+  letter-spacing: 0.08em;
+  overflow-wrap: anywhere;
+}
+.invite-partner span {
+  color: var(--muted);
+  font-size: 11px;
 }
 .hud {
   min-height: 74px;
@@ -4272,7 +4357,22 @@ body {
     gap: 8px;
   }
   .connection-status {
-    font-size: 0;
+    font-size: 8px;
+  }
+  .connection-status .status-long {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .connection-status .status-short {
+    display: inline;
+  }
+  .reconnect-banner {
+    top: 64px;
+    font-size: 11px;
   }
   .song-audio-controls {
     right: 10px;
@@ -4300,13 +4400,7 @@ body {
   .music-player-drawer {
     padding: 11px;
   }
-  .connection-status.connected::before {
-    margin: 0;
-  }
-  .connection-status:not(.connected)::after {
-    content: "saved";
-    font-size: 8px;
-  }
+
   .hud {
     gap: 14px;
     justify-content: space-between;
@@ -4572,6 +4666,9 @@ body {
   }
   .hud-delta {
     animation-name: hud-delta-fade;
+  }
+  .connection-status.partner-absent::before {
+    animation: none;
   }
   .song-landed {
     animation: none;
