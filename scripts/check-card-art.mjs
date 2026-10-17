@@ -29,19 +29,12 @@ const verifyDirectory = (directory, extension) => {
 };
 
 const webRoot = path.join(root, "packages", "client", "public", "card-art");
-const unityRoot = path.join(root, "unity", "Clave", "Assets", "Resources", "CardArt");
 verifyDirectory(webRoot, ".webp");
-verifyDirectory(unityRoot, ".png");
 
 for (const id of expectedIds) {
   const webp = fs.readFileSync(path.join(webRoot, `${id}.webp`));
   if (webp.subarray(0, 4).toString("ascii") !== "RIFF") fail(`${id}.webp has no RIFF header.`);
   if (webp.subarray(8, 12).toString("ascii") !== "WEBP") fail(`${id}.webp is not WebP.`);
-
-  const png = fs.readFileSync(path.join(unityRoot, `${id}.png`));
-  const width = png.readUInt32BE(16);
-  const height = png.readUInt32BE(20);
-  if (width !== 512 || height !== 768) fail(`${id}.png must be 512x768, got ${width}x${height}.`);
 }
 
-process.stdout.write(`[art] Verified ${expectedIds.length} web and Unity card illustrations.\n`);
+process.stdout.write(`[art] Verified ${expectedIds.length} web card illustrations.\n`);

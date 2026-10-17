@@ -13,12 +13,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
       - run: npm ci
       - run: npm test
       - run: npm run typecheck
-      - run: npm run check:unity
-      - run: npm run check:unity:csharp
       - run: npm run build
