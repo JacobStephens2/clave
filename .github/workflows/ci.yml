@@ -18,6 +18,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: bash ops/test-package-release.sh
+      - run: node ops/test-validate-release.mjs
       - run: shellcheck ops/*.sh
       - run: npm ci
       - run: npm test

@@ -80,9 +80,7 @@ trap 'exit 143' TERM HUP
 trap 'exit 130' INT
 
 check_release() {
-  node -e 'const r=require(process.argv[1]);if(r.commit!==process.argv[2])process.exit(1)' \
-    "$1/packages/client/dist/release.json" "$commit"
-  test -f "$1/packages/server/dist/index.js"
+  runuser -u clave-deploy -- node /usr/local/lib/clave/validate-release.mjs "$1" "$commit"
 }
 
 if [[ -d "$release" ]]; then
@@ -97,6 +95,7 @@ else
   # Native SQLite bindings must be installed for the server's Node version and OS.
   runuser -u clave-deploy -- env npm_config_cache=/var/cache/clave-deploy/npm \
     npm ci --omit=dev --prefix "$staging"
+  check_release "$staging"
   chown -R --no-dereference root:root "$staging"
   chmod -R a+rX,a-w "$staging"
   mv "$staging" "$release"

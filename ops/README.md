@@ -18,7 +18,8 @@ the repository's default branch (including a merged PR) then deploys to the
 `production` environment. `workflow_dispatch` can retry the default branch without
 creating another commit. PRs, tags, and other branches cannot deploy.
 
-CI uses Node 22 to match the server, runs release-packaging checks, ShellCheck,
+CI uses Node 22 to match the server, runs release-packaging and validation checks,
+ShellCheck,
 `npm ci`, the full unit suite, typechecking, and the production build. It packages
 the exact checked-out source and all four built packages into one immutable Actions
 artifact. `/release.json` identifies its commit. No credentials or `node_modules`
@@ -52,7 +53,8 @@ procedure.
 
 Bootstrap and helper updates use `ssh jacob@stephens.page`, with Jacob's existing
 sudo access. Copy `ops/install-deployment.sh`, `ops/deploy-release.sh`,
-`ops/receive-release.sh`, and the dedicated Ed25519 **public** key to a temporary
+`ops/receive-release.sh`, `ops/validate-release.mjs`, and the dedicated Ed25519
+**public** key to a temporary
 server directory. Run `sudo bash <directory>/install-deployment.sh <public-key-file>`.
 This installs the account, root-owned forced command and deployment helper, and a
 sudo rule restricted to that helper. Updating repository helper scripts alone does
