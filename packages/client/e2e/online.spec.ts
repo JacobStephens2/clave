@@ -24,7 +24,9 @@ test("keeps two authoritative screens synchronized through reload and song end",
   await roomCode.click();
   await expect(roomCode).toContainText("Copied!");
   await expect(roomCode).toHaveAccessibleName(`Room ${code} copied to clipboard`);
-  await expect(lead.getByRole("status")).toHaveText(`Room ${code} copied to clipboard.`);
+  await expect(lead.getByRole("status").filter({ hasText: `Room ${code}` })).toHaveText(
+    `Room ${code} copied to clipboard.`,
+  );
   await expect.poll(() => lead.evaluate(() => navigator.clipboard.readText())).toBe(code);
 
   await follow.goto("/");

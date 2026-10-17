@@ -36,7 +36,8 @@ function ComboThumbnail({
   );
 }
 
-function comboSummary(entry: DanceComboView): string {
+/** One 8-count in a sentence, e.g. "Lead danced Follow Right Turn, Open Position". */
+export function comboSummary(entry: DanceComboView): string {
   if (entry.outcome === "stumble") return `${roleName(entry.role)} stumbled`;
   if (entry.outcome === "basic")
     return `${roleName(entry.role)} danced the basic in ${entry.endingPosition ?? "position"}`;

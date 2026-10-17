@@ -15,7 +15,7 @@ import {
 import { DanceCard } from "./DanceCard.js";
 import { DancerDemo } from "./DancerDemo.js";
 import { MusicButton } from "./MusicPlayer.js";
-import { PhraseHistory } from "./PhraseHistory.js";
+import { PhraseHistory, comboSummary } from "./PhraseHistory.js";
 import { RulesButton } from "./RulesDialog.js";
 import { SoundEffectsButton, useSoundEffects, type SoundEffect } from "./SoundEffects.js";
 
@@ -161,13 +161,88 @@ function soundForAction(action: GameAction): SoundEffect {
   }
 }
 
-function Hud({ view }: { view: PlayerSnapshot }) {
+/** What moved on the scoreboard between two snapshots the same viewer saw. */
+interface ScoreChange {
+  key: number;
+  connection: number;
+  style: number;
+  money: number;
+  announcement: string;
+}
+
+interface ScoreReading {
+  gameId: string;
+  viewer: Role;
+  sequence: number;
+  connection: number;
+  style: number;
+  money: number;
+}
+
+function readScore(view: PlayerSnapshot): ScoreReading {
+  return {
+    gameId: view.gameId,
+    viewer: view.viewerRole,
+    sequence: view.sequence,
+    connection: view.shared.connection,
+    style: view.shared.style,
+    money: view.self.money,
+  };
+}
+
+function scoreChange(previous: ScoreReading, view: PlayerSnapshot): ScoreChange | null {
+  if (
+    previous.gameId !== view.gameId ||
+    previous.viewer !== view.viewerRole ||
+    view.sequence <= previous.sequence
+  )
+    return null;
+  const change = {
+    connection: view.shared.connection - previous.connection,
+    style: view.shared.style - previous.style,
+    money: view.self.money - previous.money,
+  };
+  if (!change.connection && !change.style && !change.money) return null;
+  const said = (label: string, value: number) =>
+    value ? `${label} ${value > 0 ? "up" : "down"} ${Math.abs(value)}.` : "";
+  // Only entries newer than the previous reading, so an undone play is never cited.
+  const causes = view.log
+    .filter(
+      (entry) =>
+        entry.sequence > previous.sequence && (entry.kind === "score" || entry.kind === "dance"),
+    )
+    .map((entry) => entry.message);
+  return {
+    key: view.sequence,
+    ...change,
+    announcement: [
+      said("Style", change.style),
+      said("Connection", change.connection),
+      said("Your practice money", change.money),
+      ...causes,
+    ]
+      .filter(Boolean)
+      .join(" "),
+  };
+}
+
+function HudDelta({ value, changeKey }: { value: number; changeKey: number }) {
+  if (!value) return null;
+  return (
+    <b key={changeKey} className={`hud-delta ${value > 0 ? "up" : "down"}`} aria-hidden="true">
+      {value > 0 ? `+${value}` : `−${Math.abs(value)}`}
+    </b>
+  );
+}
+
+function Hud({ view, change }: { view: PlayerSnapshot; change: ScoreChange | null }) {
   return (
     <div className="hud" aria-label="Game score">
       <div className="hud-stat connection">
         <small>Connection</small>
         <strong>{view.shared.connection}</strong>
         <span>/{view.rules.maximumConnection}</span>
+        {change && <HudDelta value={change.connection} changeKey={change.key} />}
       </div>
       <div className="connection-meter" aria-hidden="true">
         {Array.from({ length: view.rules.maximumConnection }, (_, index) => (
@@ -177,10 +252,12 @@ function Hud({ view }: { view: PlayerSnapshot }) {
       <div className="hud-stat">
         <small>Style</small>
         <strong>{view.shared.style}</strong>
+        {change && <HudDelta value={change.style} changeKey={change.key} />}
       </div>
       <div className="hud-stat">
         <small>Your practice</small>
         <strong>${view.self.money}</strong>
+        {change && <HudDelta value={change.money} changeKey={change.key} />}
       </div>
       <div className="hud-stat phrase">
         <small>Phrase {view.phrase.number}</small>
@@ -189,6 +266,9 @@ function Hud({ view }: { view: PlayerSnapshot }) {
           <span>/{view.rules.phraseLength}</span>
         </strong>
       </div>
+      <p className="visually-hidden" role="status" aria-live="polite" aria-atomic="true">
+        {change?.announcement ?? ""}
+      </p>
     </div>
   );
 }
@@ -208,6 +288,13 @@ function SongMoment({ view }: { view: PlayerSnapshot }) {
         </div>
       </div>
     );
+  const landed =
+    view.phase === "lesson"
+      ? [
+          view.turn.bonusStyle ? `+${view.turn.bonusStyle} Style` : null,
+          view.turn.bonusConnection ? `+${view.turn.bonusConnection} Connection` : null,
+        ].filter(Boolean)
+      : [];
   return (
     <div className={`song-card ${view.currentSong.section.toLowerCase()}`}>
       <div className="song-count">
@@ -219,7 +306,10 @@ function SongMoment({ view }: { view: PlayerSnapshot }) {
           {view.currentSong.section} · {view.currentSong.moment}
         </small>
         <h3>{view.currentSong.title}</h3>
-        <p>{view.currentSong.description}</p>
+        <p>
+          {landed.length > 0 && <b className="song-landed">Landed · {landed.join(" · ")}</b>}
+          {view.currentSong.description}
+        </p>
       </div>
       <div className="song-audio-controls" role="group" aria-label="Audio controls">
         <MusicButton compact />
@@ -1127,14 +1217,28 @@ function CardInspector({
   );
 }
 
-function PassScreen({ role, onReady }: { role: Role; onReady: () => void }) {
+function PassScreen({
+  role,
+  view,
+  onReady,
+}: {
+  role: Role;
+  view: PlayerSnapshot;
+  onReady: () => void;
+}) {
+  // All public: the last 8-count, any phrase scoring it triggered, and the next song card.
+  const lastCombo = view.status === "playing" ? view.danceHistory.at(-1) : undefined;
+  const phraseResult = view.log.find(
+    (entry) => entry.sequence === view.sequence && entry.kind === "score" && entry.role === null,
+  );
+  const nextSong = view.status === "playing" ? view.currentSong : null;
   return (
-    <div className="pass-screen" role="dialog" aria-modal="true">
+    <div className="pass-screen" role="dialog" aria-modal="true" aria-labelledby="pass-title">
       <div className="pass-orbit" aria-hidden="true">
         <span>{role === "lead" ? "L" : "F"}</span>
       </div>
       <small>Keep the hand private</small>
-      <h2>
+      <h2 id="pass-title">
         Pass to the
         <br />
         <em>{roleName(role)}</em>
@@ -1143,6 +1247,38 @@ function PassScreen({ role, onReady }: { role: Role; onReady: () => void }) {
       <button type="button" className="button gold" onClick={onReady}>
         I’m the {roleName(role)}
       </button>
+      {(lastCombo || nextSong) && (
+        <dl className="pass-recap">
+          {lastCombo && (
+            <div>
+              <dt>Last 8-count</dt>
+              <dd>{comboSummary(lastCombo)}</dd>
+            </div>
+          )}
+          {phraseResult && (
+            <div className="pass-phrase">
+              <dt>Phrase scored</dt>
+              <dd>{phraseResult.message}</dd>
+            </div>
+          )}
+          <div>
+            <dt>Together</dt>
+            <dd>
+              Style {view.shared.style} · Connection {view.shared.connection}
+            </dd>
+          </div>
+          {nextSong && (
+            <div className="pass-next-song">
+              <dt>
+                Up next · {String(nextSong.number).padStart(2, "0")} of {view.rules.songLength}
+              </dt>
+              <dd>
+                <strong>{nextSong.title}</strong> {nextSong.description}
+              </dd>
+            </div>
+          )}
+        </dl>
+      )}
     </div>
   );
 }
@@ -1216,6 +1352,8 @@ export function GameScreen() {
   const [cleanupFlight, setCleanupFlight] = useState<CleanupFlight | null>(null);
   const [dancerDemoOpen, setDancerDemoOpen] = useState(false);
   const [roomCopyStatus, setRoomCopyStatus] = useState<RoomCopyStatus>("idle");
+  const [latestScoreChange, setLatestScoreChange] = useState<ScoreChange | null>(null);
+  const lastScoreReading = useRef<ScoreReading | null>(null);
   const discardTargetRef = useRef<HTMLButtonElement>(null);
   const lessonDragRef = useRef<{
     key: string;
@@ -1265,6 +1403,14 @@ export function GameScreen() {
   }, [playSoundEffect, view?.status]);
   useEffect(() => {
     if (view) setIntent((current) => reconcileIntent(view, current));
+  }, [view]);
+  useEffect(() => {
+    if (!view) return;
+    const previous = lastScoreReading.current;
+    lastScoreReading.current = readScore(view);
+    if (previous?.viewer !== view.viewerRole) setLatestScoreChange(null);
+    const change = previous ? scoreChange(previous, view) : null;
+    if (change) setLatestScoreChange(change);
   }, [view]);
   useEffect(() => {
     setDraggingCardId(null);
@@ -1630,7 +1776,7 @@ export function GameScreen() {
           {mode === "online" ? connection : "saved on device"}
         </span>
       </header>
-      <Hud view={view} />
+      <Hud view={view} change={latestScoreChange} />
       <div className="game-grid">
         <div className="main-table">
           <SongMoment view={view} />
@@ -1707,7 +1853,7 @@ export function GameScreen() {
         <CleanupCardFlights flight={cleanupFlight} onComplete={() => setCleanupFlight(null)} />
       )}
       {passTo && mode === "hotseat" && !cleanupFlight && (
-        <PassScreen role={passTo} onReady={acceptPass} />
+        <PassScreen role={passTo} view={view} onReady={acceptPass} />
       )}
       {view.signal?.role === view.viewerRole && mode === "hotseat" && (
         <div className="signal-peek" role="dialog" aria-modal="true">

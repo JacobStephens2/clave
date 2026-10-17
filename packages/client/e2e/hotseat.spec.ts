@@ -627,6 +627,38 @@ test("offers a lesson from its enlarged card and explains when it cannot", async
   ).toHaveText(lessonName);
 });
 
+test("shows each score change, a landed song bonus, and a recap at the handoff", async ({
+  page,
+}) => {
+  await seedDeal(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  await finishSetup(page);
+
+  const scoreStatus = page.locator(".hud").getByRole("status");
+  const styleStat = page.locator(".hud-stat").filter({ hasText: "Style" });
+  const connectionStat = page.locator(".hud-stat").filter({ hasText: "Connection" });
+  const move = page.locator(".hand-scroll .dance-card.move.playable").first();
+  const moveName = await move.locator("h4").innerText();
+  const moveStyle = Number((await move.locator(".card-style-top").innerText()).match(/\d+/)![0]);
+  const detail = await openCardDetail(page, move);
+  await detail.getByRole("button", { name: "Dance move" }).click();
+  await expect(styleStat.locator(".hud-delta.up")).toHaveText(`+${moveStyle}`);
+  await expect(scoreStatus).toContainText(`Lead danced ${moveName}`);
+
+  await page.getByRole("button", { name: "Finish the 8-count" }).click();
+  await expect(page.locator(".song-card .song-landed")).toHaveText("Landed · +1 Connection");
+  await expect(connectionStat.locator(".hud-delta.up")).toHaveText("+1");
+  await expect(scoreStatus).toContainText("Connection up 1. Settle in lands: +1 Connection.");
+
+  await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
+  const handoff = page.getByRole("dialog", { name: /Pass to the/ });
+  await expect(handoff).toBeVisible();
+  await expect(handoff.getByText(`Lead danced ${moveName}`)).toBeVisible();
+  await expect(handoff.getByText("Up next · 02 of 16")).toBeVisible();
+  await expect(handoff.getByText(`Style ${moveStyle} · Connection 5`)).toBeVisible();
+});
+
 test("animates a lesson into an inspectable discard pile", async ({ page }, testInfo) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Pass & play/ }).click();
