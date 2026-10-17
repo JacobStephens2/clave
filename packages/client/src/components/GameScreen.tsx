@@ -1335,9 +1335,23 @@ function CardInspector({
   );
 }
 
-function SignalPeek({ card, onHide }: { card: CardView; onHide: () => void }) {
+function SignalPeek({
+  card,
+  opener,
+  onHide,
+}: {
+  card: CardView;
+  opener: Element | null;
+  onHide: () => void;
+}) {
   const hideButton = useRef<HTMLButtonElement>(null);
-  useEffect(() => hideButton.current?.focus(), []);
+  const [returnFocus] = useState(() => opener ?? document.activeElement);
+  useEffect(() => {
+    hideButton.current?.focus();
+    return () => {
+      if (returnFocus instanceof HTMLElement) returnFocus.focus();
+    };
+  }, [returnFocus]);
   return (
     <div
       className="signal-peek"
@@ -1457,12 +1471,14 @@ function RatingLadder({ view }: { view: PlayerSnapshot }) {
 function Terminal({
   view,
   mode,
+  inert,
   onInspect,
   onDanceAgain,
   leave,
 }: {
   view: PlayerSnapshot;
   mode: "hotseat" | "online" | null;
+  inert: boolean;
   onInspect: (card: InspectableCard) => void;
   onDanceAgain: () => void;
   leave: () => void;
@@ -1471,7 +1487,7 @@ function Terminal({
   const unresumable = view.status === "unresumable";
   const online = mode === "online";
   return (
-    <main className="terminal-screen">
+    <main className="terminal-screen" inert={inert}>
       <div className="terminal-inner">
         <small>
           {won
@@ -1562,6 +1578,7 @@ export function GameScreen() {
   const [roomCopyStatus, setRoomCopyStatus] = useState<RoomCopyStatus>("idle");
   const [latestScoreChange, setLatestScoreChange] = useState<ScoreChange | null>(null);
   const lastScoreReading = useRef<ScoreReading | null>(null);
+  const signalReturnFocus = useRef<Element | null>(null);
   const discardTargetRef = useRef<HTMLButtonElement>(null);
   const lessonDragRef = useRef<{
     key: string;
@@ -1597,6 +1614,9 @@ export function GameScreen() {
     });
   };
   const dispatch = (action: GameAction) => {
+    // The enlarged card closes as the reveal opens; return to its surviving hand card.
+    if (action.type === "SIGNAL_CARD")
+      signalReturnFocus.current = inspection?.origin?.element ?? document.activeElement;
     playSoundEffect(soundForAction(action));
     dispatchAction(action);
   };
@@ -1948,6 +1968,7 @@ export function GameScreen() {
         <Terminal
           view={view}
           mode={mode}
+          inert={Boolean(inspection)}
           onInspect={inspectCard}
           onDanceAgain={() =>
             mode === "online" ? void createOnline(view.viewerRole) : newHotseat()
@@ -2128,7 +2149,11 @@ export function GameScreen() {
       )}
       {passScreenOpen && passTo && <PassScreen role={passTo} view={view} onReady={acceptPass} />}
       {signalPeekOpen && view.signal && (
-        <SignalPeek card={view.signal.card} onHide={() => clearSignal && dispatch(clearSignal)} />
+        <SignalPeek
+          card={view.signal.card}
+          opener={signalReturnFocus.current}
+          onHide={() => clearSignal && dispatch(clearSignal)}
+        />
       )}
       {view.signal?.role === view.viewerRole && mode === "online" && clearSignal && (
         <button type="button" className="signal-live" onClick={() => dispatch(clearSignal)}>

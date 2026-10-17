@@ -338,6 +338,42 @@ test("plays a complete sixteen-count hot-seat game", async ({ page }) => {
   await expect(page.getByRole("region", { name: /Phrase choreography/ })).toBeVisible();
 });
 
+test("keeps result-screen card details modal and returns focus to the choreography", async ({
+  page,
+}) => {
+  await seedDeal(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: /Pass & play/ }).click();
+  await finishSetup(page);
+  const detail = await openCardDetail(
+    page,
+    page.locator(".hand-scroll .dance-card.move.playable").first(),
+  );
+  await detail.getByRole("button", { name: "Dance move" }).click();
+  await page.getByRole("button", { name: "Finish the 8-count" }).click();
+  await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
+
+  for (const [index, role] of (["Follow", "Lead", "Follow"] as const).entries()) {
+    await acceptPass(page, role);
+    await page.getByRole("button", { name: "Stumble · −2 Connection" }).click();
+    if (index < 2) await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
+  }
+
+  await expect(page.getByRole("heading", { name: "The dance ends here" })).toBeVisible();
+  const historyCard = page.getByRole("button", { name: /^move, .* View card\./ }).first();
+  await historyCard.focus();
+  await page.keyboard.press("Enter");
+  await expect(detail.getByRole("button", { name: "Close" })).toBeFocused();
+  for (let press = 0; press < 6; press += 1) {
+    await page.keyboard.press("Tab");
+    expect(
+      await page.evaluate(() => Boolean(document.activeElement?.closest(".terminal-screen"))),
+    ).toBe(false);
+  }
+  await page.keyboard.press("Escape");
+  await expect(historyCard).toBeFocused();
+});
+
 test("restores the exact hot-seat turn after a page reload", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: /Pass & play/ }).click();
@@ -717,6 +753,15 @@ test("plays a card and signals with the keyboard alone", async ({ page }, testIn
   await page.keyboard.press("Enter");
   await expect(page.locator('[data-slot="move"]')).toContainText(moveName);
 
+  const signaledCard = page.locator(".hand-scroll .dance-card").first();
+  await signaledCard.focus();
+  await page.keyboard.press("Enter");
+  await detail.getByRole("button", { name: "Signal to partner" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("button", { name: "Hide it again" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(signaledCard).toBeFocused();
+
   if (testInfo.project.name !== "mobile-chrome") return;
   // Phone cards show their buttons inline; Enter on one must press it, not open the card.
   const signal = page
@@ -729,6 +774,9 @@ test("plays a card and signals with the keyboard alone", async ({ page }, testIn
   await page.keyboard.press("Enter");
   await expect(page.getByText("Show only this card to your partner")).toBeVisible();
   await expect(detail).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Hide it again" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(signal).toBeFocused();
 });
 
 test("animates a lesson into an inspectable discard pile", async ({ page }, testInfo) => {

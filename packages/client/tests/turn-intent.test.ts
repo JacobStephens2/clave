@@ -233,6 +233,80 @@ describe("unavailableReason on an established floor", () => {
     const view = snapshotFor(state, "lead", content);
     expect(unavailableReason(view, NO_INTENT, id("flo_001"))).toBe("Play a Move first");
   });
+
+  it("explains a Flourish against where the Move started, even after a transition", () => {
+    let state = establishedState();
+    state.players.lead.hand.push({ instanceId: id("flo_004"), cardId: "flo_004", owner: "lead" });
+    state = applyOk(state, { type: "PLAY_MOVE", role: "lead", moveInstanceId: id("mov_002") });
+    state = applyOk(state, {
+      type: "TRANSITION",
+      role: "lead",
+      positionInstanceId: id("pos_002"),
+    });
+    const view = snapshotFor(state, "lead", content);
+    expect(unavailableReason(view, NO_INTENT, id("flo_004"))).toBe(
+      "Needs Closed · Move started from Open",
+    );
+  });
+
+  it("explains why a second Flourish must wait for another 8-count", () => {
+    let state = establishedState();
+    state.players.lead.hand.push(
+      { instanceId: id("flo_001"), cardId: "flo_001", owner: "lead" },
+      { instanceId: id("flo_002"), cardId: "flo_002", owner: "lead" },
+    );
+    state = applyOk(state, { type: "PLAY_MOVE", role: "lead", moveInstanceId: id("mov_002") });
+    state = applyOk(state, {
+      type: "PLAY_FLOURISH",
+      role: "lead",
+      flourishInstanceId: id("flo_001"),
+    });
+    const view = snapshotFor(state, "lead", content);
+    expect(unavailableReason(view, NO_INTENT, id("flo_002"))).toBe(
+      "You already added a Flourish this 8-count",
+    );
+  });
+
+  it("explains why a held Move cannot follow the Move already danced", () => {
+    const state = applyOk(establishedState(), {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: id("mov_002"),
+    });
+    const view = snapshotFor(state, "lead", content);
+    expect(unavailableReason(view, NO_INTENT, id("mov_013"))).toBe(
+      "You already danced a Move this 8-count",
+    );
+  });
+
+  it("explains a Position after the transition window has closed", () => {
+    let state = applyOk(establishedState(), {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: id("mov_002"),
+    });
+    state = applyOk(state, {
+      type: "TRANSITION",
+      role: "lead",
+      positionInstanceId: id("pos_002"),
+    });
+    const view = snapshotFor(state, "lead", content);
+    expect(unavailableReason(view, NO_INTENT, id("pos_001"))).toBe(
+      "Transition immediately after your Move",
+    );
+  });
+
+  it("explains that Recovery belongs before playing dance cards", () => {
+    const state = applyOk(establishedState(), {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: id("mov_002"),
+    });
+    const view = snapshotFor(state, "lead", content);
+    expect(unavailableReason(view, NO_INTENT, id("rec_001"))).toBe(
+      "Use with Stumble before playing dance cards",
+    );
+  });
 });
 
 describe("unavailableReason on an empty floor", () => {

@@ -95,10 +95,19 @@ export function unavailableReason(
   intent: TurnIntent,
   instanceId: string,
 ): string | null {
-  if (!isViewersDanceStep(view) || view.turn.moveCardId !== null) return null;
+  if (!isViewersDanceStep(view)) return null;
   if (floorDraggableIds(view, intent).has(instanceId)) return null;
   const card = view.self.hand.find((entry) => entry.instanceId === instanceId)?.card;
   if (!card) return null;
+  if (view.turn.moveCardId !== null) {
+    if (card.type === "move") return "You already danced a Move this 8-count";
+    if (card.type === "position") return "Transition immediately after your Move";
+    if (card.type === "recovery") return "Use with Stumble before playing dance cards";
+    if (view.turn.flourished) return "You already added a Flourish this 8-count";
+    if (card.positions !== "any" && view.turn.fromPosition)
+      return `Needs ${alternatives(card.positions)} · Move started from ${view.turn.fromPosition}`;
+    return null;
+  }
   const floor = view.table.position?.card;
   const staged = stagedPosition(view, intent)?.card;
 
