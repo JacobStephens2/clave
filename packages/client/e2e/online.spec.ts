@@ -51,6 +51,12 @@ test("keeps two authoritative screens synchronized through reload and song end",
 
   await expect(lead.getByText("final score")).toBeVisible();
   await expect(follow.getByText("final score")).toBeVisible();
+  await expect(lead.getByRole("button", { name: "Create a new room" })).toBeVisible();
+  await expect(lead.getByRole("button", { name: "Dance again" })).toHaveCount(0);
+  await lead.getByRole("button", { name: "Create a new room" }).click();
+  await expect(lead.locator(".room-code strong")).not.toHaveText(code);
+  await expect(lead.locator(".connection-status")).toContainText("connected");
+  await expect(lead.getByRole("button", { name: "Keep this hand" })).toBeVisible();
   await leadContext.close();
   await followContext.close();
 });

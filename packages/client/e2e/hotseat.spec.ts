@@ -331,6 +331,11 @@ test("plays a complete sixteen-count hot-seat game", async ({ page }) => {
 
   await expect(page.getByText("final score")).toBeVisible();
   await expect(page.getByRole("button", { name: "Dance again" })).toBeVisible();
+  const rating = await page.locator(".terminal-screen h2").innerText();
+  const ladder = page.getByRole("region", { name: "Performance ratings" });
+  await expect(ladder.locator('[aria-current="true"]')).toContainText(rating);
+  await expect(ladder.getByText(/more points? reaches/)).toBeVisible();
+  await expect(page.getByRole("region", { name: /Phrase choreography/ })).toBeVisible();
 });
 
 test("restores the exact hot-seat turn after a page reload", async ({ page }) => {

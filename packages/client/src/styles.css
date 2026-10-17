@@ -3299,7 +3299,7 @@ button {
   color: var(--gold);
 }
 .pass-screen > small,
-.terminal-screen > small,
+.terminal-inner > small,
 .signal-peek > small {
   color: var(--gold);
   text-transform: uppercase;
@@ -3384,7 +3384,81 @@ button {
   font-size: 10px;
 }
 .terminal-screen {
+  /* A flex scroller whose content centers with margin: auto, so a tall result can scroll. */
+  display: flex;
+  overflow-y: auto;
   background: radial-gradient(circle at 50% 25%, #6f2038, #160c14 58%);
+}
+.terminal-inner {
+  position: relative;
+  z-index: 1;
+  width: min(920px, 100%);
+  margin: auto;
+  display: grid;
+  justify-items: center;
+}
+.rating-ladder {
+  width: min(620px, 100%);
+  margin-top: 6px;
+}
+.rating-ladder ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+}
+.rating-ladder li {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  padding: 8px 5px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.2;
+}
+.rating-ladder li strong {
+  color: var(--cream);
+  font-family: Georgia, serif;
+  font-size: 17px;
+  font-weight: 500;
+}
+.rating-ladder li.passed {
+  border-color: rgba(226, 167, 53, 0.4);
+  color: var(--cream);
+}
+.rating-ladder li.reached {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--coral);
+  font-weight: 800;
+}
+.rating-ladder li.reached strong {
+  color: var(--ink);
+}
+.rating-ladder p {
+  margin: 12px auto 0;
+  font-size: 13px;
+}
+.rating-ladder em {
+  color: var(--gold);
+  font-style: normal;
+  font-weight: 700;
+}
+.terminal-choreography {
+  width: 100%;
+  margin-top: 20px;
+  text-align: left;
+}
+.terminal-inner > .button-row {
+  margin-top: 20px;
+}
+.terminal-screen .terminal-hint {
+  margin: 12px 0 0;
+  font-size: 12px;
 }
 .final-score {
   width: 150px;
@@ -4354,6 +4428,9 @@ body {
   .terminal-screen .button-row {
     flex-direction: column;
     width: min(280px, 100%);
+  }
+  .rating-ladder ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .card-inspector {
     padding: 14px;

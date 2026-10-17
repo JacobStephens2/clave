@@ -43,6 +43,7 @@ export interface PlayerSnapshot {
     lessonCosts: ContentSet["rules"]["lessonCosts"];
     songLength: number;
     phraseLength: number;
+    ratings: ContentSet["rules"]["ratings"];
   };
   cardCatalog: DanceCard[];
   phrase: {
@@ -144,6 +145,7 @@ export function snapshotFor(
       lessonCosts: { ...contentSet.rules.lessonCosts },
       songLength: contentSet.song.cards.length,
       phraseLength: contentSet.song.cards.length / 2,
+      ratings: contentSet.rules.ratings.map((rating) => ({ ...rating })),
     },
     cardCatalog: contentSet.cards.map((entry) => ({ ...entry })),
     phrase: {

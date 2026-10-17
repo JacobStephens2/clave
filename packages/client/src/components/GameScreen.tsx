@@ -1283,48 +1283,115 @@ function PassScreen({
   );
 }
 
+function RatingLadder({ view }: { view: PlayerSnapshot }) {
+  const score = view.finalScore ?? 0;
+  const ladder = [...view.rules.ratings].sort((left, right) => left.minimum - right.minimum);
+  const reached = ladder.reduce(
+    (found, rating, index) => (score >= rating.minimum ? index : found),
+    0,
+  );
+  const next = ladder[reached + 1];
+  return (
+    <section className="rating-ladder" aria-label="Performance ratings">
+      <ol>
+        {ladder.map((rating, index) => (
+          <li
+            key={rating.name}
+            className={index === reached ? "reached" : index < reached ? "passed" : ""}
+            aria-current={index === reached ? "true" : undefined}
+          >
+            <strong>{rating.minimum}+</strong>
+            <span>{rating.name}</span>
+          </li>
+        ))}
+      </ol>
+      {next && (
+        <p>
+          {next.minimum - score} more {next.minimum - score === 1 ? "point" : "points"} reaches{" "}
+          <em>{next.name}</em>.
+        </p>
+      )}
+    </section>
+  );
+}
+
 function Terminal({
   view,
-  newHotseat,
+  mode,
+  onInspect,
+  onDanceAgain,
   leave,
 }: {
   view: PlayerSnapshot;
-  newHotseat: () => void;
+  mode: "hotseat" | "online" | null;
+  onInspect: (card: InspectableCard) => void;
+  onDanceAgain: () => void;
   leave: () => void;
 }) {
   const won = view.status === "completed";
+  const unresumable = view.status === "unresumable";
+  const online = mode === "online";
   return (
-    <div className="terminal-screen">
-      <small>{won ? "The final 8-count" : "The connection broke"}</small>
-      <h2>{won ? view.rating?.name : "The dance ends here"}</h2>
-      <div className="final-score">
-        <span>{view.finalScore ?? 0}</span>
-        <small>final score</small>
+    <main className="terminal-screen">
+      <div className="terminal-inner">
+        <small>
+          {won
+            ? "The final 8-count"
+            : unresumable
+              ? "This dance can’t continue"
+              : "The connection broke"}
+        </small>
+        <h2>
+          {won ? view.rating?.name : unresumable ? "The floor has changed" : "The dance ends here"}
+        </h2>
+        {!unresumable && (
+          <>
+            <div className="final-score">
+              <span>{view.finalScore ?? view.shared.style + view.shared.connection}</span>
+              <small>{won ? "final score" : "Style + Connection"}</small>
+            </div>
+            <div className="score-equation">
+              <span>
+                {view.shared.style}
+                <small>Style</small>
+              </span>
+              <b>+</b>
+              <span>
+                {view.shared.connection}
+                <small>Connection</small>
+              </span>
+            </div>
+          </>
+        )}
+        <p>
+          {won
+            ? view.rating?.description
+            : unresumable
+              ? `${view.terminalReason ?? "This saved dance cannot be read by the current release."} Nothing you did caused this; start a fresh dance.`
+              : "Take a breath, find each other, and try the song again."}
+        </p>
+        {won && <RatingLadder view={view} />}
+        {view.danceHistory.length > 0 && (
+          <div className="terminal-choreography">
+            <PhraseHistory view={view} onInspect={onInspect} />
+          </div>
+        )}
+        <div className="button-row">
+          <button type="button" className="button gold" onClick={onDanceAgain}>
+            {online ? "Create a new room" : "Dance again"}
+          </button>
+          <RulesButton />
+          <button type="button" className="button outline" onClick={leave}>
+            Back home
+          </button>
+        </div>
+        {online && (
+          <p className="terminal-hint">
+            One of you creates the new room and shares its code; the other joins it from Home.
+          </p>
+        )}
       </div>
-      <div className="score-equation">
-        <span>
-          {view.shared.style}
-          <small>Style</small>
-        </span>
-        <b>+</b>
-        <span>
-          {view.shared.connection}
-          <small>Connection</small>
-        </span>
-      </div>
-      <p>
-        {won ? view.rating?.description : "Take a breath, find each other, and try the song again."}
-      </p>
-      <div className="button-row">
-        <button type="button" className="button gold" onClick={newHotseat}>
-          Dance again
-        </button>
-        <RulesButton />
-        <button type="button" className="button outline" onClick={leave}>
-          Back home
-        </button>
-      </div>
-    </div>
+    </main>
   );
 }
 
@@ -1339,6 +1406,7 @@ export function GameScreen() {
     acceptPass: acceptPassAction,
     leaveGame,
     newHotseat,
+    createOnline,
   } = useAppStore();
   const { play: playSoundEffect } = useSoundEffects();
   const [inspection, setInspection] = useState<CardInspection | null>(null);
@@ -1722,7 +1790,26 @@ export function GameScreen() {
       </main>
     );
   if (view.status === "completed" || view.status === "lost" || view.status === "unresumable")
-    return <Terminal view={view} newHotseat={newHotseat} leave={leaveGame} />;
+    return (
+      <>
+        <Terminal
+          view={view}
+          mode={mode}
+          onInspect={inspectCard}
+          onDanceAgain={() =>
+            mode === "online" ? void createOnline(view.viewerRole) : newHotseat()
+          }
+          leave={leaveGame}
+        />
+        {inspection && (
+          <CardInspector
+            inspection={inspection}
+            {...inspectorControls(inspection, view)}
+            onClosed={() => setInspection(null)}
+          />
+        )}
+      </>
+    );
 
   return (
     <main className="game">
