@@ -50,6 +50,13 @@ async function openCardDetail(page: Page, card: ReturnType<Page["locator"]>) {
   return detail;
 }
 
+async function stageOpeningPosition(page: Page) {
+  const position = page.locator(".hand-scroll .dance-card.position.playable").first();
+  const detail = await openCardDetail(page, position);
+  await detail.getByRole("button", { name: "Stage Position" }).click();
+  await expect(detail).toBeHidden();
+}
+
 test("carries the card artwork into the home-screen visual system", async ({ page }) => {
   await page.goto("/");
 
@@ -350,6 +357,7 @@ test("keeps result-screen card details modal and returns focus to the choreograp
   await page.goto("/");
   await page.getByRole("button", { name: /Pass & play/ }).click();
   await finishSetup(page);
+  await stageOpeningPosition(page);
   const detail = await openCardDetail(
     page,
     page.locator(".hand-scroll .dance-card.move.playable").first(),
@@ -691,6 +699,7 @@ test("shows each score change, a landed song bonus, and a recap at the handoff",
   await page.goto("/");
   await page.getByRole("button", { name: /Pass & play/ }).click();
   await finishSetup(page);
+  await stageOpeningPosition(page);
 
   const scoreStatus = page.locator(".hud").getByRole("status");
   const styleStat = page.locator(".hud-stat").filter({ hasText: "Style" });
@@ -756,6 +765,14 @@ test("plays a card and signals with the keyboard alone", async ({ page }, testIn
   await page.goto("/");
   await page.getByRole("button", { name: /Pass & play/ }).click();
   await finishSetup(page);
+
+  const position = page.locator(".hand-scroll .dance-card.position.playable").first();
+  await position.focus();
+  await page.keyboard.press("Enter");
+  const positionDetail = page.getByRole("dialog", { name: "Card detail" });
+  await positionDetail.getByRole("button", { name: "Stage Position" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(positionDetail).toBeHidden();
 
   const move = page.locator(".hand-scroll .dance-card.move.playable").first();
   const moveName = await move.locator("h4").innerText();
