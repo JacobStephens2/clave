@@ -87,8 +87,9 @@ export const ContentSetSchema = z.object({
     maximumConnection: z.number().int().positive(),
     initialStyle: z.number().int().nonnegative(),
     startingMoney: z.number().int().nonnegative(),
-    startingPosition: PositionSchema.default("Open"),
     incomePerTurn: z.number().int().nonnegative(),
+    // Preserve older embedded content hashes when resuming saved games.
+    startingPosition: PositionSchema.optional(),
     handSize: z.number().int().positive(),
     danceLimits: z.object({
       positions: z.number().int().positive(),

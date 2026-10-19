@@ -26,7 +26,7 @@ function applyOk(state: GameState, action: GameAction): GameState {
 /** Instance IDs deliberately differ from card IDs so the two cannot be confused. */
 const id = (cardId: string) => `lead-hand-${cardId}`;
 
-/** The Lead's first dance step on the starting Open Position, with a hand of known cards. */
+/** An established Open floor before a Move, with a hand of known cards. */
 function establishedState(): GameState {
   let state = createGame({ seed: 42, content });
   state = applyOk(state, { type: "CONFIRM_HAND", role: "lead" });
@@ -34,13 +34,13 @@ function establishedState(): GameState {
   state.players.lead.hand = ["pos_002", "mov_013", "pos_001", "mov_002", "rec_001"].map(
     (cardId) => ({ instanceId: id(cardId), cardId, owner: "lead" as const }),
   );
+  state.table.position = { instanceId: "previous-position", cardId: "pos_001", owner: "follow" };
   return state;
 }
 
 /** The Lead's first dance step with an empty floor and a hand of known cards. */
 function openingState(): GameState {
   const state = establishedState();
-  state.players.lead.discardPile.push(state.table.position!);
   state.table.position = null;
   return state;
 }

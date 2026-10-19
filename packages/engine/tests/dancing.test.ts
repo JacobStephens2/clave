@@ -6,8 +6,6 @@ import { applyOk, readyGame, setHand } from "./helpers.js";
 describe("dancing · rulebook §6", () => {
   it("opens atomically, transitions immediately, and flourishes the current move", () => {
     let state = readyGame();
-    state.players.lead.discardPile.push(state.table.position!);
-    state.table.position = null;
     setHand(state, "lead", ["pos_002", "mov_013", "pos_001", "flo_001"]);
     const [closed, move, open, flourish] = state.players.lead.hand;
     state = applyOk(state, {
@@ -50,8 +48,6 @@ describe("dancing · rulebook §6", () => {
 
   it("rejects move-position mismatches and changing position before a move", () => {
     const state = readyGame();
-    state.players.lead.discardPile.push(state.table.position!);
-    state.table.position = null;
     setHand(state, "lead", ["pos_002", "mov_002", "pos_001", "mov_006"]);
     const [closed, openOnlyMove] = state.players.lead.hand;
     const mismatch = applyAction(
@@ -107,6 +103,7 @@ describe("dancing · rulebook §6", () => {
 
   it("records a basic as a visible 8-count with the carried Position", () => {
     let state = readyGame();
+    state.table.position = { instanceId: "previous-position", cardId: "pos_001", owner: "follow" };
     state = applyOk(state, { type: "END_DANCE", role: "lead" });
     expect(state.danceHistory).toEqual([
       expect.objectContaining({

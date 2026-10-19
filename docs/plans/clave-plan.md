@@ -58,8 +58,9 @@ journal note, kept because it is the actual point of the project.
 
 Rule-section references are to `docs/rules/game-rules.md`.
 
-- **FR-1 Setup (§4):** role selection, 8-card starter decks, opening hand of 4 with
-  the one-time mulligan, Connection 4 / Style 0 / $0, ordered 16-card Llorarás song
+- **FR-1 Setup (§4):** role selection, full 8-card starter decks, empty starting floor,
+  Lead chooses the opening Position before its matching Move; opening hand of 4 with
+  a one-time mulligan when no Position and Move in hand match, Connection 4 / Style 0 / $0, ordered 16-card Llorarás song
   deck, Beginner supply + Intermediate market of 3 + face-down Advanced deck.
 - **FR-2 Turn loop (§5):** alternating turns Lead-first; per turn: +$1 and song-card
   reveal → dance → optional lesson → discard freely and draw to 4 with reshuffle on

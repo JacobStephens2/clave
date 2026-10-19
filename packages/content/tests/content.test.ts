@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   cardsById,
+  canonicalStringify,
   content,
   contentBytes,
   contentHash,
   parseContentBytes,
+  sha256Hex,
+  verifyContentHash,
   type MoveCard,
   type Position,
 } from "../src/index.js";
@@ -20,14 +23,6 @@ describe("v1 content", () => {
     expect(count(content.decks.full.lead)).toBe(16);
     expect(count(content.decks.full.follow)).toBe(16);
     expect(content.song.cards).toHaveLength(16);
-    expect(content.rules.startingPosition).toBe("Open");
-    expect(
-      content.decks.starter.some(
-        (entry) =>
-          cardsById[entry.cardId]?.type === "position" &&
-          cardsById[entry.cardId].position === content.rules.startingPosition,
-      ),
-    ).toBe(true);
   });
 
   it("references defined cards and preserves the exact bytes/hash pair", () => {
@@ -41,6 +36,16 @@ describe("v1 content", () => {
     expect(ids.every((id) => cardsById[id])).toBe(true);
     expect(contentHash).toMatch(/^[a-f0-9]{64}$/);
     expect(parseContentBytes(contentBytes)).toEqual(content);
+  });
+
+  it("resumes legacy embedded content without adding a preset Position to new games", () => {
+    const legacyContent = {
+      ...content,
+      rules: { ...content.rules, startingPosition: "Open" },
+    };
+    const legacyBytes = canonicalStringify(legacyContent);
+    expect(verifyContentHash(legacyBytes, sha256Hex(legacyBytes))).toEqual(legacyContent);
+    expect(content.rules).not.toHaveProperty("startingPosition");
   });
 
   it("keeps every represented position playable in each fixed deck", () => {

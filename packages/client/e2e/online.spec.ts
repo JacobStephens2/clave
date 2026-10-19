@@ -46,6 +46,11 @@ test("keeps two authoritative screens synchronized through reload and song end",
   await lead.getByRole("button", { name: "Keep this hand" }).click();
   await follow.getByRole("button", { name: "Keep this hand" }).click();
 
+  for (const screen of [lead, follow]) {
+    await expect(screen.locator('[data-slot="position"] .empty-slot')).toBeVisible();
+    await expect(screen.locator('[data-slot="move"] .empty-slot')).toBeVisible();
+  }
+
   for (let count = 1; count <= 16; count += 1) {
     const active = count % 2 === 1 ? lead : follow;
     const partner = count % 2 === 1 ? follow : lead;

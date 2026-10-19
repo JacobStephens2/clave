@@ -5,7 +5,6 @@
     "maximumConnection": 10,
     "initialStyle": 0,
     "startingMoney": 0,
-    "startingPosition": "Open",
     "incomePerTurn": 1,
     "handSize": 4,
     "danceLimits": { "positions": 2, "moves": 1, "flourishes": 1 },
