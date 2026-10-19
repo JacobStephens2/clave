@@ -129,6 +129,8 @@ test("starts and pauses ambient Llorarás playback across screens", async ({ pag
     "data-spotify-uri",
     "spotify:track:5SsgnRkcr4ogLB9rcW61tf",
   );
+  await page.getByRole("button", { name: "Hide music player" }).click();
+  await expect(drawer).toBeHidden();
 
   await page.getByRole("button", { name: /Pass & play/ }).click();
   await acceptPass(page, "Lead");
