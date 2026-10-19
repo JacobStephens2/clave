@@ -75,3 +75,11 @@ still proceeds through the optional lesson and mandatory cleanup; only the conte
 of cleanup have changed. The web client commits cleanup when the player finishes the
 lesson step and animates the entire remaining hand into the discard pile before the
 privacy handoff appears.
+
+## 2026-10-19 — A Flourish in the Beginner supply (issue #19)
+
+Hand Twist (`flo_003`) moves from Intermediate to Beginner so both players can buy a
+Flourish from the always-available $1 supply. Its role-neutral name and Open/Half-Open
+tags make it a fit for the Beginner supply; its 1 Style and play requirements stay
+the same. Its two physical copies move to the Beginner supply, leaving 20 cards in
+the Intermediate lessons deck. Starter and full decks keep their existing contents.

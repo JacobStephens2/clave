@@ -204,7 +204,7 @@
     {
       "id": "flo_003",
       "name": "Hand Twist",
-      "tier": "I",
+      "tier": "B",
       "type": "flourish",
       "positions": ["Open", "Half-Open"],
       "style": 1,
@@ -248,6 +248,7 @@
       "mov_005",
       "mov_013",
       "mov_006",
+      "flo_003",
       "rec_001"
     ],
     "intermediate": [
@@ -259,7 +260,6 @@
       { "cardId": "mov_010", "count": 2 },
       { "cardId": "flo_001", "count": 2 },
       { "cardId": "flo_002", "count": 2 },
-      { "cardId": "flo_003", "count": 2 },
       { "cardId": "rec_002", "count": 2 }
     ],
     "advanced": [
