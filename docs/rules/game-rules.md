@@ -189,6 +189,9 @@ home; it shows up on the floor when your deck comes back around.
 | Intermediate (private lesson) | $2   | Any face-up card in the Intermediate market |
 | Advanced (private lesson)     | $3   | Any face-up Advanced card _(montuno only)_  |
 
+**Hand Twist** is a Beginner Flourish, always available for $1. It adds 1 Style to
+your Move danced from Open or Half-Open. It is not in the Intermediate lessons deck.
+
 Refill the Intermediate market to 3 (and the Advanced display to 2) whenever a card is
 bought.
 

@@ -18,7 +18,7 @@ const count = (entries: readonly { count: number }[]) =>
 describe("v1 content", () => {
   it("matches the card-list counts", () => {
     expect(count(content.decks.starter)).toBe(8);
-    expect(count(content.decks.intermediate)).toBe(22);
+    expect(count(content.decks.intermediate)).toBe(20);
     expect(count(content.decks.advanced)).toBe(6);
     expect(count(content.decks.full.lead)).toBe(16);
     expect(count(content.decks.full.follow)).toBe(16);

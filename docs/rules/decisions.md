@@ -91,3 +91,11 @@ This supersedes the preset Open Position ruling above. Opening-hand mulligans ch
 for a matching Position and Move in hand for either role. Basic and Stumble remain
 available, and leave the floor empty until someone opens. Later empty floors and
 established-floor Move → Position → Flourish play are unchanged.
+
+## 2026-10-19 — A Flourish in the Beginner supply (issue #19)
+
+Hand Twist (`flo_003`) moves from Intermediate to Beginner so both players can buy a
+Flourish from the always-available $1 supply. Its role-neutral name and Open/Half-Open
+tags make it a fit for the Beginner supply; its 1 Style and play requirements stay
+the same. Its two physical copies move to the Beginner supply, leaving 20 cards in
+the Intermediate lessons deck. Starter and full decks keep their existing contents.
