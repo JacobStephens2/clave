@@ -299,7 +299,7 @@ Alternatives considered: LAN-only hosting on the Mac (works for home play but ad
   meaningful. No DOM, no I/O, no wall-clock.
 - **`packages/content`** — `cards.json`, deck/supply definitions,
   `song-lloraras.json`, zod schemas, and a consistency check that asserts counts
-  against the card-list doc (22-card Intermediate deck, 6-card Advanced deck,
+  against the card-list doc (20-card Intermediate deck, 6-card Advanced deck,
   8-card starters, 16 song cards).
 - **`packages/client`** — React PWA. Screens: Home (new hot-seat game / create room /
   join room / resume, role pick) and Match (table: dance state + current song card
