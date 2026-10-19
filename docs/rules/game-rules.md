@@ -69,13 +69,11 @@ lessons to learn new cards.
    - 1 × Follow Right Turn, 1 × Follow Left Turn
    - 1 × Lead Right Turn, 1 × Lead Left Turn
    - 1 × Cross Body Lead — Closed
-3. The Lead places one **Open Position** card from their starter deck on the floor.
-   The couple begins the song in Open; this is the current position for the first
-   8-count. The card remains Lead-owned and goes to the Lead's discard pile when it
-   is replaced or the dance state is cleared.
-4. Each player shuffles their remaining deck and draws a hand of **4 cards**.
-   _Mulligan:_ if your opening hand contains no Move card that can be danced from
-   Open, you may reveal it, shuffle it back, and draw a new hand once.
+3. The floor starts **empty**. The Lead chooses the opening Position from their hand
+   on their first card play, followed by a matching Move.
+4. Each player shuffles their full starter deck and draws a hand of **4 cards**.
+   _Mulligan:_ if your opening hand contains no matching Position and Move, you may
+   reveal it, shuffle it back, and draw a new hand once.
 5. Set the Connection marker to **4** and Style to **0**. Each player starts with $0.
 6. Build the **song deck**: the 8 cuerpo cards in order on top of the 8 montuno cards
    in order, face down.
@@ -109,10 +107,10 @@ go to section 10.
 On your turn you may play **at most two Position cards, one Move card, and one
 Flourish card**, following these rules:
 
-**The first 8-count.** The song begins with the Lead's Open Position already on the
-floor, so the Lead starts by playing a Move from Open. As on any established floor,
-they may then transition to a new Position and add a Flourish. The starting Open card
-does not count as a Position played during that turn.
+**The first 8-count.** The floor begins empty. The Lead's first card play chooses a
+Position to connect in, followed by a matching Move, using the opening rule below.
+This opening Position counts toward the turn's Position limit. The Lead may then
+transition to another Position and add a Flourish.
 
 **Opening a phrase.** If the dance state is empty (start of a phrase, or after a
 stumble), your play must begin with **a Position card and a matching Move card

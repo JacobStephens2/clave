@@ -49,6 +49,8 @@ into one Open and one Closed copy.
 
 ## 2026-07-20 — The song begins in Open Position
 
+_Superseded by the 2026-10-19 opening-Position ruling below._
+
 Before either player shuffles, the Lead places one Open Position from their starter
 deck on the floor. It remains a Lead-owned card and is discarded normally when a
 transition, stumble, or phrase ending clears it. The first turn therefore follows the
@@ -75,3 +77,17 @@ still proceeds through the optional lesson and mandatory cleanup; only the conte
 of cleanup have changed. The web client commits cleanup when the player finishes the
 lesson step and animates the entire remaining hand into the discard pile before the
 privacy handoff appears.
+
+## 2026-10-19 — The Lead chooses the opening Position (issue #18)
+
+The song starts on an empty floor, with both full eight-card starter decks shuffled
+and four cards dealt to each player. No Open Position is placed automatically. The
+Lead's first card play chooses how to connect: a Position from their hand followed
+by a matching Move. The existing atomic Position + Move opening rule applies, with
+the web client staging the Position before committing the pair. The opening Position
+counts toward the turn's two-Position limit; a transition and Flourish may follow.
+
+This supersedes the preset Open Position ruling above. Opening-hand mulligans check
+for a matching Position and Move in hand for either role. Basic and Stumble remain
+available, and leave the floor empty until someone opens. Later empty floors and
+established-floor Move → Position → Flourish play are unchanged.

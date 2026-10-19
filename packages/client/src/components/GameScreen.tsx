@@ -304,7 +304,7 @@ function SongMoment({ view }: { view: PlayerSnapshot }) {
         <div>
           <small>Music</small>
           <h3>Opening hands</h3>
-          <p>You begin in Open. Check for a matching Move.</p>
+          <p>Look for a matching Position and Move.</p>
         </div>
         <div className="song-audio-controls" role="group" aria-label="Audio controls">
           <MusicButton compact />
@@ -711,7 +711,10 @@ function TurnActions({
         <div className="setup-heading">
           <small>Opening hand</small>
           <strong>Ready to dance?</strong>
-          <p>You begin in Open Position. Look for a Move you can dance from Open.</p>
+          <p>
+            Look for a Position and a Move you can dance from it. The Lead chooses the first
+            Position.
+          </p>
         </div>
         <div className="button-row">
           {mulligan && (

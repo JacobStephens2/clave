@@ -44,7 +44,7 @@ describe("visibility and signaling · rulebook §9", () => {
         role: "lead",
         outcome: "basic",
         move: null,
-        position: expect.objectContaining({ id: "pos_001", name: "Open Position" }),
+        position: null,
         flourish: null,
       }),
     ]);
