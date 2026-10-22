@@ -151,9 +151,9 @@ export class RoomDatabase {
         .prepare(
           `UPDATE rooms
              SET envelope_json = ?, last_active_at = ?, started = ?, terminal_event = ?
-           WHERE code = ?`,
+           WHERE code = ? AND (terminal_event IS NULL OR terminal_event = ?)`,
         )
-        .run(JSON.stringify(envelope), now, Number(started), terminalEvent, code);
+        .run(JSON.stringify(envelope), now, Number(started), terminalEvent, code, terminalEvent);
       if (update.changes !== 1) throw new Error("Room disappeared during commit.");
       const insert = this.db.prepare(
         "INSERT OR IGNORE INTO game_events (room_code, type, mode, occurred_at, test) VALUES (?, ?, 'online', ?, ?)",

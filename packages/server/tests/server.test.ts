@@ -111,6 +111,78 @@ describe("authoritative room persistence", () => {
     database.close();
   });
 
+  it("does not let a swept never-started room keep playing off the floor cap", () => {
+    const database = new RoomDatabase(":memory:");
+    const rooms = new RoomManager(database);
+    const held = rooms.create("lead", true);
+    const record = database.getRoom(held.code)!;
+    expect(record.started).toBe(false);
+    database.commitEnvelope(
+      record.code,
+      record.envelope,
+      "2000-01-01T00:00:00.000Z",
+      [],
+      record.started,
+      record.terminalEvent,
+      record.test,
+    );
+
+    // Same cutoff shape as the hourly sweep: abandon only rows idle before `before`.
+    database.markAbandoned("2001-01-01T00:00:00.000Z", "2001-01-02T00:00:00.000Z");
+    while (database.countActiveRooms() < 50) rooms.create("lead", true);
+    expect(database.countActiveRooms()).toBe(50);
+
+    let joined = false;
+    try {
+      rooms.join(held.code, "follow");
+      joined = true;
+    } catch (error) {
+      expect(error instanceof Error ? error.message : "").toMatch(/ended/);
+    }
+    if ((database.getRoom(held.code)?.terminalEvent ?? null) === "abandoned")
+      expect(joined).toBe(false);
+
+    let played = false;
+    try {
+      rooms.action(held.code, "lead", held.seatToken, 0, {
+        type: "CONFIRM_HAND",
+        role: "lead",
+      });
+      played = true;
+    } catch (error) {
+      expect(error instanceof Error ? error.message : "").toMatch(/ended/);
+    }
+
+    expect(database.countActiveRooms()).toBeLessThanOrEqual(50);
+    const terminal = database.getRoom(held.code)?.terminalEvent ?? null;
+    if (terminal === "abandoned") {
+      expect(played).toBe(false);
+      expect(database.countActiveRooms()).toBe(50);
+    } else {
+      expect(terminal).toBeNull();
+      expect(played).toBe(true);
+      expect(database.countActiveRooms()).toBe(50);
+    }
+
+    const restarted = new RoomManager(database);
+    let playedAfterRestart = false;
+    try {
+      restarted.action(held.code, "lead", held.seatToken, 0, {
+        type: "CONFIRM_HAND",
+        role: "lead",
+      });
+      playedAfterRestart = true;
+    } catch (error) {
+      expect(error instanceof Error ? error.message : "").toMatch(/ended/);
+    }
+    const finalTerminal = database.getRoom(held.code)?.terminalEvent ?? null;
+    expect(database.countActiveRooms()).toBeLessThanOrEqual(50);
+    if (finalTerminal === "abandoned") expect(playedAfterRestart).toBe(false);
+    else expect(playedAfterRestart).toBe(true);
+
+    database.close();
+  });
+
   it("resumes a version-mismatched active room from its stored snapshot", () => {
     const database = new RoomDatabase(":memory:");
     const rooms = new RoomManager(database);

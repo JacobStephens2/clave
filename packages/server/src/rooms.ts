@@ -64,6 +64,7 @@ export class RoomManager {
   join(codeInput: string, role: Role): SeatCredentials {
     const code = codeInput.trim().toUpperCase();
     const record = this.get(code);
+    this.refreshTerminal(record);
     if (record.terminalEvent) throw new Error("That dance has already ended.");
     const occupied = role === "lead" ? record.leadToken : record.followToken;
     if (occupied)
@@ -105,6 +106,9 @@ export class RoomManager {
     action: GameAction,
   ): { snapshot: PlayerSnapshot; duplicate: boolean } {
     const room = this.authenticate(code, role, seatToken);
+    this.refreshTerminal(room);
+    const abandoned = room.terminalEvent === "abandoned";
+    if (abandoned) throw new Error("That dance has already ended.");
     if (expectedSequence < room.envelope.state.sequence) {
       return { snapshot: this.snapshot(code, role, seatToken), duplicate: true };
     }
@@ -154,6 +158,12 @@ export class RoomManager {
       ...(room.leadToken ? { lead: snapshotFor(room.envelope.state, "lead", content) } : {}),
       ...(room.followToken ? { follow: snapshotFor(room.envelope.state, "follow", content) } : {}),
     };
+  }
+
+  /** Copy a terminal event from the row onto the cached room, if the sweep wrote one. */
+  private refreshTerminal(room: RoomRecord): void {
+    const stored = this.database.getRoom(room.code);
+    if (stored?.terminalEvent) room.terminalEvent = stored.terminalEvent;
   }
 
   private get(code: string): RoomRecord {
