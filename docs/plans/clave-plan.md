@@ -585,8 +585,8 @@ to SQLite alongside the rooms:
   commits (SM-2's denominator).
 - Terminal events, at most one per game: `completed` (song finished),
   `lost` (Connection 0), `unresumable` (version-upgrade casualty, from §4),
-  `abandoned` (assigned by a sweep when a started game has had no action for
-  72 hours).
+  `abandoned` (assigned by a sweep when a room has had no action for 72 hours,
+  whether or not the game has started).
 - Hot-seat games POST a fire-and-forget completion beacon carrying the same shape,
   flagged `mode: hotseat`, so SM-1 counts couch games too (best-effort; a beacon
   lost to a network blip undercounts SM-1 slightly, accepted).
