@@ -5,7 +5,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { z } from "zod";
 import { serveClientAssets } from "./client-assets.js";
-import type { RoomDatabase } from "./database.js";
+import { HotseatStorageFullError, type RoomDatabase } from "./database.js";
 import { roomCreateCaller, type RoomCreateLimiter } from "./room-create-limit.js";
 import type { RoomManager } from "./rooms.js";
 
@@ -103,11 +103,23 @@ export function createApp(options: {
       .object({ gameId: z.string().min(1).max(120), type: z.enum(["completed", "lost"]) })
       .safeParse(await context.req.json().catch(() => ({})));
     if (!body.success) return context.json({ error: "Invalid completion event." }, 400);
-    database.recordHotseatEvent(
-      `hotseat:${body.data.gameId}`,
-      body.data.type,
-      new Date().toISOString(),
+    const caller = roomCreateCaller(
+      getConnInfo(context).remote.address,
+      context.req.header("x-forwarded-for"),
     );
+    if (!limiter.allow(caller, Date.now()))
+      return context.json({ error: "Too many requests. Try again in a minute." }, 429);
+    try {
+      database.recordHotseatEvent(
+        `hotseat:${body.data.gameId}`,
+        body.data.type,
+        new Date().toISOString(),
+      );
+    } catch (error) {
+      if (error instanceof HotseatStorageFullError)
+        return context.json({ error: error.message }, 400);
+      throw error;
+    }
     return context.body(null, 204);
   });
 
