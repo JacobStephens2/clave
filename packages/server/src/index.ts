@@ -1,6 +1,3 @@
-import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
-import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
 import { GameActionSchema, ENGINE_VERSION, RoleSchema, type Role } from "@clave/engine";
@@ -8,6 +5,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { WebSocket, WebSocketServer } from "ws";
 import { z } from "zod";
+import { serveClientAssets } from "./client-assets.js";
 import { RoomDatabase } from "./database.js";
 import { RoomManager } from "./rooms.js";
 
@@ -109,29 +107,7 @@ app.post("/api/events/hotseat", async (context) => {
   return context.body(null, 204);
 });
 
-const mimeTypes: Record<string, string> = {
-  ".css": "text/css; charset=utf-8",
-  ".html": "text/html; charset=utf-8",
-  ".js": "text/javascript; charset=utf-8",
-  ".json": "application/json",
-  ".png": "image/png",
-  ".svg": "image/svg+xml",
-  ".webmanifest": "application/manifest+json",
-};
-
-app.get("*", async (context) => {
-  if (!existsSync(clientDist)) {
-    return context.json({ service: "clave", message: "Client assets have not been built yet." });
-  }
-  const requested = context.req.path === "/" ? "index.html" : context.req.path.slice(1);
-  const safePath = requested.includes("..") ? "index.html" : requested;
-  const candidate = join(clientDist, safePath);
-  const path = existsSync(candidate) ? candidate : join(clientDist, "index.html");
-  const body = await readFile(path);
-  return context.body(body, 200, {
-    "Content-Type": mimeTypes[extname(path)] ?? "application/octet-stream",
-  });
-});
+app.get("*", serveClientAssets(clientDist));
 
 const server = serve({ fetch: app.fetch, port, hostname });
 const sockets = new WebSocketServer({ noServer: true });
