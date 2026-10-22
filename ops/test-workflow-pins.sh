@@ -19,8 +19,7 @@ check_action() {
     found=1
     number=${line%%:*}
     body=${line#*:}
-    if [[ ! "$body" =~ ^[[:space:]]*-[[:space:]]+uses:[[:space:]]+actions/${name}@[0-9a-fA-F]{40}[[:space:]]#[[:space:]]v[0-9]+\.[0-9]+\.[0-9]+[[:space:]]*$ ]] &&
-      [[ ! "$body" =~ ^[[:space:]]*uses:[[:space:]]+actions/${name}@[0-9a-fA-F]{40}[[:space:]]#[[:space:]]v[0-9]+\.[0-9]+\.[0-9]+[[:space:]]*$ ]]; then
+    if [[ ! "$body" =~ ^[[:space:]]*(-[[:space:]]+)?uses:[[:space:]]+actions/${name}@[0-9a-fA-F]{40}[[:space:]]#[[:space:]]v[0-9]+\.[0-9]+\.[0-9]+[[:space:]]*$ ]]; then
       echo "actions/${name} on line ${number} must be a full commit SHA with a version comment: ${body}" >&2
       fail=1
     fi
