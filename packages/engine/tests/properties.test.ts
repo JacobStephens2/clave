@@ -100,6 +100,7 @@ function walk(seed: number, visit: (state: GameState) => void): void {
 }
 
 describe("engine properties", () => {
+  // Opening Position and Move pairs push this past vitest's 5s default.
   it("every reported legal action applies and no invariant is breached", () => {
     fc.assert(
       fc.property(fc.integer({ min: 0, max: 0xffff_ffff }), (seed) => {
@@ -123,7 +124,7 @@ describe("engine properties", () => {
       }),
       { numRuns: 30 },
     );
-  });
+  }, 30_000);
 
   it("every action the reducer accepts is a listed legal action, except a no-op undo", () => {
     fc.assert(

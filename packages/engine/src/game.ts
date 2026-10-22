@@ -78,34 +78,17 @@ function takeDisplay(deck: string[], amount: number): string[] {
 
 export function createGame(options: CreateGameOptions): GameState {
   const contentSet = options.content ?? defaultContent;
-  const definitions = cardsFor(contentSet);
   const resolvedHash =
     options.contentHash ??
     (contentSet === defaultContent ? defaultContentHash : hashCanonical(contentSet));
   let rngState = options.seed >>> 0;
   let nextInstance = 1;
-  let startingPosition: CardInstance | null = null;
 
   const makeInstances = (role: Role, ids: readonly string[]): CardInstance[] =>
     ids.map((cardId) => ({ instanceId: `${role}-${nextInstance++}`, cardId, owner: role }));
 
   const makePlayer = (role: Role): PlayerState => {
     const instances = makeInstances(role, expanded(contentSet.decks.starter));
-    if (role === "lead") {
-      const positionIndex = instances.findIndex((instance) => {
-        const definition = definitions[instance.cardId];
-        return (
-          definition?.type === "position" &&
-          definition.position === contentSet.rules.startingPosition
-        );
-      });
-      fail(
-        positionIndex >= 0,
-        "STARTING_POSITION_MISSING",
-        `The Lead starter deck needs a ${contentSet.rules.startingPosition} Position card.`,
-      );
-      startingPosition = instances.splice(positionIndex, 1)[0]!;
-    }
     const shuffled = shuffle(instances, rngState);
     rngState = shuffled.state;
     return {
@@ -121,7 +104,6 @@ export function createGame(options: CreateGameOptions): GameState {
 
   const lead = makePlayer("lead");
   const follow = makePlayer("follow");
-  fail(startingPosition, "STARTING_POSITION_MISSING", "The starting Position was not placed.");
   const intermediate = shuffle(expanded(contentSet.decks.intermediate), rngState);
   rngState = intermediate.state;
   const advanced = shuffle(expanded(contentSet.decks.advanced), rngState);
@@ -155,7 +137,7 @@ export function createGame(options: CreateGameOptions): GameState {
       style: contentSet.rules.initialStyle,
     },
     market,
-    table: { position: startingPosition, move: null, flourish: null },
+    table: { position: null, move: null, flourish: null },
     phrase: {
       number: 1,
       stumbled: false,
@@ -174,7 +156,8 @@ export function createGame(options: CreateGameOptions): GameState {
         sequence: 0,
         role: null,
         kind: "system",
-        message: `${contentSet.rules.startingPosition} Position is on the floor. Lead checks their opening hand first.`,
+        message:
+          "Lead checks their opening hand first. Choose a Position and matching Move to open the dance.",
       },
     ],
     checkpoint: null,
@@ -303,16 +286,8 @@ function startTurn(state: GameState, role: Role, contentSet: ContentSet): void {
   state.checkpoint = snapshotCheckpoint(state);
 }
 
-function canMulligan(
-  player: PlayerState,
-  contentSet: ContentSet,
-  currentPosition: CardInstance | null,
-): boolean {
+function canMulligan(player: PlayerState, contentSet: ContentSet): boolean {
   const moves = player.hand.filter((entry) => card(contentSet, entry.cardId).type === "move");
-  if (currentPosition) {
-    const position = positionFor(contentSet, currentPosition);
-    return !moves.some((move) => moveMatches(moveFor(contentSet, move), position));
-  }
   const positions = player.hand.filter(
     (entry) => card(contentSet, entry.cardId).type === "position",
   );
@@ -614,9 +589,9 @@ function checkMulligan(
   const player = state.players[role];
   fail(!player.mulliganUsed, "MULLIGAN_USED", "The one-time mulligan has already been used.");
   fail(
-    canMulligan(player, contentSet, state.table.position),
+    canMulligan(player, contentSet),
     "MULLIGAN_NOT_ALLOWED",
-    "This hand has a Move for the current Position.",
+    "This hand has a matching Position and Move.",
   );
   return (state) => {
     const player = state.players[role];

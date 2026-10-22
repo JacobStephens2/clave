@@ -127,17 +127,17 @@ function RulesDialog({ onClose }: { onClose: () => void }) {
           <section id="rules-setup">
             <span className="rules-section-number">02</span>
             <div>
-              <h3>Begin in Open Position</h3>
+              <h3>Choose your opening Position</h3>
               <ol>
                 <li>Choose Lead and Follow. The Lead takes the first turn.</li>
                 <li>Each player begins with a {starterSize}-card starter deck.</li>
                 <li>
-                  The Lead places one {rules.startingPosition} Position on the floor, then each
-                  player shuffles their remaining deck and draws {rules.handSize} cards.
+                  Each player shuffles their full starter deck and draws {rules.handSize} cards. The
+                  floor starts empty; the Lead chooses the first Position from their hand.
                 </li>
                 <li>
-                  If you have no Move that can be danced from {rules.startingPosition}, you may
-                  mulligan your entire hand once.
+                  If your hand has no matching Position and Move, you may mulligan your entire hand
+                  once.
                 </li>
               </ol>
               <p>
@@ -173,9 +173,9 @@ function RulesDialog({ onClose }: { onClose: () => void }) {
               <aside>
                 <strong>If the floor is empty</strong>
                 <p>
-                  After a stumble or at the start of phrase two, open with a Position and a matching
-                  Move together. In the app, stage the Position first, then drag in its matching
-                  Move. The preset Open Position applies only at the beginning of the game.
+                  At the start of the song, after a stumble, or at the start of phrase two, open
+                  with a Position and a matching Move together. In the app, stage the Position
+                  first, then play its matching Move by dragging or using its card action.
                 </p>
               </aside>
               <p>

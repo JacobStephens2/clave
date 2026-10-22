@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { CardIdSchema, PositionSchema, SongIdSchema } from "@clave/content";
 
-export const ENGINE_VERSION = 4;
+export const ENGINE_VERSION = 5;
 export const RoleSchema = z.enum(["lead", "follow"]);
 export type Role = z.infer<typeof RoleSchema>;
 

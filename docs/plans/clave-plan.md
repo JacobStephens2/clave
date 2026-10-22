@@ -58,8 +58,9 @@ journal note, kept because it is the actual point of the project.
 
 Rule-section references are to `docs/rules/game-rules.md`.
 
-- **FR-1 Setup (§4):** role selection, 8-card starter decks, opening hand of 4 with
-  the one-time mulligan, Connection 4 / Style 0 / $0, ordered 16-card Llorarás song
+- **FR-1 Setup (§4):** role selection, full 8-card starter decks, empty starting floor,
+  Lead chooses the opening Position before its matching Move; opening hand of 4 with
+  a one-time mulligan when no Position and Move in hand match, Connection 4 / Style 0 / $0, ordered 16-card Llorarás song
   deck, Beginner supply + Intermediate market of 3 + face-down Advanced deck.
 - **FR-2 Turn loop (§5):** alternating turns Lead-first; per turn: +$1 and song-card
   reveal → dance → optional lesson → discard freely and draw to 4 with reshuffle on
@@ -299,7 +300,7 @@ Alternatives considered: LAN-only hosting on the Mac (works for home play but ad
   meaningful. No DOM, no I/O, no wall-clock.
 - **`packages/content`** — `cards.json`, deck/supply definitions,
   `song-lloraras.json`, zod schemas, and a consistency check that asserts counts
-  against the card-list doc (22-card Intermediate deck, 6-card Advanced deck,
+  against the card-list doc (20-card Intermediate deck, 6-card Advanced deck,
   8-card starters, 16 song cards).
 - **`packages/client`** — React PWA. Screens: Home (new hot-seat game / create room /
   join room / resume, role pick) and Match (table: dance state + current song card
@@ -584,8 +585,8 @@ to SQLite alongside the rooms:
   commits (SM-2's denominator).
 - Terminal events, at most one per game: `completed` (song finished),
   `lost` (Connection 0), `unresumable` (version-upgrade casualty, from §4),
-  `abandoned` (assigned by a sweep when a started game has had no action for
-  72 hours).
+  `abandoned` (assigned by a sweep when a room has had no action for 72 hours,
+  whether or not the game has started).
 - Hot-seat games POST a fire-and-forget completion beacon carrying the same shape,
   flagged `mode: hotseat`, so SM-1 counts couch games too (best-effort; a beacon
   lost to a network blip undercounts SM-1 slightly, accepted).

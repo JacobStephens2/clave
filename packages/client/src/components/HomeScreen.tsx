@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Role } from "@clave/engine";
 import { useAppStore } from "../store.js";
 import { MusicButton } from "./MusicPlayer.js";
@@ -14,23 +14,33 @@ function RoleChoice({
   onChange: (role: Role) => void;
   legend: string;
 }) {
+  const choose = (role: Role, target: HTMLElement) => {
+    onChange(role);
+    target.parentElement?.querySelector<HTMLElement>(`[data-role="${role}"]`)?.focus();
+  };
   return (
-    <fieldset className="role-choice">
+    <fieldset className="role-choice" role="radiogroup">
       <legend>{legend}</legend>
-      <button
-        type="button"
-        className={value === "lead" ? "selected" : ""}
-        onClick={() => onChange("lead")}
-      >
-        Lead
-      </button>
-      <button
-        type="button"
-        className={value === "follow" ? "selected" : ""}
-        onClick={() => onChange("follow")}
-      >
-        Follow
-      </button>
+      {(["lead", "follow"] as const).map((role) => (
+        <button
+          key={role}
+          type="button"
+          role="radio"
+          aria-checked={value === role}
+          tabIndex={value === role ? 0 : -1}
+          data-role={role}
+          className={value === role ? "selected" : ""}
+          onClick={() => onChange(role)}
+          onKeyDown={(event) => {
+            if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
+              event.preventDefault();
+              choose(role === "lead" ? "follow" : "lead", event.currentTarget);
+            }
+          }}
+        >
+          {role === "lead" ? "Lead" : "Follow"}
+        </button>
+      ))}
     </fieldset>
   );
 }
@@ -40,6 +50,7 @@ export function HomeScreen() {
   const [joinRole, setJoinRole] = useState<Role>("follow");
   const [joinCode, setJoinCode] = useState("");
   const [showNetwork, setShowNetwork] = useState(false);
+  const joinButton = useRef<HTMLButtonElement>(null);
   const {
     hasHotseatResume,
     hasOnlineResume,
@@ -49,7 +60,24 @@ export function HomeScreen() {
     createOnline,
     joinOnline,
     resumeOnline,
+    forgetOnline,
   } = useAppStore();
+
+  useEffect(() => {
+    // An invite link (#join=CODE) opens the join form with the code and the open seat chosen.
+    const invited = /^#join=([A-Za-z0-9_-]+)$/.exec(location.hash)?.[1]?.toUpperCase();
+    if (!invited) return;
+    history.replaceState(null, "", location.pathname + location.search);
+    setJoinCode(invited);
+    setShowNetwork(true);
+    void fetch(`/api/rooms/${encodeURIComponent(invited)}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body: { availableRole?: Role | null } | null) => {
+        if (body?.availableRole) setJoinRole(body.availableRole);
+        joinButton.current?.focus();
+      })
+      .catch(() => undefined);
+  }, []);
 
   return (
     <main className="home">
@@ -117,6 +145,9 @@ export function HomeScreen() {
             <button type="button" className="button outline" onClick={resumeOnline}>
               Reconnect
             </button>
+            <button type="button" className="text-button" onClick={forgetOnline}>
+              Forget
+            </button>
           </div>
         )}
 
@@ -171,14 +202,16 @@ export function HomeScreen() {
                 <span>Room code</span>
                 <input
                   value={joinCode}
-                  onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
+                  onChange={(event) =>
+                    setJoinCode(event.target.value.replace(/\s+/g, "").toUpperCase())
+                  }
                   placeholder="PASTE CODE"
                   autoCapitalize="characters"
                   required
                 />
               </label>
               <RoleChoice value={joinRole} onChange={setJoinRole} legend="I’ll dance as" />
-              <button type="submit" className="button cream full">
+              <button ref={joinButton} type="submit" className="button cream full">
                 Join room
               </button>
             </form>

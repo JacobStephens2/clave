@@ -177,18 +177,10 @@ button {
   flex-wrap: wrap;
   gap: 9px;
 }
-.music-button:hover:not(:disabled) {
+.music-button:hover {
   transform: translateY(-1px);
   border-color: var(--gold);
   background: rgba(217, 164, 65, 0.18);
-}
-.music-button:disabled {
-  cursor: wait;
-  opacity: 0.55;
-}
-.music-button.playing {
-  border-color: var(--coral);
-  background: rgba(217, 93, 82, 0.15);
 }
 .music-button-icon {
   width: 28px;
@@ -201,13 +193,6 @@ button {
   font-family: Georgia, serif;
   font-size: 16px;
   line-height: 1;
-}
-.music-button.playing .music-button-icon {
-  background: var(--coral);
-  font-family: inherit;
-  font-size: 12px;
-  letter-spacing: -0.18em;
-  padding-right: 2px;
 }
 .sound-effects-button {
   min-height: 46px;
@@ -657,16 +642,6 @@ button {
   font-family: Georgia, serif;
   font-size: 18px;
 }
-.spotify-embed {
-  width: 100%;
-  min-height: 152px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #121212;
-}
-.spotify-embed iframe {
-  display: block;
-}
 .rhythm-mark {
   aspect-ratio: 1;
   border: 1px solid var(--line);
@@ -1051,7 +1026,8 @@ button {
 .room-code.failed small {
   color: #f49a8f;
 }
-.room-copy-announcement {
+.room-copy-announcement,
+.visually-hidden {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -1078,8 +1054,93 @@ button {
   background: #58b889;
   margin-right: 7px;
 }
-.connection-status.reconnecting {
+.connection-status.reconnecting,
+.connection-status.connecting {
   color: #e3ac69;
+}
+.connection-status.partner-absent {
+  color: var(--gold);
+}
+.connection-status.partner-away,
+.connection-status.offline {
+  color: #f08e86;
+}
+.connection-status.partner-absent::before,
+.connection-status.partner-away::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 7px;
+  background: currentColor;
+}
+.connection-status.partner-absent::before {
+  animation: presence-wait 1.6s ease-in-out infinite;
+}
+@keyframes presence-wait {
+  50% {
+    opacity: 0.25;
+  }
+}
+.connection-status .status-short {
+  display: none;
+}
+.reconnect-banner {
+  position: fixed;
+  z-index: 95;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  margin: 0;
+  padding: 9px 16px;
+  border: 2px solid var(--ink);
+  background: #e3ac69;
+  color: var(--ink);
+  box-shadow: 4px 4px 0 rgba(4, 13, 18, 0.72);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+.turn-actions.with-invite {
+  flex-wrap: wrap;
+}
+.invite-partner {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 18px;
+  padding: 10px 12px;
+  border: 1px dashed rgba(226, 167, 53, 0.6);
+  background: rgba(226, 167, 53, 0.08);
+  text-align: left;
+}
+.invite-partner > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.invite-partner small {
+  color: var(--gold);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.invite-partner .invite-code {
+  color: var(--cream);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 17px;
+  letter-spacing: 0.08em;
+  overflow-wrap: anywhere;
+}
+.invite-partner span {
+  color: var(--muted);
+  font-size: 11px;
 }
 .hud {
   min-height: 74px;
@@ -1091,10 +1152,85 @@ button {
   border-bottom: 1px solid var(--line);
 }
 .hud-stat {
+  position: relative;
   display: grid;
   grid-template-columns: auto auto;
   align-items: baseline;
   column-gap: 4px;
+}
+/* A score change floats beside its stat, then fades; the status line below says why. */
+.hud-delta {
+  position: absolute;
+  left: calc(100% + 2px);
+  top: 14px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1.3;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: hud-delta-float 2.8s ease-out both;
+}
+.hud-delta.up {
+  background: #0f6d6e;
+  color: #f4e2ba;
+}
+.hud-delta.down {
+  background: #a73543;
+  color: #f4e2ba;
+}
+@keyframes hud-delta-float {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.8);
+  }
+  12% {
+    opacity: 1;
+    transform: translateY(0) scale(1.08);
+  }
+  20% {
+    transform: none;
+  }
+  78% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+.song-landed {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 6px;
+  background: var(--ink, #081b25);
+  color: var(--gold);
+  font-size: 0.8em;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  animation: song-landed-stamp 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.song-landed::before {
+  content: "✓ ";
+}
+@keyframes hud-delta-fade {
+  0%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes song-landed-stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.6) rotate(-4deg);
+  }
 }
 .hud-stat small {
   grid-column: 1 / -1;
@@ -2373,7 +2509,7 @@ button {
 }
 .card-topline {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 5px;
   color: currentColor;
@@ -2406,9 +2542,17 @@ button {
   letter-spacing: 0.04em;
 }
 .dance-card.compact .card-topline {
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 3px;
   font-size: 7px;
   letter-spacing: 0.05em;
+}
+/* Compact cards sit in labeled floor slots or the lesson market; the requirement needs the room. */
+.dance-card.compact .card-type-top {
+  display: none;
+}
+.dance-card.compact .card-requirement-top {
+  text-align: left;
 }
 .card-art {
   position: relative;
@@ -2938,11 +3082,13 @@ button {
   will-change: transform, opacity, filter;
 }
 .card-inspector[data-motion-state="opening"] .inspector-hint,
-.card-inspector[data-motion-state="opening"] .inspector-close {
+.card-inspector[data-motion-state="opening"] .inspector-note,
+.card-inspector[data-motion-state="opening"] .inspector-actions {
   animation: card-inspector-controls-in 180ms 110ms ease-out both;
 }
 .card-inspector[data-motion-state="closing"] .inspector-hint,
-.card-inspector[data-motion-state="closing"] .inspector-close {
+.card-inspector[data-motion-state="closing"] .inspector-note,
+.card-inspector[data-motion-state="closing"] .inspector-actions {
   animation: card-inspector-controls-out 100ms ease-in both;
 }
 @keyframes card-inspector-backdrop-in {
@@ -3021,6 +3167,39 @@ button {
   font-weight: 800;
   cursor: pointer;
 }
+.inspector-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  max-width: min(86vw, 430px);
+}
+.inspector-actions .button {
+  min-height: 42px;
+}
+.inspector-note {
+  max-width: min(86vw, 430px);
+  margin: 0;
+  padding: 7px 12px;
+  border: 1px solid rgba(227, 95, 79, 0.55);
+  background: rgba(227, 95, 79, 0.12);
+  color: var(--cream);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+}
+.dance-card.detailed .card-requirement-top {
+  overflow: visible;
+  white-space: normal;
+}
+.hand-heading .hand-play-hint {
+  display: none;
+}
+.dance-card.detailed .card-rules {
+  margin-top: 12px;
+  opacity: 0.86;
+}
 .market,
 .game-log {
   border: 1px solid var(--line);
@@ -3069,12 +3248,16 @@ button {
 .market-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 5px;
+  gap: 8px;
   max-height: 270px;
   overflow-y: auto;
 }
 .market-row .dance-card {
   min-height: 142px;
+}
+.market-row .dance-card.playable,
+.market-row .dance-card.inspectable:hover {
+  box-shadow: 0 0 0 2px var(--gold);
 }
 .market-row .dance-card h4 {
   font-size: 10px;
@@ -3176,7 +3359,7 @@ button {
   color: var(--gold);
 }
 .pass-screen > small,
-.terminal-screen > small,
+.terminal-inner > small,
 .signal-peek > small {
   color: var(--gold);
   text-transform: uppercase;
@@ -3205,6 +3388,40 @@ button {
   margin-top: 18px;
   min-width: 210px;
 }
+.pass-recap {
+  position: relative;
+  z-index: 1;
+  width: min(440px, 100%);
+  margin: 26px 0 0;
+  padding: 12px 16px;
+  display: grid;
+  gap: 9px;
+  border: 1px solid rgba(226, 167, 53, 0.4);
+  background: rgba(7, 24, 32, 0.72);
+  text-align: left;
+}
+.pass-recap dt {
+  color: var(--gold);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.pass-recap dd {
+  margin: 2px 0 0;
+  color: var(--cream);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.pass-recap .pass-phrase dd {
+  color: var(--gold);
+  font-weight: 700;
+}
+.pass-recap .pass-next-song strong {
+  font-family: Georgia, serif;
+  font-size: 15px;
+  font-weight: 500;
+}
 .signal-peek {
   background: rgba(22, 12, 20, 0.96);
 }
@@ -3227,7 +3444,81 @@ button {
   font-size: 10px;
 }
 .terminal-screen {
+  /* A flex scroller whose content centers with margin: auto, so a tall result can scroll. */
+  display: flex;
+  overflow-y: auto;
   background: radial-gradient(circle at 50% 25%, #6f2038, #160c14 58%);
+}
+.terminal-inner {
+  position: relative;
+  z-index: 1;
+  width: min(920px, 100%);
+  margin: auto;
+  display: grid;
+  justify-items: center;
+}
+.rating-ladder {
+  width: min(620px, 100%);
+  margin-top: 6px;
+}
+.rating-ladder ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+}
+.rating-ladder li {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  padding: 8px 5px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.2;
+}
+.rating-ladder li strong {
+  color: var(--cream);
+  font-family: Georgia, serif;
+  font-size: 17px;
+  font-weight: 500;
+}
+.rating-ladder li.passed {
+  border-color: rgba(226, 167, 53, 0.4);
+  color: var(--cream);
+}
+.rating-ladder li.reached {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--ink);
+  box-shadow: 4px 4px 0 var(--coral);
+  font-weight: 800;
+}
+.rating-ladder li.reached strong {
+  color: var(--ink);
+}
+.rating-ladder p {
+  margin: 12px auto 0;
+  font-size: 13px;
+}
+.rating-ladder em {
+  color: var(--gold);
+  font-style: normal;
+  font-weight: 700;
+}
+.terminal-choreography {
+  width: 100%;
+  margin-top: 20px;
+  text-align: left;
+}
+.terminal-inner > .button-row {
+  margin-top: 20px;
+}
+.terminal-screen .terminal-hint {
+  margin: 12px 0 0;
+  font-size: 12px;
 }
 .final-score {
   width: 150px;
@@ -3431,6 +3722,15 @@ body {
   color: rgba(8, 27, 37, 0.7);
 }
 
+.resume-strip.network-resume {
+  background: var(--turquoise);
+  border-color: var(--ink);
+}
+
+.resume-strip.network-resume small {
+  color: var(--ink);
+}
+
 .resume-strip .text-button {
   color: rgba(8, 27, 37, 0.78);
 }
@@ -3507,7 +3807,7 @@ body {
 
 .hud-stat > span,
 .hud-stat strong span {
-  color: rgba(8, 27, 37, 0.58);
+  color: rgba(8, 27, 37, 0.74);
 }
 
 .connection-meter i {
@@ -3538,8 +3838,8 @@ body {
 }
 
 .song-count small,
-.song-card > div:last-child > small,
-.song-card.waiting > small,
+.song-card > div:nth-child(2) > small,
+.song-card.waiting > div:first-child > small,
 .song-card p {
   color: rgba(8, 27, 37, 0.72);
 }
@@ -3625,8 +3925,23 @@ body {
     8px 9px 0 var(--coral);
 }
 
+.dance-card.inspectable:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--ink),
+    0 0 0 6px #fff8e7,
+    8px 9px 0 var(--coral);
+}
+
 .card-art {
   border: 2px solid var(--ink);
+}
+
+.step-heading small,
+.setup-heading small,
+.opening-drag-guide > small,
+.learn-partner > small {
+  color: #f08e86;
 }
 
 .step-heading > span {
@@ -3704,13 +4019,13 @@ body {
   }
   .dance-table {
     min-height: 0;
-    overflow: hidden;
+    overflow: clip;
   }
   .hand-zone {
     min-height: 0;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
-    overflow: hidden;
+    overflow: clip;
   }
   .hand-scroll {
     height: 100%;
@@ -3722,6 +4037,13 @@ body {
   .hand-scroll .dance-card {
     height: 100%;
     min-height: 220px;
+  }
+  /* The held hand clips each card's lower edge, so its actions live in the enlarged card. */
+  .hand-scroll .card-actions {
+    visibility: hidden;
+  }
+  .hand-heading .hand-play-hint {
+    display: inline;
   }
   .hand-scroll .dance-card p {
     font-size: 10px;
@@ -3839,13 +4161,14 @@ body {
 }
 
 @media (min-width: 1001px) and (min-height: 700px) {
+  /* Clip rather than hide: a focused, partly clipped hand card must not scroll the table. */
   .game {
     height: 100vh;
-    overflow: hidden;
+    overflow: clip;
   }
   .game-grid {
     height: calc(100vh - 136px);
-    overflow: hidden;
+    overflow: clip;
     align-items: stretch;
   }
   .game-sidebar {
@@ -4009,7 +4332,22 @@ body {
     gap: 8px;
   }
   .connection-status {
-    font-size: 0;
+    font-size: 8px;
+  }
+  .connection-status .status-long {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .connection-status .status-short {
+    display: inline;
+  }
+  .reconnect-banner {
+    top: 64px;
+    font-size: 11px;
   }
   .song-audio-controls {
     right: 10px;
@@ -4037,13 +4375,7 @@ body {
   .music-player-drawer {
     padding: 11px;
   }
-  .connection-status.connected::before {
-    margin: 0;
-  }
-  .connection-status:not(.connected)::after {
-    content: "saved";
-    font-size: 8px;
-  }
+
   .hud {
     gap: 14px;
     justify-content: space-between;
@@ -4056,9 +4388,6 @@ body {
     display: none;
   }
   .connection-meter {
-    display: none;
-  }
-  .hud-stat:nth-of-type(3) {
     display: none;
   }
   .game-grid {
@@ -4193,6 +4522,9 @@ body {
     flex-direction: column;
     width: min(280px, 100%);
   }
+  .rating-ladder ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
   .card-inspector {
     padding: 14px;
   }
@@ -4306,6 +4638,15 @@ body {
   }
   .phrase-combo.latest {
     animation-duration: 1ms !important;
+  }
+  .hud-delta {
+    animation-name: hud-delta-fade;
+  }
+  .connection-status.partner-absent::before {
+    animation: none;
+  }
+  .song-landed {
+    animation: none;
   }
   *,
   *::before,

@@ -1,20 +1,21 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { DanceCard as DanceCardDefinition, Position } from "@clave/content";
 import type { CardView, GameAction, PlayerSnapshot, Role } from "@clave/engine";
-import { useAppStore } from "../store.js";
+import { useAppStore, type PartnerPresence } from "../store.js";
 import {
   NO_INTENT,
-  floorActionFor,
   floorDraggableIds,
   reconcileIntent,
   resolveDrop,
   stagedPosition,
+  unavailableReason,
+  type DropResolution,
   type TurnIntent,
 } from "../turn-intent.js";
 import { DanceCard } from "./DanceCard.js";
 import { DancerDemo } from "./DancerDemo.js";
 import { MusicButton } from "./MusicPlayer.js";
-import { PhraseHistory } from "./PhraseHistory.js";
+import { PhraseHistory, comboSummary } from "./PhraseHistory.js";
 import { RulesButton } from "./RulesDialog.js";
 import { SoundEffectsButton, useSoundEffects, type SoundEffect } from "./SoundEffects.js";
 
@@ -32,6 +33,15 @@ interface CardInspectionOrigin {
 interface CardInspection {
   card: InspectableCard;
   origin: CardInspectionOrigin | null;
+  /** The market row a lesson card was opened from, so the enlarged card can offer it. */
+  lessonSource?: LessonBuyAction["source"] | undefined;
+}
+
+interface InspectorAction {
+  label: string;
+  primary: boolean;
+  /** Receives the enlarged card element, the origin for any card flight. */
+  run: (enlargedCard: HTMLElement | null) => void;
 }
 
 interface LessonFlight {
@@ -95,10 +105,10 @@ function actionLabel(action: GameAction | undefined): string {
   return "Dance move";
 }
 
-function alternatives(values: string[]): string {
-  if (values.length < 2) return values[0] ?? "the required Position";
-  if (values.length === 2) return `${values[0]} or ${values[1]}`;
-  return `${values.slice(0, -1).join(", ")}, or ${values.at(-1)}`;
+/** The button label for playing a hand card to the floor, or undefined when it cannot go. */
+function playLabel(play: DropResolution | null): string | undefined {
+  if (!play || play.kind === "ignore") return undefined;
+  return play.kind === "stage" ? "Stage Position" : actionLabel(play.action);
 }
 
 function currentFloorPosition(view: PlayerSnapshot): Position | null {
@@ -106,33 +116,36 @@ function currentFloorPosition(view: PlayerSnapshot): Position | null {
   return card?.type === "position" ? card.position : null;
 }
 
-function unavailableReasonForCard(
+/** Why the viewer cannot take a lesson from `source` right now, or null when nothing explains it. */
+function lessonUnavailableReason(
   view: PlayerSnapshot,
-  entry: CardView,
-  primary: GameAction | undefined,
-): string | undefined {
-  if (
-    primary ||
-    view.phase !== "dance" ||
-    view.activeRole !== view.viewerRole ||
-    view.turn.moveCardId !== null
-  )
-    return undefined;
+  source: LessonBuyAction["source"],
+): string | null {
+  const cost = view.rules.lessonCosts[source];
+  if (view.status !== "playing" || view.activeRole !== view.viewerRole)
+    return "Learn on your turn, after you dance";
+  if (view.phase === "dance") return "Learn after you dance this 8-count";
+  if (view.turn.boughtLesson) return "You already took a lesson this turn";
+  if (source !== "beginner" && !view.market.privateLessonAvailable)
+    return "Private lesson already taken this round";
+  if (view.self.money < cost) return `Costs $${cost} · you have $${view.self.money}`;
+  return null;
+}
 
-  const floorPosition = currentFloorPosition(view);
-  if (!floorPosition) return undefined;
+/** What a screen reader hears when the turn or step changes. */
+function turnAnnouncement(view: PlayerSnapshot): string {
+  if (view.status !== "playing") return "";
+  if (view.activeRole !== view.viewerRole) return `${roleName(view.activeRole)}’s 8-count.`;
+  if (view.phase === "lesson") return "Your lesson step: learn a card, or finish your turn.";
+  const song = view.currentSong;
+  return song ? `Your 8-count: ${song.title}. ${song.description}.` : "Your 8-count.";
+}
 
-  switch (entry.card.type) {
-    case "move":
-      return entry.card.positions.includes(floorPosition)
-        ? undefined
-        : `Needs ${alternatives(entry.card.positions)} · Floor is ${floorPosition}`;
-    case "position":
-    case "flourish":
-      return "Play a Move first";
-    case "recovery":
-      return "Use with Stumble";
-  }
+/** Whether the viewer is the one the game is waiting on. */
+function viewersTurn(view: PlayerSnapshot | null): boolean {
+  if (!view) return false;
+  if (view.status === "setup") return view.setupRole === view.viewerRole;
+  return view.status === "playing" && view.activeRole === view.viewerRole;
 }
 
 function soundForAction(action: GameAction): SoundEffect {
@@ -164,13 +177,96 @@ function soundForAction(action: GameAction): SoundEffect {
   }
 }
 
-function Hud({ view }: { view: PlayerSnapshot }) {
+/** What moved on the scoreboard between two snapshots the same viewer saw. */
+interface ScoreChange {
+  key: number;
+  connection: number;
+  style: number;
+  money: number;
+  announcement: string;
+}
+
+interface ScoreReading {
+  gameId: string;
+  viewer: Role;
+  sequence: number;
+  connection: number;
+  style: number;
+  money: number;
+}
+
+function readScore(view: PlayerSnapshot): ScoreReading {
+  return {
+    gameId: view.gameId,
+    viewer: view.viewerRole,
+    sequence: view.sequence,
+    connection: view.shared.connection,
+    style: view.shared.style,
+    money: view.self.money,
+  };
+}
+
+function scoreChange(previous: ScoreReading, view: PlayerSnapshot): ScoreChange | null {
+  if (
+    previous.gameId !== view.gameId ||
+    previous.viewer !== view.viewerRole ||
+    view.sequence <= previous.sequence
+  )
+    return null;
+  const change = {
+    connection: view.shared.connection - previous.connection,
+    style: view.shared.style - previous.style,
+    money: view.self.money - previous.money,
+  };
+  if (!change.connection && !change.style && !change.money) return null;
+  const said = (label: string, value: number) =>
+    value ? `${label} ${value > 0 ? "up" : "down"} ${Math.abs(value)}.` : "";
+  // Only entries newer than the previous reading, so an undone play is never cited.
+  const causes = view.log
+    .filter(
+      (entry) =>
+        entry.sequence > previous.sequence && (entry.kind === "score" || entry.kind === "dance"),
+    )
+    .map((entry) => entry.message);
+  return {
+    key: view.sequence,
+    ...change,
+    announcement: [
+      said("Style", change.style),
+      said("Connection", change.connection),
+      said("Your practice money", change.money),
+      ...causes,
+    ]
+      .filter(Boolean)
+      .join(" "),
+  };
+}
+
+function HudDelta({ value, changeKey }: { value: number; changeKey: number }) {
+  if (!value) return null;
   return (
-    <div className="hud" aria-label="Game score">
+    <b key={changeKey} className={`hud-delta ${value > 0 ? "up" : "down"}`} aria-hidden="true">
+      {value > 0 ? `+${value}` : `−${Math.abs(value)}`}
+    </b>
+  );
+}
+
+function Hud({
+  view,
+  change,
+  inert,
+}: {
+  view: PlayerSnapshot;
+  change: ScoreChange | null;
+  inert: boolean;
+}) {
+  return (
+    <div className="hud" role="group" aria-label="Game score" inert={inert}>
       <div className="hud-stat connection">
         <small>Connection</small>
         <strong>{view.shared.connection}</strong>
         <span>/{view.rules.maximumConnection}</span>
+        {change && <HudDelta value={change.connection} changeKey={change.key} />}
       </div>
       <div className="connection-meter" aria-hidden="true">
         {Array.from({ length: view.rules.maximumConnection }, (_, index) => (
@@ -180,10 +276,12 @@ function Hud({ view }: { view: PlayerSnapshot }) {
       <div className="hud-stat">
         <small>Style</small>
         <strong>{view.shared.style}</strong>
+        {change && <HudDelta value={change.style} changeKey={change.key} />}
       </div>
       <div className="hud-stat">
         <small>Your practice</small>
         <strong>${view.self.money}</strong>
+        {change && <HudDelta value={change.money} changeKey={change.key} />}
       </div>
       <div className="hud-stat phrase">
         <small>Phrase {view.phrase.number}</small>
@@ -192,6 +290,9 @@ function Hud({ view }: { view: PlayerSnapshot }) {
           <span>/{view.rules.phraseLength}</span>
         </strong>
       </div>
+      <p className="visually-hidden" role="status" aria-live="polite" aria-atomic="true">
+        {change?.announcement ?? ""}
+      </p>
     </div>
   );
 }
@@ -203,7 +304,7 @@ function SongMoment({ view }: { view: PlayerSnapshot }) {
         <div>
           <small>Music</small>
           <h3>Opening hands</h3>
-          <p>You begin in Open. Check for a matching Move.</p>
+          <p>Look for a matching Position and Move.</p>
         </div>
         <div className="song-audio-controls" role="group" aria-label="Audio controls">
           <MusicButton compact />
@@ -211,6 +312,13 @@ function SongMoment({ view }: { view: PlayerSnapshot }) {
         </div>
       </div>
     );
+  const landed =
+    view.phase === "lesson"
+      ? [
+          view.turn.bonusStyle ? `+${view.turn.bonusStyle} Style` : null,
+          view.turn.bonusConnection ? `+${view.turn.bonusConnection} Connection` : null,
+        ].filter(Boolean)
+      : [];
   return (
     <div className={`song-card ${view.currentSong.section.toLowerCase()}`}>
       <div className="song-count">
@@ -222,7 +330,10 @@ function SongMoment({ view }: { view: PlayerSnapshot }) {
           {view.currentSong.section} · {view.currentSong.moment}
         </small>
         <h3>{view.currentSong.title}</h3>
-        <p>{view.currentSong.description}</p>
+        <p>
+          {landed.length > 0 && <b className="song-landed">Landed · {landed.join(" · ")}</b>}
+          {view.currentSong.description}
+        </p>
       </div>
       <div className="song-audio-controls" role="group" aria-label="Audio controls">
         <MusicButton compact />
@@ -396,7 +507,11 @@ function Market({
   pendingLesson,
 }: {
   view: PlayerSnapshot;
-  onInspect: (card: InspectableCard) => void;
+  onInspect: (
+    card: InspectableCard,
+    source: HTMLElement,
+    lessonSource: LessonBuyAction["source"],
+  ) => void;
   onBuyLesson: (
     card: DanceCardDefinition,
     action: LessonBuyAction,
@@ -442,7 +557,7 @@ function Market({
               disabled={!buy || Boolean(pendingLesson)}
               actionLabel={purchasePending ? "Learning…" : `Learn · $${cost}`}
               onAction={buy ? (event) => onBuyLesson(card, buy, event.currentTarget) : undefined}
-              onInspect={() => onInspect(card)}
+              onInspect={(element) => onInspect(card, element, source)}
               draggable={draggable}
               dragging={draggingLessonKey === lessonKey}
               onDragStart={
@@ -488,6 +603,65 @@ function Market({
   );
 }
 
+/** The header chip: where the game is saved, or how the room and the partner are doing. */
+function connectionStatus(
+  mode: "hotseat" | "online" | null,
+  connection: "offline" | "connecting" | "connected" | "reconnecting",
+  partner: PartnerPresence | null,
+): { state: string; long: string; short: string } {
+  if (mode !== "online") return { state: "local", long: "Saved on device", short: "Saved" };
+  if (connection === "connecting")
+    return { state: "connecting", long: "Connecting…", short: "Connecting" };
+  if (connection === "reconnecting")
+    return { state: "reconnecting", long: "Reconnecting…", short: "Reconnecting" };
+  if (connection === "offline") return { state: "offline", long: "Offline", short: "Offline" };
+  if (partner === "away")
+    return { state: "partner-away", long: "Partner away", short: "Partner away" };
+  if (partner === "absent")
+    return { state: "partner-absent", long: "Waiting for partner", short: "Waiting" };
+  return partner === "connected"
+    ? { state: "connected", long: "Partner here", short: "Partner here" }
+    : { state: "connected", long: "Connected", short: "Online" };
+}
+
+function InvitePartner({ code }: { code: string }) {
+  const [shareStatus, setShareStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const grouped = code.match(/.{1,4}/g)?.join(" ") ?? code;
+  const link = `${location.origin}/#join=${code}`;
+  const share = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Dance Clave with me",
+          text: `Join my room: ${grouped}`,
+          url: link,
+        });
+        return;
+      }
+      await copyText(link);
+      setShareStatus("copied");
+    } catch (error) {
+      if (!(error instanceof DOMException && error.name === "AbortError")) setShareStatus("failed");
+    }
+  };
+  return (
+    <section className="invite-partner" aria-labelledby="invite-partner-title">
+      <div>
+        <small id="invite-partner-title">Invite your partner</small>
+        <strong className="invite-code">{grouped}</strong>
+        <span>On their device: Two devices → Join with this code, or open your invite link.</span>
+      </div>
+      <button type="button" className="button gold" onClick={() => void share()}>
+        {shareStatus === "copied"
+          ? "Link copied"
+          : shareStatus === "failed"
+            ? "Copy failed · try again"
+            : "Share invite link"}
+      </button>
+    </section>
+  );
+}
+
 function TurnActions({
   view,
   dispatch,
@@ -495,6 +669,8 @@ function TurnActions({
   cleanupPending,
   pendingPosition,
   cancelPendingPosition,
+  invite,
+  partnerAway,
 }: {
   view: PlayerSnapshot;
   dispatch: (action: GameAction) => void;
@@ -502,6 +678,10 @@ function TurnActions({
   cleanupPending: boolean;
   pendingPosition: CardView | null;
   cancelPendingPosition: () => void;
+  /** The room code to share while the partner's seat is still empty. */
+  invite: string | null;
+  /** The online partner's device has dropped away. */
+  partnerAway: boolean;
 }) {
   const actions = view.legalActions;
   const byType = <T extends GameAction["type"]>(type: T) =>
@@ -511,17 +691,30 @@ function TurnActions({
     const confirm = byType("CONFIRM_HAND")[0];
     if (!confirm)
       return (
-        <div className="turn-actions waiting-actions">
-          <strong>Waiting for {roleName(view.setupRole)}</strong>
-          <span>Your hand stays private.</span>
+        <div className={`turn-actions waiting-actions ${invite ? "with-invite" : ""}`}>
+          {invite && <InvitePartner code={invite} />}
+          <strong>
+            {invite
+              ? `Waiting for the ${roleName(view.setupRole)} to join`
+              : partnerAway
+                ? `${roleName(view.setupRole)} stepped away`
+                : `Waiting for ${roleName(view.setupRole)}`}
+          </strong>
+          <span>
+            {partnerAway ? "The dance resumes when they reconnect." : "Your hand stays private."}
+          </span>
         </div>
       );
     return (
-      <div className="turn-actions">
+      <div className={`turn-actions ${invite ? "with-invite" : ""}`}>
+        {invite && <InvitePartner code={invite} />}
         <div className="setup-heading">
           <small>Opening hand</small>
           <strong>Ready to dance?</strong>
-          <p>You begin in Open Position. Look for a Move you can dance from Open.</p>
+          <p>
+            Look for a Position and a Move you can dance from it. The Lead chooses the first
+            Position.
+          </p>
         </div>
         <div className="button-row">
           {mulligan && (
@@ -539,8 +732,14 @@ function TurnActions({
   if (view.activeRole !== view.viewerRole)
     return (
       <div className="turn-actions waiting-actions">
-        <strong>{roleName(view.activeRole)} is dancing</strong>
-        <span>Watch the floor, not their hand.</span>
+        <strong>
+          {roleName(view.activeRole)} {partnerAway ? "stepped away" : "is dancing"}
+        </strong>
+        <span>
+          {partnerAway
+            ? "The dance resumes when they reconnect."
+            : "Watch the floor, not their hand."}
+        </span>
       </div>
     );
 
@@ -558,7 +757,7 @@ function TurnActions({
     const danceHeading = pendingPosition
       ? "Complete the opening"
       : openings.length > 0
-        ? "Drag a Position to the floor"
+        ? "Open the floor with a Position"
         : beforeMove
           ? "Play a Move first"
           : transitions.length > 0
@@ -594,8 +793,8 @@ function TurnActions({
             <small>Opening play</small>
             <span>
               {pendingPosition
-                ? `${pendingPosition.card.name} is staged. Drag a highlighted matching Move next.`
-                : "Start with any highlighted Position in your hand."}
+                ? `${pendingPosition.card.name} is staged. Play a highlighted matching Move next.`
+                : "Stage any highlighted Position from your hand, then add a Move that dances from it."}
             </span>
           </div>
         )}
@@ -685,7 +884,9 @@ function TurnActions({
 
 function Hand({
   view,
+  intent,
   dispatch,
+  onPlayCard,
   onInspect,
   pendingPosition,
   draggableCardIds,
@@ -701,7 +902,9 @@ function Hand({
   onOpenDiscard,
 }: {
   view: PlayerSnapshot;
+  intent: TurnIntent;
   dispatch: (action: GameAction) => void;
+  onPlayCard: (instanceId: string) => void;
   onInspect: (card: InspectableCard, source?: HTMLElement) => void;
   pendingPosition: CardView | null;
   draggableCardIds: Set<string>;
@@ -729,6 +932,9 @@ function Hand({
           <small>{roleName(view.viewerRole)} hand</small>
           <strong>{visibleHand.length} cards</strong>
           {pendingPosition && <span>1 Position staged</span>}
+          {draggableCardIds.size > 0 && (
+            <span className="hand-play-hint">Drag a highlighted card or click it to play</span>
+          )}
         </div>
         <div>
           <span>Deck {view.self.drawCount}</span>
@@ -776,20 +982,19 @@ function Hand({
       </div>
       <div className="hand-scroll">
         {visibleHand.map((entry) => {
-          const primary = floorActionFor(view.legalActions, entry.instanceId);
           const signal = view.legalActions.find(
             (action) => action.type === "SIGNAL_CARD" && action.instanceId === entry.instanceId,
           );
           const draggable = draggableCardIds.has(entry.instanceId);
-          const unavailableReason = unavailableReasonForCard(view, entry, primary);
+          const label = playLabel(draggable ? resolveDrop(view, intent, entry.instanceId) : null);
           return (
             <DanceCard
               key={entry.instanceId}
               value={entry}
               disabled={!isOwnTurn}
-              actionLabel={actionLabel(primary)}
-              unavailableReason={unavailableReason}
-              onAction={primary ? () => dispatch(primary) : undefined}
+              actionLabel={label}
+              unavailableReason={unavailableReason(view, intent, entry.instanceId) ?? undefined}
+              onAction={label ? () => onPlayCard(entry.instanceId) : undefined}
               onSignal={signal ? () => dispatch(signal) : undefined}
               onInspect={(source) => onInspect(entry, source)}
               draggable={draggable}
@@ -898,21 +1103,31 @@ function GameLog({ view }: { view: PlayerSnapshot }) {
 function DiscardPileInspector({
   cards,
   role,
+  covered,
   onInspect,
   onClose,
 }: {
   cards: CardView[];
   role: Role;
+  /** An enlarged card sits on top, so this dialog steps out of the tab order. */
+  covered: boolean;
   onInspect: (card: CardView) => void;
   onClose: () => void;
 }) {
   const closeButton = useRef<HTMLButtonElement>(null);
+  // Read during the first render: once this dialog commits, the table behind it turns inert
+  // and the browser moves focus to the body.
+  const [returnFocus] = useState(() => document.activeElement);
+  const onCloseRef = useRef(onClose);
+
+  onCloseRef.current = onClose;
 
   useEffect(() => {
-    const previousFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !document.querySelector(".card-inspector")) onClose();
+      if (event.key === "Escape" && !document.querySelector(".card-inspector")) {
+        onCloseRef.current();
+      }
     };
 
     document.body.style.overflow = "hidden";
@@ -922,9 +1137,9 @@ function DiscardPileInspector({
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
-      if (previousFocus instanceof HTMLElement) previousFocus.focus();
+      if (returnFocus instanceof HTMLElement) returnFocus.focus();
     };
-  }, [onClose]);
+  }, [returnFocus]);
 
   return (
     <div
@@ -932,6 +1147,7 @@ function DiscardPileInspector({
       role="dialog"
       aria-modal="true"
       aria-labelledby="discard-inspector-title"
+      inert={covered}
       onClick={onClose}
     >
       <section className="discard-inspector-panel" onClick={(event) => event.stopPropagation()}>
@@ -979,9 +1195,13 @@ function cardZoomTransform(
 
 function CardInspector({
   inspection,
+  actions,
+  note,
   onClosed,
 }: {
   inspection: CardInspection;
+  actions: InspectorAction[];
+  note: string | null;
   onClosed: () => void;
 }) {
   const closeButton = useRef<HTMLButtonElement>(null);
@@ -998,8 +1218,10 @@ function CardInspector({
     setMotionState("closing");
   }, []);
 
+  // Read during the first render, before the table behind the dialog turns inert.
+  const [returnFocus] = useState(() => document.activeElement);
+
   useEffect(() => {
-    const previousFocus = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") requestClose();
@@ -1012,9 +1234,9 @@ function CardInspector({
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
-      if (previousFocus instanceof HTMLElement) previousFocus.focus();
+      if (returnFocus instanceof HTMLElement) returnFocus.focus();
     };
-  }, [requestClose]);
+  }, [requestClose, returnFocus]);
 
   useLayoutEffect(() => {
     if (motionState === "open") return;
@@ -1087,77 +1309,247 @@ function CardInspector({
         <span className="inspector-hint" id="card-inspector-title">
           Card detail
         </span>
-        <DanceCard value={inspection.card} />
-        <button ref={closeButton} type="button" className="inspector-close" onClick={requestClose}>
-          Close
-        </button>
+        <DanceCard value={inspection.card} detailed />
+        {note && <p className="inspector-note">{note}</p>}
+        <div className="inspector-actions">
+          {actions.map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              className={`button ${action.primary ? "gold" : "outline"}`}
+              onClick={() =>
+                action.run(content.current?.querySelector<HTMLElement>(".dance-card") ?? null)
+              }
+            >
+              {action.label}
+            </button>
+          ))}
+          <button
+            ref={closeButton}
+            type="button"
+            className="inspector-close"
+            onClick={requestClose}
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-function PassScreen({ role, onReady }: { role: Role; onReady: () => void }) {
+function SignalPeek({
+  card,
+  opener,
+  onHide,
+}: {
+  card: CardView;
+  opener: Element | null;
+  onHide: () => void;
+}) {
+  const hideButton = useRef<HTMLButtonElement>(null);
+  const [returnFocus] = useState(() => opener ?? document.activeElement);
+  useEffect(() => {
+    hideButton.current?.focus();
+    return () => {
+      if (returnFocus instanceof HTMLElement) returnFocus.focus();
+    };
+  }, [returnFocus]);
   return (
-    <div className="pass-screen" role="dialog" aria-modal="true">
-      <div className="pass-orbit" aria-hidden="true">
-        <span>{role === "lead" ? "L" : "F"}</span>
-      </div>
-      <small>Keep the hand private</small>
-      <h2>
-        Pass to the
-        <br />
-        <em>{roleName(role)}</em>
-      </h2>
-      <p>When your partner has the screen, tap below.</p>
-      <button type="button" className="button gold" onClick={onReady}>
-        I’m the {roleName(role)}
+    <div
+      className="signal-peek"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="signal-peek-title"
+    >
+      <small id="signal-peek-title">Show only this card to your partner</small>
+      <DanceCard value={card} />
+      <button ref={hideButton} type="button" className="button gold" onClick={onHide}>
+        Hide it again
       </button>
     </div>
   );
 }
 
+function PassScreen({
+  role,
+  view,
+  onReady,
+}: {
+  role: Role;
+  view: PlayerSnapshot;
+  onReady: () => void;
+}) {
+  // All public: the last 8-count, any phrase scoring it triggered, and the next song card.
+  const lastCombo = view.status === "playing" ? view.danceHistory.at(-1) : undefined;
+  const phraseResult = view.log.find(
+    (entry) => entry.sequence === view.sequence && entry.kind === "score" && entry.role === null,
+  );
+  const nextSong = view.status === "playing" ? view.currentSong : null;
+  const readyButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => readyButton.current?.focus(), []);
+  return (
+    <div className="pass-screen" role="dialog" aria-modal="true" aria-labelledby="pass-title">
+      <div className="pass-orbit" aria-hidden="true">
+        <span>{role === "lead" ? "L" : "F"}</span>
+      </div>
+      <small>Keep the hand private</small>
+      <h2 id="pass-title">
+        Pass to the
+        <br />
+        <em>{roleName(role)}</em>
+      </h2>
+      <p>When your partner has the screen, tap below.</p>
+      <button ref={readyButton} type="button" className="button gold" onClick={onReady}>
+        I’m the {roleName(role)}
+      </button>
+      {(lastCombo || nextSong) && (
+        <dl className="pass-recap">
+          {lastCombo && (
+            <div>
+              <dt>Last 8-count</dt>
+              <dd>{comboSummary(lastCombo)}</dd>
+            </div>
+          )}
+          {phraseResult && (
+            <div className="pass-phrase">
+              <dt>Phrase scored</dt>
+              <dd>{phraseResult.message}</dd>
+            </div>
+          )}
+          <div>
+            <dt>Together</dt>
+            <dd>
+              Style {view.shared.style} · Connection {view.shared.connection}
+            </dd>
+          </div>
+          {nextSong && (
+            <div className="pass-next-song">
+              <dt>
+                Up next · {String(nextSong.number).padStart(2, "0")} of {view.rules.songLength}
+              </dt>
+              <dd>
+                <strong>{nextSong.title}</strong> {nextSong.description}
+              </dd>
+            </div>
+          )}
+        </dl>
+      )}
+    </div>
+  );
+}
+
+function RatingLadder({ view }: { view: PlayerSnapshot }) {
+  const score = view.finalScore ?? 0;
+  const ladder = [...view.rules.ratings].sort((left, right) => left.minimum - right.minimum);
+  const reached = ladder.reduce(
+    (found, rating, index) => (score >= rating.minimum ? index : found),
+    0,
+  );
+  const next = ladder[reached + 1];
+  return (
+    <section className="rating-ladder" aria-label="Performance ratings">
+      <ol>
+        {ladder.map((rating, index) => (
+          <li
+            key={rating.name}
+            className={index === reached ? "reached" : index < reached ? "passed" : ""}
+            aria-current={index === reached ? "true" : undefined}
+          >
+            <strong>{rating.minimum}+</strong>
+            <span>{rating.name}</span>
+          </li>
+        ))}
+      </ol>
+      {next && (
+        <p>
+          {next.minimum - score} more {next.minimum - score === 1 ? "point" : "points"} reaches{" "}
+          <em>{next.name}</em>.
+        </p>
+      )}
+    </section>
+  );
+}
+
 function Terminal({
   view,
-  newHotseat,
+  mode,
+  inert,
+  onInspect,
+  onDanceAgain,
   leave,
 }: {
   view: PlayerSnapshot;
-  newHotseat: () => void;
+  mode: "hotseat" | "online" | null;
+  inert: boolean;
+  onInspect: (card: InspectableCard) => void;
+  onDanceAgain: () => void;
   leave: () => void;
 }) {
   const won = view.status === "completed";
+  const unresumable = view.status === "unresumable";
+  const online = mode === "online";
   return (
-    <div className="terminal-screen">
-      <small>{won ? "The final 8-count" : "The connection broke"}</small>
-      <h2>{won ? view.rating?.name : "The dance ends here"}</h2>
-      <div className="final-score">
-        <span>{view.finalScore ?? 0}</span>
-        <small>final score</small>
+    <main className="terminal-screen" inert={inert}>
+      <div className="terminal-inner">
+        <small>
+          {won
+            ? "The final 8-count"
+            : unresumable
+              ? "This dance can’t continue"
+              : "The connection broke"}
+        </small>
+        <h2>
+          {won ? view.rating?.name : unresumable ? "The floor has changed" : "The dance ends here"}
+        </h2>
+        {!unresumable && (
+          <>
+            <div className="final-score">
+              <span>{view.finalScore ?? view.shared.style + view.shared.connection}</span>
+              <small>{won ? "final score" : "Style + Connection"}</small>
+            </div>
+            <div className="score-equation">
+              <span>
+                {view.shared.style}
+                <small>Style</small>
+              </span>
+              <b>+</b>
+              <span>
+                {view.shared.connection}
+                <small>Connection</small>
+              </span>
+            </div>
+          </>
+        )}
+        <p>
+          {won
+            ? view.rating?.description
+            : unresumable
+              ? `${view.terminalReason ?? "This saved dance cannot be read by the current release."} Nothing you did caused this; start a fresh dance.`
+              : "Take a breath, find each other, and try the song again."}
+        </p>
+        {won && <RatingLadder view={view} />}
+        {view.danceHistory.length > 0 && (
+          <div className="terminal-choreography">
+            <PhraseHistory view={view} onInspect={onInspect} />
+          </div>
+        )}
+        <div className="button-row">
+          <button type="button" className="button gold" onClick={onDanceAgain}>
+            {online ? "Create a new room" : "Dance again"}
+          </button>
+          <RulesButton />
+          <button type="button" className="button outline" onClick={leave}>
+            Back home
+          </button>
+        </div>
+        {online && (
+          <p className="terminal-hint">
+            One of you creates the new room and shares its code; the other joins it from Home.
+          </p>
+        )}
       </div>
-      <div className="score-equation">
-        <span>
-          {view.shared.style}
-          <small>Style</small>
-        </span>
-        <b>+</b>
-        <span>
-          {view.shared.connection}
-          <small>Connection</small>
-        </span>
-      </div>
-      <p>
-        {won ? view.rating?.description : "Take a breath, find each other, and try the song again."}
-      </p>
-      <div className="button-row">
-        <button type="button" className="button gold" onClick={newHotseat}>
-          Dance again
-        </button>
-        <RulesButton />
-        <button type="button" className="button outline" onClick={leave}>
-          Back home
-        </button>
-      </div>
-    </div>
+    </main>
   );
 }
 
@@ -1168,10 +1560,12 @@ export function GameScreen() {
     passTo,
     onlineSeat,
     connection,
+    partnerPresence,
     dispatch: dispatchAction,
     acceptPass: acceptPassAction,
     leaveGame,
     newHotseat,
+    createOnline,
   } = useAppStore();
   const { play: playSoundEffect } = useSoundEffects();
   const [inspection, setInspection] = useState<CardInspection | null>(null);
@@ -1185,6 +1579,9 @@ export function GameScreen() {
   const [cleanupFlight, setCleanupFlight] = useState<CleanupFlight | null>(null);
   const [dancerDemoOpen, setDancerDemoOpen] = useState(false);
   const [roomCopyStatus, setRoomCopyStatus] = useState<RoomCopyStatus>("idle");
+  const [latestScoreChange, setLatestScoreChange] = useState<ScoreChange | null>(null);
+  const lastScoreReading = useRef<ScoreReading | null>(null);
+  const signalReturnFocus = useRef<Element | null>(null);
   const discardTargetRef = useRef<HTMLButtonElement>(null);
   const lessonDragRef = useRef<{
     key: string;
@@ -1196,10 +1593,15 @@ export function GameScreen() {
   const cleanupFlightKey = useRef(0);
   const roomCopyReset = useRef<number | null>(null);
   const previousStatus = useRef(view?.status);
-  const inspectCard = (card: InspectableCard, source?: HTMLElement) => {
+  const inspectCard = (
+    card: InspectableCard,
+    source?: HTMLElement,
+    lessonSource?: LessonBuyAction["source"],
+  ) => {
     const sourceRect = source?.getBoundingClientRect();
     setInspection({
       card,
+      lessonSource,
       origin:
         source && sourceRect
           ? {
@@ -1215,6 +1617,9 @@ export function GameScreen() {
     });
   };
   const dispatch = (action: GameAction) => {
+    // The enlarged card closes as the reveal opens; return to its surviving hand card.
+    if (action.type === "SIGNAL_CARD")
+      signalReturnFocus.current = inspection?.origin?.element ?? document.activeElement;
     playSoundEffect(soundForAction(action));
     dispatchAction(action);
   };
@@ -1227,8 +1632,29 @@ export function GameScreen() {
       playSoundEffect("success");
     previousStatus.current = view?.status;
   }, [playSoundEffect, view?.status]);
+  const myTurn = viewersTurn(view);
+  const wasMyTurn = useRef(myTurn);
+  useEffect(() => {
+    // Online, the partner's device is elsewhere: cue the turn and mark the tab.
+    if (mode !== "online") return;
+    if (myTurn && !wasMyTurn.current) playSoundEffect("turn");
+    wasMyTurn.current = myTurn;
+    const baseTitle = document.title.replace(/^Your turn · /, "");
+    document.title = myTurn ? `Your turn · ${baseTitle}` : baseTitle;
+    return () => {
+      document.title = baseTitle;
+    };
+  }, [mode, myTurn, playSoundEffect]);
   useEffect(() => {
     if (view) setIntent((current) => reconcileIntent(view, current));
+  }, [view]);
+  useEffect(() => {
+    if (!view) return;
+    const previous = lastScoreReading.current;
+    lastScoreReading.current = readScore(view);
+    if (previous?.viewer !== view.viewerRole) setLatestScoreChange(null);
+    const change = previous ? scoreChange(previous, view) : null;
+    if (change) setLatestScoreChange(change);
   }, [view]);
   useEffect(() => {
     setDraggingCardId(null);
@@ -1295,7 +1721,7 @@ export function GameScreen() {
     [intent, view],
   );
 
-  const playDroppedCard = (instanceId: string) => {
+  const playToFloor = (instanceId: string) => {
     if (!view) return;
     const drop = resolveDrop(view, intent, instanceId);
     if (drop.kind === "ignore") return;
@@ -1459,6 +1885,76 @@ export function GameScreen() {
     dispatch(action);
   };
 
+  const returnStagedPosition = () => {
+    playSoundEffect("undo");
+    setIntent(NO_INTENT);
+  };
+
+  /** What the enlarged card offers, read from the live snapshot so it never goes stale. */
+  const inspectorControls = (
+    current: CardInspection,
+    view: PlayerSnapshot,
+  ): { actions: InspectorAction[]; note: string | null } => {
+    const closeThen = (run: () => void) => () => {
+      setInspection(null);
+      run();
+    };
+    if (current.lessonSource) {
+      const source = current.lessonSource;
+      const card = "card" in current.card ? current.card.card : current.card;
+      const buy = view.legalActions.find(
+        (action): action is LessonBuyAction =>
+          action.type === "BUY_LESSON" && action.source === source && action.cardId === card.id,
+      );
+      if (!buy || lessonFlight) return { actions: [], note: lessonUnavailableReason(view, source) };
+      return {
+        actions: [
+          {
+            label: `Learn · $${view.rules.lessonCosts[source]}`,
+            primary: true,
+            run: (enlargedCard) => {
+              if (enlargedCard) buyLesson(card, buy, enlargedCard);
+              else closeThen(() => dispatch(buy))();
+            },
+          },
+        ],
+        note: null,
+      };
+    }
+
+    const instanceId = "instanceId" in current.card ? current.card.instanceId : null;
+    if (!instanceId || !view.self.hand.some((entry) => entry.instanceId === instanceId))
+      return { actions: [], note: null };
+    if (pendingPosition?.instanceId === instanceId)
+      return {
+        actions: [
+          {
+            label: "Return Position to hand",
+            primary: false,
+            run: closeThen(returnStagedPosition),
+          },
+        ],
+        note: "Staged on the floor, waiting for a matching Move",
+      };
+
+    const actions: InspectorAction[] = [];
+    const label = playLabel(
+      draggableCardIds.has(instanceId) ? resolveDrop(view, intent, instanceId) : null,
+    );
+    if (label)
+      actions.push({ label, primary: true, run: closeThen(() => playToFloor(instanceId)) });
+    const signal = view.legalActions.find(
+      (action) => action.type === "SIGNAL_CARD" && action.instanceId === instanceId,
+    );
+    if (signal)
+      actions.push({
+        label: "Signal to partner",
+        primary: false,
+        run: closeThen(() => dispatch(signal)),
+      });
+    return { actions, note: unavailableReason(view, intent, instanceId) };
+  };
+
   if (!view)
     return (
       <main className="loading-table">
@@ -1470,11 +1966,38 @@ export function GameScreen() {
       </main>
     );
   if (view.status === "completed" || view.status === "lost" || view.status === "unresumable")
-    return <Terminal view={view} newHotseat={newHotseat} leave={leaveGame} />;
+    return (
+      <>
+        <Terminal
+          view={view}
+          mode={mode}
+          inert={Boolean(inspection)}
+          onInspect={inspectCard}
+          onDanceAgain={() =>
+            mode === "online" ? void createOnline(view.viewerRole) : newHotseat()
+          }
+          leave={leaveGame}
+        />
+        {inspection && (
+          <CardInspector
+            inspection={inspection}
+            {...inspectorControls(inspection, view)}
+            onClosed={() => setInspection(null)}
+          />
+        )}
+      </>
+    );
+
+  const status = connectionStatus(mode, connection, partnerPresence);
+  const passScreenOpen = Boolean(passTo && mode === "hotseat" && !cleanupFlight);
+  const signalPeekOpen = view.signal?.role === view.viewerRole && mode === "hotseat";
+  // While a dialog is up, the table behind it leaves the tab order and the accessibility tree.
+  const overlayOpen =
+    passScreenOpen || signalPeekOpen || Boolean(inspection) || discardOpen || dancerDemoOpen;
 
   return (
     <main className="game">
-      <header className="game-header">
+      <header className="game-header" inert={overlayOpen}>
         <button type="button" className="mini-brand" onClick={leaveGame} aria-label="Return home">
           CLAVE
         </button>
@@ -1520,12 +2043,35 @@ export function GameScreen() {
           <span className="mode-label">Pass & play</span>
         )}
         <RulesButton compact />
-        <span className={`connection-status ${connection}`}>
-          {mode === "online" ? connection : "saved on device"}
+        <span
+          className={`connection-status ${status.state}`}
+          data-connection={mode === "online" ? connection : "local"}
+          data-partner={
+            mode === "online" && connection === "connected"
+              ? (partnerPresence ?? "unknown")
+              : undefined
+          }
+        >
+          <span className="status-long">{status.long}</span>
+          <span className="status-short" aria-hidden="true">
+            {status.short}
+          </span>
         </span>
       </header>
-      <Hud view={view} />
-      <div className="game-grid">
+      {mode === "online" && connection !== "connected" && (
+        <p className="reconnect-banner" role="status">
+          {connection === "offline"
+            ? "This seat is offline. Head home to reconnect or start a new room."
+            : connection === "connecting"
+              ? "Connecting to your room…"
+              : "Reconnecting to your room… your moves will wait."}
+        </p>
+      )}
+      <p className="visually-hidden" role="status" aria-live="polite">
+        {turnAnnouncement(view)}
+      </p>
+      <Hud view={view} change={latestScoreChange} inert={overlayOpen} />
+      <div className="game-grid" inert={overlayOpen}>
         <div className="main-table">
           <SongMoment view={view} />
           <PhraseHistory view={view} onInspect={inspectCard} />
@@ -1536,7 +2082,7 @@ export function GameScreen() {
             acceptsDrop={draggableCardIds.size > 0}
             dragOver={floorDragOver}
             onDragOverChange={setFloorDragOver}
-            onCardDrop={playDroppedCard}
+            onCardDrop={playToFloor}
             onOpenDancerDemo={() => setDancerDemoOpen(true)}
           />
           <TurnActions
@@ -1545,14 +2091,17 @@ export function GameScreen() {
             onCleanup={cleanupTurn}
             cleanupPending={Boolean(cleanupFlight)}
             pendingPosition={pendingPosition}
-            cancelPendingPosition={() => {
-              playSoundEffect("undo");
-              setIntent(NO_INTENT);
-            }}
+            cancelPendingPosition={returnStagedPosition}
+            invite={
+              mode === "online" && partnerPresence === "absent" ? (onlineSeat?.code ?? null) : null
+            }
+            partnerAway={mode === "online" && partnerPresence === "away"}
           />
           <Hand
             view={view}
+            intent={intent}
             dispatch={dispatch}
+            onPlayCard={playToFloor}
             onInspect={inspectCard}
             pendingPosition={pendingPosition}
             draggableCardIds={draggableCardIds}
@@ -1601,32 +2150,31 @@ export function GameScreen() {
       {cleanupFlight && (
         <CleanupCardFlights flight={cleanupFlight} onComplete={() => setCleanupFlight(null)} />
       )}
-      {passTo && mode === "hotseat" && !cleanupFlight && (
-        <PassScreen role={passTo} onReady={acceptPass} />
-      )}
-      {view.signal?.role === view.viewerRole && mode === "hotseat" && (
-        <div className="signal-peek" role="dialog" aria-modal="true">
-          <small>Show only this card to your partner</small>
-          <DanceCard value={view.signal.card} />
-          <button
-            type="button"
-            className="button gold"
-            onClick={() => clearSignal && dispatch(clearSignal)}
-          >
-            Hide it again
-          </button>
-        </div>
+      {passScreenOpen && passTo && <PassScreen role={passTo} view={view} onReady={acceptPass} />}
+      {signalPeekOpen && view.signal && (
+        <SignalPeek
+          card={view.signal.card}
+          opener={signalReturnFocus.current}
+          onHide={() => clearSignal && dispatch(clearSignal)}
+        />
       )}
       {view.signal?.role === view.viewerRole && mode === "online" && clearSignal && (
         <button type="button" className="signal-live" onClick={() => dispatch(clearSignal)}>
           Signal visible to partner · tap to hide
         </button>
       )}
-      {inspection && <CardInspector inspection={inspection} onClosed={() => setInspection(null)} />}
+      {inspection && (
+        <CardInspector
+          inspection={inspection}
+          {...inspectorControls(inspection, view)}
+          onClosed={() => setInspection(null)}
+        />
+      )}
       {discardOpen && (
         <DiscardPileInspector
           cards={view.self.discard}
           role={view.viewerRole}
+          covered={Boolean(inspection)}
           onInspect={inspectCard}
           onClose={() => setDiscardOpen(false)}
         />

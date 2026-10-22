@@ -30,7 +30,9 @@ export class RoomManager {
   }
 
   create(role: Role, test = false): SeatCredentials {
-    if (this.rooms.size >= 50) throw new Error("The dance floor is full. Try again later.");
+    // Only unfinished rooms hold a place; finished or abandoned ones never come back.
+    if (this.database.countActiveRooms() >= 50)
+      throw new Error("The dance floor is full. Try again later.");
     let code = roomCode();
     while (this.database.getRoom(code)) code = roomCode();
     const seatToken = token();
@@ -54,6 +56,7 @@ export class RoomManager {
   join(codeInput: string, role: Role): SeatCredentials {
     const code = codeInput.trim().toUpperCase();
     const record = this.get(code);
+    this.refreshTerminal(record);
     if (record.terminalEvent) throw new Error("That dance has already ended.");
     const occupied = role === "lead" ? record.leadToken : record.followToken;
     if (occupied)
@@ -94,6 +97,9 @@ export class RoomManager {
     action: GameAction,
   ): { snapshot: PlayerSnapshot; duplicate: boolean } {
     const room = this.authenticate(code, role, seatToken);
+    this.refreshTerminal(room);
+    const abandoned = room.terminalEvent === "abandoned";
+    if (abandoned) throw new Error("That dance has already ended.");
     if (expectedSequence < room.envelope.state.sequence) {
       return { snapshot: this.snapshot(code, role, seatToken), duplicate: true };
     }
@@ -141,6 +147,12 @@ export class RoomManager {
       ...(room.leadToken ? { lead: envelopeSnapshot(room.envelope, "lead") } : {}),
       ...(room.followToken ? { follow: envelopeSnapshot(room.envelope, "follow") } : {}),
     };
+  }
+
+  /** Copy a terminal event from the row onto the cached room, if the sweep wrote one. */
+  private refreshTerminal(room: RoomRecord): void {
+    const stored = this.database.getRoom(room.code);
+    if (stored?.terminalEvent) room.terminalEvent = stored.terminalEvent;
   }
 
   private get(code: string): RoomRecord {

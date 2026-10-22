@@ -19,6 +19,15 @@ The full-resolution working renders are intentionally excluded from Git. Deliver
 
 - Web: `packages/client/public/card-art/<card-id>.webp`, 512×768, quality 84.
 
+On 2026-10-19, issue #20 corrected `pos_002` with the built-in imagegen edit
+tool. [closed-position-arm-edit-prompt.txt](closed-position-arm-edit-prompt.txt)
+records the exact prompt. The Follow's right elbow now bends into a raised
+handhold with the Lead's left hand, replacing the straight downward arm. The
+selected 1024×1536 PNG was resized with Pillow's `Image.Resampling.LANCZOS` to
+512×768 and saved as WebP at quality 84. Visual inspection at delivery size
+confirmed the arm pathway and joined hands, full-body framing, and established
+palette and texture; `npm run check:art` validates the delivery asset contract.
+
 The later `mov_013` Closed-entry Cross Body Lead split deliberately reuses the
 foundational `mov_005` composition for now: both cards depict the same traveling
 figure, while their names and position tags distinguish the starting handhold. The

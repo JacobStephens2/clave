@@ -53,7 +53,7 @@ danced from. v1 has no flourish state tracking (no free-hand checks).
 | ------- | --------------------- | ---- | --------------- | ----- | -------- |
 | flo_001 | Arm Overhead (Lead)   | I    | any             | 1     |          |
 | flo_002 | Arm Overhead (Follow) | I    | any             | 1     |          |
-| flo_003 | Hand Twist            | I    | Open, Half-Open | 1     |          |
+| flo_003 | Hand Twist            | B    | Open, Half-Open | 1     |          |
 | flo_004 | Dip                   | A    | Closed          | 3     | **Pose** |
 
 ## Recovery
@@ -89,6 +89,7 @@ Played from hand when you stumble; they replace the normal −2 Connection cost.
 | mov_005 CBL — Open          | 2      |
 | mov_013 CBL — Closed        | 2      |
 | mov_006 Hesitation          | 3      |
+| flo_003 Hand Twist          | 2      |
 | rec_001 Return to Basic     | 4      |
 
 ### Intermediate lessons deck (shuffled; market of 3; $2)
@@ -103,10 +104,9 @@ Played from hand when you stumble; they replace the normal −2 Connection cost.
 | mov_010 Change of Place       | 2      |
 | flo_001 Arm Overhead (Lead)   | 2      |
 | flo_002 Arm Overhead (Follow) | 2      |
-| flo_003 Hand Twist            | 2      |
 | rec_002 Reconnect             | 2      |
 
-22 cards.
+20 cards.
 
 ### Advanced lessons deck (shuffled; display of 2; $3; montuno only)
 

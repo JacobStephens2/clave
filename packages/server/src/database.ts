@@ -5,6 +5,16 @@ import type { ResumeEnvelope, Role } from "@clave/engine";
 
 export type GameEventType = "game_started" | "completed" | "lost" | "abandoned" | "unresumable";
 
+// Stored hot-seat beacons only. Unfinished rooms keep their own floor of 50.
+const HOTSEAT_ROW_CAP = 50;
+
+export class HotseatStorageFullError extends Error {
+  constructor() {
+    super("Hot-seat storage is full.");
+    this.name = "HotseatStorageFullError";
+  }
+}
+
 export interface RoomRecord {
   code: string;
   envelope: ResumeEnvelope;
@@ -118,6 +128,22 @@ export class RoomDatabase {
     return row ? this.mapRoom(row) : null;
   }
 
+  countActiveRooms(): number {
+    return (
+      this.db.prepare("SELECT COUNT(*) AS n FROM rooms WHERE terminal_event IS NULL").get() as {
+        n: number;
+      }
+    ).n;
+  }
+
+  countHotseatRows(): number {
+    return (
+      this.db.prepare("SELECT COUNT(*) AS n FROM game_events WHERE mode = 'hotseat'").get() as {
+        n: number;
+      }
+    ).n;
+  }
+
   listActiveRooms(): StoredRoom[] {
     return (
       this.db.prepare("SELECT * FROM rooms WHERE terminal_event IS NULL").all() as RawRoom[]
@@ -148,9 +174,9 @@ export class RoomDatabase {
         .prepare(
           `UPDATE rooms
              SET envelope_json = ?, last_active_at = ?, started = ?, terminal_event = ?
-           WHERE code = ?`,
+           WHERE code = ? AND (terminal_event IS NULL OR terminal_event = ?)`,
         )
-        .run(JSON.stringify(envelope), now, Number(started), terminalEvent, code);
+        .run(JSON.stringify(envelope), now, Number(started), terminalEvent, code, terminalEvent);
       if (update.changes !== 1) throw new Error("Room disappeared during commit.");
       const insert = this.db.prepare(
         "INSERT OR IGNORE INTO game_events (room_code, type, mode, occurred_at, test) VALUES (?, ?, 'online', ?, ?)",
@@ -161,6 +187,11 @@ export class RoomDatabase {
 
   recordHotseatEvent(gameId: string, type: "completed" | "lost", now: string): void {
     this.db.transaction(() => {
+      const existing = this.db
+        .prepare("SELECT 1 AS present FROM game_events WHERE room_code = ? AND mode = 'hotseat'")
+        .get(gameId) as { present: number } | undefined;
+      if (!existing && this.countHotseatRows() >= HOTSEAT_ROW_CAP)
+        throw new HotseatStorageFullError();
       this.db
         .prepare(
           `INSERT OR IGNORE INTO rooms
@@ -178,9 +209,7 @@ export class RoomDatabase {
 
   markAbandoned(before: string, now: string): number {
     const rooms = this.db
-      .prepare(
-        "SELECT code, test FROM rooms WHERE started = 1 AND terminal_event IS NULL AND last_active_at < ?",
-      )
+      .prepare("SELECT code, test FROM rooms WHERE terminal_event IS NULL AND last_active_at < ?")
       .all(before) as { code: string; test: number }[];
     this.db.transaction(() => {
       for (const room of rooms) {

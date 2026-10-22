@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PlayerSnapshot } from "@clave/engine";
 
 export type ChoreographyMode = "position" | "move" | "flourish";
@@ -47,6 +47,8 @@ export function DancerDemo({ view, onClose }: { view: PlayerSnapshot; onClose: (
   const [mode, setMode] = useState<ChoreographyMode>(initialMode);
   const activeCard = liveCard(view, mode) ?? fallbackCards[mode];
 
+  const closeButton = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -54,6 +56,16 @@ export function DancerDemo({ view, onClose }: { view: PlayerSnapshot; onClose: (
     window.addEventListener("keydown", closeOnEscape);
     return () => window.removeEventListener("keydown", closeOnEscape);
   }, [onClose]);
+
+  // Read during the first render, before the table behind the dialog turns inert.
+  const [returnFocus] = useState(() => document.activeElement);
+
+  useEffect(() => {
+    closeButton.current?.focus();
+    return () => {
+      if (returnFocus instanceof HTMLElement) returnFocus.focus();
+    };
+  }, [returnFocus]);
 
   return (
     <div className="dancer-demo-overlay" role="presentation" onClick={onClose}>
@@ -69,7 +81,7 @@ export function DancerDemo({ view, onClose }: { view: PlayerSnapshot; onClose: (
             <small>Choreography prototype</small>
             <h2 id="dancer-demo-title">Watch the partnership</h2>
           </div>
-          <button type="button" className="dancer-demo-close" onClick={onClose}>
+          <button ref={closeButton} type="button" className="dancer-demo-close" onClick={onClose}>
             Close
           </button>
         </header>
