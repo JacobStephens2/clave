@@ -29,7 +29,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
             ×
           </button>
         </header>
-        <div className="spotify-embed" />
         <p role="status">The embedded player could not load. Open the recording in Spotify.</p>
         <footer>
           <span>Ambient only · play on one speaker</span>
@@ -52,7 +51,6 @@ export function MusicButton({ compact = false }: { compact?: boolean }) {
       className={`music-button ${compact ? "compact" : ""}`}
       onClick={music.openPlayer}
       aria-label="Open Llorarás"
-      aria-pressed={false}
     >
       <span className="music-button-icon" aria-hidden="true">
         ♪

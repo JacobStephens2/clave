@@ -20,8 +20,8 @@ export function serveClientAssets(clientDist: string): MiddlewareHandler {
       return context.json({ service: "clave", message: "Client assets have not been built yet." });
     }
     const requested = context.req.path === "/" ? "index.html" : context.req.path.slice(1);
-    const safePath = requested.includes("..") ? "index.html" : requested;
-    const candidate = join(clientDist, safePath);
+    const relativePath = requested.includes("..") ? "index.html" : requested;
+    const candidate = join(clientDist, relativePath);
     const path = existsSync(candidate) ? candidate : join(clientDist, "index.html");
     const body = await readFile(path);
     const headers: Record<string, string> = {

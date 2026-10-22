@@ -34,4 +34,16 @@ describe("Llorarás music player", () => {
     const link = host.querySelector<HTMLAnchorElement>(`a[href="${LLORARAS_URL}"]`);
     expect(link?.textContent).toContain("Open in Spotify");
   });
+
+  it("opens Llorarás as a command, not a pressed toggle or an empty embed well", async () => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    root = createRoot(host);
+    await act(async () => {
+      root?.render(createElement(MusicProvider, null, createElement(MusicButton)));
+    });
+    const button = host.querySelector("button");
+    expect(button?.getAttribute("aria-pressed")).toBeNull();
+    expect(host.querySelector(".spotify-embed")).toBeNull();
+  });
 });
