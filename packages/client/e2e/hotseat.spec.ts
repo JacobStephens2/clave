@@ -95,59 +95,36 @@ test("makes the rulebook accessible from home and live play", async ({ page }) =
   await expect(gameRules).toBeFocused();
 });
 
-test("starts and pauses ambient Llorarás playback across screens", async ({ page }) => {
-  await page.route("https://open.spotify.com/embed/iframe-api/v1", async (route) => {
-    await route.fulfill({
-      contentType: "text/javascript",
-      body: `
-        window.onSpotifyIframeApiReady({
-          createController(element, options, callback) {
-            const listeners = {};
-            element.dataset.spotifyUri = options.uri;
-            callback({
-              addListener(event, listener) { listeners[event] = listener; },
-              destroy() {},
-              pause() { listeners.playback_update?.({ data: { isPaused: true } }); },
-              resume() {
-                listeners.playback_started?.({ data: {} });
-                listeners.playback_update?.({ data: { isPaused: false } });
-              },
-            });
-            setTimeout(() => listeners.ready?.({ data: {} }), 0);
-          },
-        });
-      `,
-    });
+test("offers Llorarás in Spotify when the embedded player is not loaded", async ({ page }) => {
+  const spotifyScripts: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().startsWith("https://open.spotify.com/embed/iframe-api/"))
+      spotifyScripts.push(request.url());
   });
   await page.goto("/");
 
   const drawer = page.getByRole("complementary", { name: "Llorarás music player" });
-  const play = page.getByRole("button", { name: "Play Llorarás" });
-  await expect(play).toBeEnabled();
+  const open = page.getByRole("button", { name: "Open Llorarás" });
+  await expect(open).toBeEnabled();
   await expect(drawer).toBeHidden();
-  await play.click();
+  await open.click();
 
   await expect(drawer).toBeVisible();
-  await expect(page.getByRole("button", { name: "Pause Llorarás" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
+  await expect(drawer.getByRole("status")).toHaveText(
+    "The embedded player could not load. Open the recording in Spotify.",
   );
-  await expect(page.locator(".spotify-embed")).toHaveAttribute(
-    "data-spotify-uri",
-    "spotify:track:5SsgnRkcr4ogLB9rcW61tf",
+  await expect(drawer.getByRole("link", { name: /Open in Spotify/ })).toHaveAttribute(
+    "href",
+    "https://open.spotify.com/track/5SsgnRkcr4ogLB9rcW61tf",
   );
+  expect(spotifyScripts).toEqual([]);
   await page.getByRole("button", { name: "Hide music player" }).click();
   await expect(drawer).toBeHidden();
 
   await page.getByRole("button", { name: /Pass & play/ }).click();
   await acceptPass(page, "Lead");
-  const gamePause = page.getByRole("button", { name: "Pause Llorarás" });
-  await expect(gamePause).toBeVisible();
-  await gamePause.click();
-  await expect(page.getByRole("button", { name: "Play Llorarás" })).toHaveAttribute(
-    "aria-pressed",
-    "false",
-  );
+  await expect(page.getByRole("button", { name: "Open Llorarás" })).toBeVisible();
+  expect(spotifyScripts).toEqual([]);
 });
 
 test("plays procedural game cues and remembers the sound-effects preference", async ({ page }) => {

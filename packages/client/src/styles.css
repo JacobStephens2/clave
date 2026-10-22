@@ -177,18 +177,10 @@ button {
   flex-wrap: wrap;
   gap: 9px;
 }
-.music-button:hover:not(:disabled) {
+.music-button:hover {
   transform: translateY(-1px);
   border-color: var(--gold);
   background: rgba(217, 164, 65, 0.18);
-}
-.music-button:disabled {
-  cursor: wait;
-  opacity: 0.55;
-}
-.music-button.playing {
-  border-color: var(--coral);
-  background: rgba(217, 93, 82, 0.15);
 }
 .music-button-icon {
   width: 28px;
@@ -201,13 +193,6 @@ button {
   font-family: Georgia, serif;
   font-size: 16px;
   line-height: 1;
-}
-.music-button.playing .music-button-icon {
-  background: var(--coral);
-  font-family: inherit;
-  font-size: 12px;
-  letter-spacing: -0.18em;
-  padding-right: 2px;
 }
 .sound-effects-button {
   min-height: 46px;
@@ -656,16 +641,6 @@ button {
   color: var(--muted);
   font-family: Georgia, serif;
   font-size: 18px;
-}
-.spotify-embed {
-  width: 100%;
-  min-height: 152px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: #121212;
-}
-.spotify-embed iframe {
-  display: block;
 }
 .rhythm-mark {
   aspect-ratio: 1;
