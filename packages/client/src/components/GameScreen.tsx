@@ -616,7 +616,7 @@ function TurnActions({
   onCleanup,
   cleanupPending,
   telling,
-  cancelPendingPosition,
+  returnStagedPosition,
   invite,
   partnerAway,
 }: {
@@ -625,7 +625,7 @@ function TurnActions({
   onCleanup: (action: CleanupAction) => void;
   cleanupPending: boolean;
   telling: DanceTelling | null;
-  cancelPendingPosition: () => void;
+  returnStagedPosition: () => void;
   /** The room code to share while the partner's seat is still empty. */
   invite: string | null;
   /** The online partner's device has dropped away. */
@@ -711,7 +711,7 @@ function TurnActions({
         )}
         <div className="button-row wrap">
           {telling.controls.kind === "return" ? (
-            <button type="button" className="button outline" onClick={cancelPendingPosition}>
+            <button type="button" className="button outline" onClick={returnStagedPosition}>
               {telling.controls.label}
             </button>
           ) : (
@@ -2000,7 +2000,7 @@ export function GameScreen() {
             onCleanup={cleanupTurn}
             cleanupPending={Boolean(cleanupFlight)}
             telling={step.telling}
-            cancelPendingPosition={returnStagedPosition}
+            returnStagedPosition={returnStagedPosition}
             invite={
               mode === "online" && partnerPresence === "absent" ? (onlineSeat?.code ?? null) : null
             }

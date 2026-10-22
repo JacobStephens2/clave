@@ -83,7 +83,9 @@ export interface DanceStep {
 }
 
 type OpeningAction = Extract<GameAction, { type: "PLAY_OPEN" }>;
-type StepMoment = "staged" | "opening" | "move" | "transition" | "flourish" | "finish" | "away";
+type StepMoment = "staged" | "opening" | "move" | "transition" | "flourish" | "finish" | "not-step";
+
+type AfterMove = "both" | "transition" | "flourish" | "neither";
 
 const isViewersDanceStep = (view: PlayerSnapshot) =>
   view.status === "playing" && view.phase === "dance" && view.activeRole === view.viewerRole;
@@ -298,18 +300,29 @@ function countHint(view: PlayerSnapshot): string {
   return `${name}\u2019s 8-count`;
 }
 
+/** Transition, Flourish, both, or neither. Heading and instruction share this. */
+function afterMove(view: PlayerSnapshot): AfterMove {
+  const transition = view.legalActions.some((action) => action.type === "TRANSITION");
+  const flourish = view.legalActions.some((action) => action.type === "PLAY_FLOURISH");
+  if (transition && flourish) return "both";
+  if (transition) return "transition";
+  if (flourish) return "flourish";
+  return "neither";
+}
+
 /**
  * Staged Position, else a legal opening, else a Move still to play, else a legal
  * Transition, else a legal Flourish, else nothing left. Outside this viewer's
  * dance step none of those drops apply.
  */
 function stepMoment(view: PlayerSnapshot, intent: TurnIntent): StepMoment {
-  if (!isViewersDanceStep(view)) return "away";
+  if (!isViewersDanceStep(view)) return "not-step";
   if (intent.stagedPositionId !== null) return "staged";
   if (openingActions(view).length > 0) return "opening";
   if (view.table.position && view.turn.moveCardId === null) return "move";
-  if (view.legalActions.some((action) => action.type === "TRANSITION")) return "transition";
-  if (view.legalActions.some((action) => action.type === "PLAY_FLOURISH")) return "flourish";
+  const next = afterMove(view);
+  if (next === "transition" || next === "both") return "transition";
+  if (next === "flourish") return "flourish";
   return "finish";
 }
 
@@ -328,12 +341,12 @@ function floorHintFor(view: PlayerSnapshot, moment: StepMoment): string {
     case "flourish":
       return "Now drag a highlighted Flourish here";
     case "finish":
-    case "away":
+    case "not-step":
       return countHint(view);
   }
 }
 
-function headingFor(moment: Exclude<StepMoment, "away">): string {
+function headingFor(moment: Exclude<StepMoment, "not-step">): string {
   switch (moment) {
     case "staged":
       return "Complete the opening";
@@ -359,15 +372,16 @@ function instructionFor(view: PlayerSnapshot, moment: StepMoment): string | null
       : `No Move in your hand includes ${floorPosition}. Dance the basic or Stumble below.`;
   }
   if (view.turn.moveCardId === null) return null;
-  const transition = view.legalActions.some((action) => action.type === "TRANSITION");
-  const flourish = view.legalActions.some((action) => action.type === "PLAY_FLOURISH");
-  if (transition && flourish)
-    return "Your Move is on the floor. Add a highlighted Position or Flourish, or finish.";
-  if (transition)
-    return "Your Move is on the floor. Add a highlighted Position, or finish the 8-count.";
-  if (flourish)
-    return "Your Move is on the floor. Add a highlighted Flourish, or finish the 8-count.";
-  return "Your Move is on the floor. Finish the 8-count when you\u2019re ready.";
+  switch (afterMove(view)) {
+    case "both":
+      return "Your Move is on the floor. Add a highlighted Position or Flourish, or finish.";
+    case "transition":
+      return "Your Move is on the floor. Add a highlighted Position, or finish the 8-count.";
+    case "flourish":
+      return "Your Move is on the floor. Add a highlighted Flourish, or finish the 8-count.";
+    case "neither":
+      return "Your Move is on the floor. Finish the 8-count when you\u2019re ready.";
+  }
 }
 
 function openingGuide(view: PlayerSnapshot, stagedCard: CardView | null): string | null {
@@ -442,7 +456,7 @@ export function readDanceStep(view: PlayerSnapshot, intent: TurnIntent): DanceSt
     acceptsDrop: offers.some((offer) => offer.draggable),
     offers,
     telling:
-      moment === "away"
+      moment === "not-step"
         ? null
         : {
             heading: headingFor(moment),

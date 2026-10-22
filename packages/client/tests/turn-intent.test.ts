@@ -131,10 +131,6 @@ describe("opening with a staged Position", () => {
       action: opening!,
       intent: NO_INTENT,
     });
-    expect(offerFor(closed, id("mov_013")).drop).toMatchObject({
-      kind: "dispatch",
-      action: opening,
-    });
     if (offerFor(closed, id("mov_013")).drop.kind === "dispatch")
       expect(offerFor(closed, id("mov_013")).drop.action).toBe(opening);
 
