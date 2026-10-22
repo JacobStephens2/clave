@@ -181,9 +181,7 @@ export class RoomDatabase {
 
   markAbandoned(before: string, now: string): number {
     const rooms = this.db
-      .prepare(
-        "SELECT code, test FROM rooms WHERE started = 1 AND terminal_event IS NULL AND last_active_at < ?",
-      )
+      .prepare("SELECT code, test FROM rooms WHERE terminal_event IS NULL AND last_active_at < ?")
       .all(before) as { code: string; test: number }[];
     this.db.transaction(() => {
       for (const room of rooms) {

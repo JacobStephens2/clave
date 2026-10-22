@@ -71,6 +71,46 @@ describe("authoritative room persistence", () => {
     database.close();
   });
 
+  it("abandons an idle room that never started and frees its place on the floor", () => {
+    const database = new RoomDatabase(":memory:");
+    const rooms = new RoomManager(database);
+    const seats = Array.from({ length: 50 }, () => rooms.create("lead", true));
+    expect(() => rooms.create("lead", true)).toThrow(/full/);
+
+    const stillWaiting = seats[0]!;
+    const idle = seats.slice(1);
+    const backdate = (code: string, lastActiveAt: string) => {
+      const record = database.getRoom(code)!;
+      expect(record.started).toBe(false);
+      database.commitEnvelope(
+        record.code,
+        record.envelope,
+        lastActiveAt,
+        [],
+        record.started,
+        record.terminalEvent,
+        record.test,
+      );
+    };
+    // Sweep at 2026-10-22T00:00:00.000Z keeps the 72-hour cutoff of 2026-10-19T00:00:00.000Z.
+    backdate(stillWaiting.code, "2026-10-21T00:00:00.000Z");
+    for (const seat of idle) backdate(seat.code, "2026-10-18T00:00:00.000Z");
+
+    expect(database.markAbandoned("2026-10-19T00:00:00.000Z", "2026-10-22T00:00:00.000Z")).toBe(49);
+    expect(database.getRoom(stillWaiting.code)).toMatchObject({
+      started: false,
+      terminalEvent: null,
+    });
+    for (const seat of idle) {
+      expect(database.getRoom(seat.code)).toMatchObject({
+        started: false,
+        terminalEvent: "abandoned",
+      });
+    }
+    expect(() => rooms.create("lead", true)).not.toThrow();
+    database.close();
+  });
+
   it("resumes a version-mismatched active room from its stored snapshot", () => {
     const database = new RoomDatabase(":memory:");
     const rooms = new RoomManager(database);
