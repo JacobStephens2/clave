@@ -142,22 +142,22 @@ function openingRefusal(
 ): string | null {
   const card = cards[instance.cardId]!;
   const opposite = card.type === "position" ? "move" : "position";
-  const partners = hand.filter((other) => cards[other.cardId]?.type === opposite);
-  if (partners.length === 0) return "POSITION_MISMATCH";
+  const oppositeCards = hand.filter((other) => cards[other.cardId]?.type === opposite);
+  if (oppositeCards.length === 0) return "POSITION_MISMATCH";
   let shared: string | null = null;
-  for (const partner of partners) {
+  for (const oppositeCard of oppositeCards) {
     const action: GameAction =
       card.type === "position"
         ? {
             type: "PLAY_OPEN",
             role,
             positionInstanceId: instance.instanceId,
-            moveInstanceId: partner.instanceId,
+            moveInstanceId: oppositeCard.instanceId,
           }
         : {
             type: "PLAY_OPEN",
             role,
-            positionInstanceId: partner.instanceId,
+            positionInstanceId: oppositeCard.instanceId,
             moveInstanceId: instance.instanceId,
           };
     const code = refusalCode(state, action, contentSet);
