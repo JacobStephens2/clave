@@ -20,7 +20,6 @@ import {
   type GameState,
   type Market,
   type PlayerState,
-  type ResumeEnvelope,
   type Role,
   type TurnCheckpoint,
   type TurnDance,
@@ -1104,42 +1103,21 @@ export function legalActions(
   );
 }
 
-export function createEnvelope(
-  state: GameState,
-  contentBytes: string,
-  actions: GameAction[] = [],
-): ResumeEnvelope {
-  return {
-    engineVersion: state.engineVersion,
-    contentHash: state.contentHash,
-    contentBytes,
-    seed: state.seed,
-    actions: clone(actions),
-    state: clone(state),
-  };
-}
-
-export function applyEnvelopeAction(
-  envelope: ResumeEnvelope,
-  action: GameAction,
-  contentSet: ContentSet = defaultContent,
-):
-  { ok: true; envelope: ResumeEnvelope } | { ok: false; error: { code: string; message: string } } {
-  const result = applyAction(envelope.state, action, contentSet);
-  if (!result.ok) return result;
-  return {
-    ok: true,
-    envelope: { ...envelope, actions: [...envelope.actions, clone(action)], state: result.state },
-  };
-}
-
 export function replayActions(
   options: CreateGameOptions,
   actions: readonly GameAction[],
 ): ApplyResult {
-  let state = createGame(options);
+  return replayFrom(createGame(options), actions, options.content);
+}
+
+export function replayFrom(
+  origin: GameState,
+  actions: readonly GameAction[],
+  contentSet: ContentSet = defaultContent,
+): ApplyResult {
+  let state = origin;
   for (const action of actions) {
-    const result = applyAction(state, action, options.content);
+    const result = applyAction(state, action, contentSet);
     if (!result.ok) return result;
     state = result.state;
   }

@@ -179,6 +179,20 @@ export const GameActionSchema = z.discriminatedUnion("type", [
 ]);
 export type GameAction = z.infer<typeof GameActionSchema>;
 
+export const RetiredLogSchema = z.object({
+  engineVersion: z.number().int().positive(),
+  reason: z.enum(["pre-upgrade", "replay-mismatch", "unresumable"]),
+  // Verbatim: never parsed with the running action schema, never replayed.
+  actions: z.array(z.unknown()),
+});
+export type RetiredLog = z.infer<typeof RetiredLogSchema>;
+
+export const ReplayOriginSchema = z.object({
+  state: GameStateSchema,
+  retiredLogs: z.array(RetiredLogSchema),
+});
+export type ReplayOrigin = z.infer<typeof ReplayOriginSchema>;
+
 export const ResumeEnvelopeSchema = z.object({
   engineVersion: z.number().int().positive(),
   contentHash: z.string().regex(/^[a-f0-9]{64}$/),
@@ -186,6 +200,8 @@ export const ResumeEnvelopeSchema = z.object({
   seed: z.number().int().nonnegative(),
   actions: z.array(GameActionSchema),
   state: GameStateSchema,
+  // Absent: the live log replays from a new game built from the seed.
+  origin: ReplayOriginSchema.optional(),
 });
 export type ResumeEnvelope = z.infer<typeof ResumeEnvelopeSchema>;
 

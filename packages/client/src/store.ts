@@ -1,12 +1,9 @@
-import { content, contentBytes, contentHash, verifyContentHash } from "@clave/content";
 import {
   ENGINE_VERSION,
-  GameStateSchema,
-  ResumeEnvelopeSchema,
   applyEnvelopeAction,
   createEnvelope,
-  createGame,
-  snapshotFor,
+  envelopeSnapshot,
+  rehydrateEnvelope,
   type GameAction,
   type PlayerSnapshot,
   type ResumeEnvelope,
@@ -84,20 +81,18 @@ function readOnlineSeat(): OnlineSeat | null {
   return null;
 }
 
+// The saved game, rehydrated. A save that rehydration changed is written back; an unresumable
+// one counts as no save.
 function readHotseat(): ResumeEnvelope | null {
   try {
     const raw = localStorage.getItem(HOTSEAT_KEY);
     if (!raw) return null;
-    const parsed = ResumeEnvelopeSchema.safeParse(JSON.parse(raw));
-    if (!parsed.success) return null;
-    verifyContentHash(parsed.data.contentBytes, parsed.data.contentHash);
-    if (parsed.data.engineVersion === ENGINE_VERSION) return parsed.data;
-    const state = GameStateSchema.safeParse(parsed.data.state);
-    if (!state.success) return null;
-    state.data.engineVersion = ENGINE_VERSION;
-    const upgraded = { ...parsed.data, engineVersion: ENGINE_VERSION, state: state.data };
-    localStorage.setItem(HOTSEAT_KEY, JSON.stringify(upgraded));
-    return upgraded;
+    const { kind, envelope, detail } = rehydrateEnvelope(JSON.parse(raw));
+    if (kind !== "resumed") {
+      localStorage.setItem(HOTSEAT_KEY, JSON.stringify(envelope));
+      console.warn(`[clave] hot-seat save ${kind}: ${detail}`);
+    }
+    return envelope.state.status === "unresumable" ? null : envelope;
   } catch {
     return null;
   }
@@ -215,15 +210,14 @@ export const useAppStore = create<AppStore>((set, get) => {
     newHotseat: () => {
       closeSocket();
       const seed = randomSeed();
-      const state = createGame({ seed, gameId: `hot-${seed}`, content, contentHash });
-      const envelope = createEnvelope(state, contentBytes);
+      const envelope = createEnvelope({ seed, gameId: `hot-${seed}` });
       localStorage.setItem(HOTSEAT_KEY, JSON.stringify(envelope));
       set({
         screen: "game",
         mode: "hotseat",
         envelope,
         viewerRole: "lead",
-        snapshot: snapshotFor(state, "lead", content),
+        snapshot: envelopeSnapshot(envelope, "lead"),
         passTo: "lead",
         error: null,
         hasHotseatResume: true,
@@ -237,14 +231,13 @@ export const useAppStore = create<AppStore>((set, get) => {
         set({ error: "That saved dance can no longer be resumed.", hasHotseatResume: false });
         return;
       }
-      const contentSet = verifyContentHash(envelope.contentBytes, envelope.contentHash);
       const role = desiredRole(envelope);
       set({
         screen: "game",
         mode: "hotseat",
         envelope,
         viewerRole: role,
-        snapshot: snapshotFor(envelope.state, role, contentSet),
+        snapshot: envelopeSnapshot(envelope, role),
         passTo: role,
         error: null,
         connection: "offline",
@@ -260,12 +253,7 @@ export const useAppStore = create<AppStore>((set, get) => {
       const envelope = get().envelope;
       const role = get().passTo;
       if (!envelope || !role) return;
-      const contentSet = verifyContentHash(envelope.contentBytes, envelope.contentHash);
-      set({
-        viewerRole: role,
-        snapshot: snapshotFor(envelope.state, role, contentSet),
-        passTo: null,
-      });
+      set({ viewerRole: role, snapshot: envelopeSnapshot(envelope, role), passTo: null });
     },
 
     dispatch: (action) => {
@@ -280,9 +268,8 @@ export const useAppStore = create<AppStore>((set, get) => {
       }
       const envelope = get().envelope;
       if (!envelope) return;
-      const contentSet = verifyContentHash(envelope.contentBytes, envelope.contentHash);
       const beforeRole = desiredRole(envelope);
-      const result = applyEnvelopeAction(envelope, action, contentSet);
+      const result = applyEnvelopeAction(envelope, action);
       if (!result.ok) {
         set({ error: result.error.message });
         return;
@@ -296,7 +283,7 @@ export const useAppStore = create<AppStore>((set, get) => {
           ? afterRole
           : null;
       const viewer = passTo ? get().viewerRole : afterRole;
-      const snapshot = snapshotFor(result.envelope.state, viewer, contentSet);
+      const snapshot = envelopeSnapshot(result.envelope, viewer);
       set({ envelope: result.envelope, snapshot, passTo, error: null });
       completionBeacon(result.envelope);
     },

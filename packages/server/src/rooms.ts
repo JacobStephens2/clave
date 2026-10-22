@@ -1,20 +1,14 @@
 import { randomBytes } from "node:crypto";
-import { contentBytes, verifyContentHash } from "@clave/content";
 import {
-  ENGINE_VERSION,
-  GameStateSchema,
-  ResumeEnvelopeSchema,
   applyEnvelopeAction,
   createEnvelope,
-  createGame,
-  replayActions,
-  snapshotFor,
+  envelopeSnapshot,
+  rehydrateEnvelope,
   type GameAction,
   type PlayerSnapshot,
   type Role,
 } from "@clave/engine";
-import { canonicalStringify } from "@clave/content";
-import type { GameEventType, RoomDatabase, RoomRecord } from "./database.js";
+import type { GameEventType, RoomDatabase, RoomRecord, StoredRoom } from "./database.js";
 
 const now = (): string => new Date().toISOString();
 const token = (): string => randomBytes(16).toString("base64url");
@@ -31,8 +25,8 @@ export class RoomManager {
   private readonly rooms = new Map<string, RoomRecord>();
 
   constructor(readonly database: RoomDatabase) {
-    for (const record of database.listActiveRooms())
-      this.rooms.set(record.code, this.rehydrate(record));
+    for (const stored of database.listActiveRooms())
+      this.rooms.set(stored.code, this.rehydrate(stored));
   }
 
   create(role: Role, test = false): SeatCredentials {
@@ -42,12 +36,10 @@ export class RoomManager {
     let code = roomCode();
     while (this.database.getRoom(code)) code = roomCode();
     const seatToken = token();
-    const gameSeed = seed();
-    const game = createGame({ seed: gameSeed, gameId: code });
     const timestamp = now();
     const record: RoomRecord = {
       code,
-      envelope: createEnvelope(game, contentBytes),
+      envelope: createEnvelope({ seed: seed(), gameId: code }),
       leadToken: role === "lead" ? seatToken : null,
       followToken: role === "follow" ? seatToken : null,
       createdAt: timestamp,
@@ -94,8 +86,7 @@ export class RoomManager {
 
   snapshot(code: string, role: Role, seatToken: string): PlayerSnapshot {
     const room = this.authenticate(code, role, seatToken);
-    const content = verifyContentHash(room.envelope.contentBytes, room.envelope.contentHash);
-    return snapshotFor(room.envelope.state, role, content);
+    return envelopeSnapshot(room.envelope, role);
   }
 
   action(
@@ -116,8 +107,7 @@ export class RoomManager {
       throw new Error("Your game state is ahead of the server. Reload the room.");
     if (action.role !== role)
       throw new Error("An action cannot be submitted for your partner's seat.");
-    const content = verifyContentHash(room.envelope.contentBytes, room.envelope.contentHash);
-    const result = applyEnvelopeAction(room.envelope, action, content);
+    const result = applyEnvelopeAction(room.envelope, action);
     if (!result.ok) throw new Error(result.error.message);
 
     const events: GameEventType[] = [];
@@ -148,15 +138,14 @@ export class RoomManager {
     room.envelope = result.envelope;
     room.lastActiveAt = timestamp;
     room.terminalEvent = terminalEvent;
-    return { snapshot: snapshotFor(room.envelope.state, role, content), duplicate: false };
+    return { snapshot: envelopeSnapshot(room.envelope, role), duplicate: false };
   }
 
   snapshotsForRoom(code: string): Partial<Record<Role, PlayerSnapshot>> {
     const room = this.get(code);
-    const content = verifyContentHash(room.envelope.contentBytes, room.envelope.contentHash);
     return {
-      ...(room.leadToken ? { lead: snapshotFor(room.envelope.state, "lead", content) } : {}),
-      ...(room.followToken ? { follow: snapshotFor(room.envelope.state, "follow", content) } : {}),
+      ...(room.leadToken ? { lead: envelopeSnapshot(room.envelope, "lead") } : {}),
+      ...(room.followToken ? { follow: envelopeSnapshot(room.envelope, "follow") } : {}),
     };
   }
 
@@ -167,74 +156,39 @@ export class RoomManager {
   }
 
   private get(code: string): RoomRecord {
-    const room = this.rooms.get(code) ?? this.database.getRoom(code);
-    if (!room) throw new Error("Room not found.");
+    const loaded = this.rooms.get(code);
+    if (loaded) return loaded;
+    const stored = this.database.getRoom(code);
+    if (!stored) throw new Error("Room not found.");
+    const room = this.rehydrate(stored);
     this.rooms.set(code, room);
     return room;
   }
 
-  private rehydrate(record: RoomRecord): RoomRecord {
-    const parsedEnvelope = ResumeEnvelopeSchema.safeParse(record.envelope);
-    if (!parsedEnvelope.success)
-      return this.unresumable(record, "Stored resume envelope is invalid.");
-    const envelope = parsedEnvelope.data;
-    let content;
-    try {
-      content = verifyContentHash(envelope.contentBytes, envelope.contentHash);
-    } catch {
-      return this.unresumable(record, "Stored content does not match its hash.");
+  /**
+   * Every room loaded from the database comes through here. A rehydration that changed the
+   * envelope is committed before the room serves anything, keeping its last-active time and any
+   * terminal event it already has.
+   */
+  private rehydrate(stored: StoredRoom): RoomRecord {
+    const { kind, envelope, detail } = rehydrateEnvelope(stored.envelope);
+    const room: RoomRecord = { ...stored, envelope };
+    if (kind === "resumed") return room;
+    console.error(`[clave] ${kind} in room ${room.code}: ${detail}`);
+    const events: GameEventType[] = [];
+    if (kind === "unresumable" && !room.terminalEvent) {
+      room.terminalEvent = "unresumable";
+      events.push("unresumable");
     }
-    if (envelope.engineVersion === ENGINE_VERSION) {
-      const replay = replayActions(
-        { seed: envelope.seed, gameId: record.code, content, contentHash: envelope.contentHash },
-        envelope.actions,
-      );
-      if (replay.ok && canonicalStringify(replay.state) !== canonicalStringify(envelope.state)) {
-        console.error(`[clave] replay mismatch in room ${record.code}; preserving stored snapshot`);
-      }
-      return record;
-    }
-    const state = GameStateSchema.safeParse(envelope.state);
-    if (!state.success)
-      return this.unresumable(record, "Stored state cannot be read by this release.");
-    state.data.engineVersion = ENGINE_VERSION;
-    record.envelope = { ...envelope, engineVersion: ENGINE_VERSION, state: state.data };
     this.database.commitEnvelope(
-      record.code,
-      record.envelope,
-      now(),
-      [],
-      record.started,
-      record.terminalEvent,
-      record.test,
+      room.code,
+      envelope,
+      room.lastActiveAt,
+      events,
+      room.started,
+      room.terminalEvent,
+      room.test,
     );
-    return record;
-  }
-
-  private unresumable(record: RoomRecord, reason: string): RoomRecord {
-    const state = GameStateSchema.safeParse(record.envelope.state);
-    if (state.success) {
-      state.data.status = "unresumable";
-      state.data.phase = "terminal";
-      state.data.terminalReason = reason;
-      record.envelope = { ...record.envelope, state: state.data };
-    } else {
-      const fallback = createGame({ seed: record.envelope.seed ?? 0, gameId: record.code });
-      fallback.status = "unresumable";
-      fallback.phase = "terminal";
-      fallback.terminalReason = reason;
-      record.envelope = createEnvelope(fallback, contentBytes);
-    }
-    record.terminalEvent = "unresumable";
-    this.database.commitEnvelope(
-      record.code,
-      record.envelope,
-      now(),
-      ["unresumable"],
-      record.started,
-      "unresumable",
-      record.test,
-    );
-    return record;
+    return room;
   }
 }

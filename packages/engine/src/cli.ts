@@ -1,16 +1,9 @@
 import { createInterface } from "node:readline/promises";
 import { stdin, stdout } from "node:process";
-import { content, contentBytes } from "@clave/content";
-import {
-  applyEnvelopeAction,
-  createEnvelope,
-  createGame,
-  snapshotFor,
-  type GameAction,
-} from "./index.js";
+import { applyEnvelopeAction, createEnvelope, envelopeSnapshot, type GameAction } from "./index.js";
 
 const terminal = createInterface({ input: stdin, output: stdout });
-let envelope = createEnvelope(createGame({ seed: 20260718, content }), contentBytes);
+let envelope = createEnvelope({ seed: 20260718 });
 
 console.log(
   "\nCLAVE · terminal table\nChoose a legal action by number. Ctrl-C leaves the dance.\n",
@@ -19,7 +12,7 @@ console.log(
 while (envelope.state.status === "setup" || envelope.state.status === "playing") {
   const role =
     envelope.state.status === "setup" ? envelope.state.setupRole : envelope.state.activeRole;
-  const view = snapshotFor(envelope.state, role, content);
+  const view = envelopeSnapshot(envelope, role);
   console.log(
     `\n${role.toUpperCase()} · ${view.phase} · Count ${Math.max(0, view.songIndex + 1)}/16`,
   );
@@ -39,7 +32,7 @@ while (envelope.state.status === "setup" || envelope.state.status === "playing")
     console.log("Choose one of the listed actions.");
     continue;
   }
-  const result = applyEnvelopeAction(envelope, action, content);
+  const result = applyEnvelopeAction(envelope, action);
   if (!result.ok) console.log(result.error.message);
   else envelope = result.envelope;
 }

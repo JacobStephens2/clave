@@ -27,6 +27,11 @@ export interface RoomRecord {
   test: boolean;
 }
 
+/** A room as stored. Its envelope stays untyped until rehydration turns it into a live one. */
+export interface StoredRoom extends Omit<RoomRecord, "envelope"> {
+  envelope: unknown;
+}
+
 interface RawRoom {
   code: string;
   envelope_json: string;
@@ -117,7 +122,7 @@ export class RoomDatabase {
       );
   }
 
-  getRoom(code: string): RoomRecord | null {
+  getRoom(code: string): StoredRoom | null {
     const row = this.db.prepare("SELECT * FROM rooms WHERE code = ?").get(code) as
       RawRoom | undefined;
     return row ? this.mapRoom(row) : null;
@@ -139,7 +144,7 @@ export class RoomDatabase {
     ).n;
   }
 
-  listActiveRooms(): RoomRecord[] {
+  listActiveRooms(): StoredRoom[] {
     return (
       this.db.prepare("SELECT * FROM rooms WHERE terminal_event IS NULL").all() as RawRoom[]
     ).map((row) => this.mapRoom(row));
@@ -229,10 +234,10 @@ export class RoomDatabase {
     this.db.close();
   }
 
-  private mapRoom(row: RawRoom): RoomRecord {
+  private mapRoom(row: RawRoom): StoredRoom {
     return {
       code: row.code,
-      envelope: JSON.parse(row.envelope_json) as ResumeEnvelope,
+      envelope: JSON.parse(row.envelope_json) as unknown,
       leadToken: row.lead_token,
       followToken: row.follow_token,
       createdAt: row.created_at,
