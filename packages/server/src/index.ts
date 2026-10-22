@@ -1,113 +1,17 @@
-import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
 import { GameActionSchema, ENGINE_VERSION, RoleSchema, type Role } from "@clave/engine";
-import { Hono } from "hono";
-import { cors } from "hono/cors";
 import { WebSocket, WebSocketServer } from "ws";
 import { z } from "zod";
-import { serveClientAssets } from "./client-assets.js";
+import { createApp } from "./app.js";
 import { RoomDatabase } from "./database.js";
+import { RoomCreateLimiter } from "./room-create-limit.js";
 import { RoomManager } from "./rooms.js";
 
 const port = Number.parseInt(process.env.PORT ?? "8787", 10);
 const hostname = process.env.HOST ?? "0.0.0.0";
 const database = new RoomDatabase();
 const rooms = new RoomManager(database);
-const app = new Hono();
-const clientDist = fileURLToPath(new URL("../../client/dist", import.meta.url));
-
-const createRequests = new Map<string, number[]>();
-
-app.use(
-  "/api/*",
-  cors({
-    origin: (origin) =>
-      !origin || origin.startsWith("http://localhost:") || origin.startsWith("http://127.0.0.1:")
-        ? origin
-        : "https://clave.dance",
-    allowHeaders: ["Content-Type", "X-Seat-Token"],
-  }),
-);
-
-app.get("/healthz", (context) =>
-  context.json({ ok: true, engineVersion: ENGINE_VERSION, service: "clave" }),
-);
-
-app.post("/api/rooms", async (context) => {
-  const ip = context.req.header("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
-  const recent = (createRequests.get(ip) ?? []).filter(
-    (timestamp) => Date.now() - timestamp < 60_000,
-  );
-  if (recent.length >= 10)
-    return context.json({ error: "Too many rooms created. Try again in a minute." }, 429);
-  recent.push(Date.now());
-  createRequests.set(ip, recent);
-  const body = z
-    .object({ role: RoleSchema, test: z.boolean().optional().default(false) })
-    .safeParse(await context.req.json().catch(() => ({})));
-  if (!body.success) return context.json({ error: "Choose Lead or Follow." }, 400);
-  try {
-    return context.json(rooms.create(body.data.role, body.data.test), 201);
-  } catch (error) {
-    return context.json(
-      { error: error instanceof Error ? error.message : "Could not create the room." },
-      400,
-    );
-  }
-});
-
-app.get("/api/rooms/:code", (context) => {
-  try {
-    return context.json({ availableRole: rooms.availableRole(context.req.param("code")) });
-  } catch (error) {
-    return context.json({ error: error instanceof Error ? error.message : "Room not found." }, 404);
-  }
-});
-
-app.post("/api/rooms/:code/join", async (context) => {
-  const body = z.object({ role: RoleSchema }).safeParse(await context.req.json().catch(() => ({})));
-  if (!body.success) return context.json({ error: "Choose Lead or Follow." }, 400);
-  try {
-    return context.json(rooms.join(context.req.param("code"), body.data.role));
-  } catch (error) {
-    return context.json(
-      { error: error instanceof Error ? error.message : "Could not join the room." },
-      400,
-    );
-  }
-});
-
-app.get("/api/rooms/:code/resume", (context) => {
-  const role = RoleSchema.safeParse(context.req.query("role"));
-  const seatToken = context.req.header("x-seat-token");
-  if (!role.success || !seatToken)
-    return context.json({ error: "Seat credentials are required." }, 401);
-  try {
-    return context.json({
-      snapshot: rooms.snapshot(context.req.param("code"), role.data, seatToken),
-    });
-  } catch (error) {
-    return context.json(
-      { error: error instanceof Error ? error.message : "Could not resume the room." },
-      401,
-    );
-  }
-});
-
-app.post("/api/events/hotseat", async (context) => {
-  const body = z
-    .object({ gameId: z.string().min(1).max(120), type: z.enum(["completed", "lost"]) })
-    .safeParse(await context.req.json().catch(() => ({})));
-  if (!body.success) return context.json({ error: "Invalid completion event." }, 400);
-  database.recordHotseatEvent(
-    `hotseat:${body.data.gameId}`,
-    body.data.type,
-    new Date().toISOString(),
-  );
-  return context.body(null, 204);
-});
-
-app.get("*", serveClientAssets(clientDist));
+const app = createApp({ rooms, database, limiter: new RoomCreateLimiter() });
 
 const server = serve({ fetch: app.fetch, port, hostname });
 const sockets = new WebSocketServer({ noServer: true });
