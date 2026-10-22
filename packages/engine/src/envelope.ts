@@ -256,19 +256,30 @@ function resumingFrom(
   };
 }
 
-/** The logs `stored` had already retired, then its live log, retired with `reason`. */
+/**
+ * The logs `stored` had already retired, then its live log, retired with `reason`.
+ * Version is the envelope's when that parses, otherwise the state's.
+ */
 function retiredLogsAfter(stored: unknown, reason: RetiredLog["reason"]): RetiredLog[] {
   const earlier = ReplayOriginSchema.pick({ retiredLogs: true }).safeParse(field(stored, "origin"));
-  const engineVersion = ResumeEnvelopeSchema.shape.engineVersion.safeParse(
+  const envelopeVersion = ResumeEnvelopeSchema.shape.engineVersion.safeParse(
     field(stored, "engineVersion"),
   );
+  const stateVersion = GameStateSchema.shape.engineVersion.safeParse(
+    field(field(stored, "state"), "engineVersion"),
+  );
+  const engineVersion = envelopeVersion.success
+    ? envelopeVersion.data
+    : stateVersion.success
+      ? stateVersion.data
+      : null;
   const actions = field(stored, "actions");
   return [
     ...(earlier.success ? earlier.data.retiredLogs : []),
-    ...(engineVersion.success
+    ...(engineVersion !== null
       ? [
           {
-            engineVersion: engineVersion.data,
+            engineVersion,
             reason,
             actions: Array.isArray(actions) ? actions : [],
           },

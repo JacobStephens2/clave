@@ -284,6 +284,19 @@ describe("resume envelope", () => {
       });
     });
 
+    it("retires the live log of an unresumable envelope whose envelope engineVersion does not parse", () => {
+      const envelope = played(6);
+      const result = rehydrateEnvelope(stored({ ...envelope, engineVersion: undefined }));
+      expect(result.kind).toBe("unresumable");
+      expect(result.envelope.origin?.retiredLogs).toContainEqual(
+        expect.objectContaining({
+          engineVersion: envelope.state.engineVersion,
+          reason: "unresumable",
+          actions: envelope.actions,
+        }),
+      );
+    });
+
     it("ends a stored state holding a card its content lacks as unresumable, and shows it", () => {
       const envelope = played(6);
       envelope.state.players.lead.hand.push({
