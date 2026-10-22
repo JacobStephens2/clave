@@ -5,6 +5,7 @@ import {
   type SongCard,
 } from "@clave/content";
 import { legalActions, refusalCode } from "./game.js";
+import { readSongPlace, type SongPhrase } from "./place.js";
 import type { CardInstance, GameAction, GameState, LogEntry, Role } from "./schemas.js";
 
 export interface CardView extends CardInstance {
@@ -43,6 +44,7 @@ export interface PlayerSnapshot {
     lessonCosts: ContentSet["rules"]["lessonCosts"];
     songLength: number;
     phraseLength: number;
+    phrases: readonly SongPhrase[];
     ratings: ContentSet["rules"]["ratings"];
   };
   cardCatalog: DanceCard[];
@@ -256,6 +258,7 @@ export function snapshotFor(
   const ratingDefinition = state.rating
     ? (contentSet.rules.ratings.find((entry) => entry.name === state.rating) ?? null)
     : null;
+  const place = readSongPlace(contentSet.song.cards, state.songIndex);
 
   return {
     engineVersion: state.engineVersion,
@@ -274,14 +277,15 @@ export function snapshotFor(
     rules: {
       maximumConnection: contentSet.rules.maximumConnection,
       lessonCosts: { ...contentSet.rules.lessonCosts },
-      songLength: contentSet.song.cards.length,
-      phraseLength: contentSet.song.cards.length / 2,
+      songLength: place.songLength,
+      phraseLength: place.phraseLength,
+      phrases: place.phrases.map((phrase) => ({ ...phrase })),
       ratings: contentSet.rules.ratings.map((rating) => ({ ...rating })),
     },
     cardCatalog: contentSet.cards.map((entry) => ({ ...entry })),
     phrase: {
       number: state.phrase.number,
-      count: state.songIndex < 0 ? 0 : (state.songIndex % (contentSet.song.cards.length / 2)) + 1,
+      count: place.at?.count ?? 0,
       stumbled: state.phrase.stumbled,
       positionsDancedFrom: [...state.phrase.positionsDancedFrom],
       flourishedBy: { ...state.phrase.flourishedBy },
@@ -290,7 +294,7 @@ export function snapshotFor(
     danceHistory: state.danceHistory.map((entry) => ({
       sequence: entry.sequence,
       phrase: entry.phrase,
-      count: (entry.songIndex % (contentSet.song.cards.length / 2)) + 1,
+      count: readSongPlace(contentSet.song.cards, entry.songIndex).at!.count,
       role: entry.role,
       outcome: entry.outcome,
       move: entry.moveCardId ? (cards[entry.moveCardId] ?? null) : null,

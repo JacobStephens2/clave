@@ -14,7 +14,7 @@ while (envelope.state.status === "setup" || envelope.state.status === "playing")
     envelope.state.status === "setup" ? envelope.state.setupRole : envelope.state.activeRole;
   const view = envelopeSnapshot(envelope, role);
   console.log(
-    `\n${role.toUpperCase()} · ${view.phase} · Count ${Math.max(0, view.songIndex + 1)}/16`,
+    `\n${role.toUpperCase()} · ${view.phase} · Count ${Math.max(0, view.songIndex + 1)}/${view.rules.songLength}`,
   );
   console.log(
     `Connection ${view.shared.connection} · Style ${view.shared.style} · $${view.self.money}`,

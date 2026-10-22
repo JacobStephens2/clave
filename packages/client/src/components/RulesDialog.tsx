@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from "react";
 import { content } from "@clave/content";
+import { readSongPlace } from "@clave/engine";
+import { useAppStore } from "../store.js";
 
 interface RulesContextValue {
   openRules: () => void;
@@ -20,8 +22,10 @@ function RulesDialog({ onClose }: { onClose: () => void }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const rules = content.rules;
-  const songLength = content.song.cards.length;
-  const phraseLength = songLength / 2;
+  const dance = useAppStore((state) => (state.screen === "game" ? state.snapshot : null));
+  const { songLength, phraseLength, phrases } = dance
+    ? dance.rules
+    : readSongPlace(content.song.cards, -1);
   const starterSize = content.decks.starter.reduce((total, entry) => total + entry.count, 0);
 
   useEffect(() => {
@@ -226,9 +230,9 @@ function RulesDialog({ onClose }: { onClose: () => void }) {
             <div>
               <h3>Follow the song</h3>
               <p>
-                Llorarás is two phrases of {phraseLength} 8-counts: the Cuerpo, then the Montuno.
-                Each song moment has a visible condition such as changing Position or playing a
-                Flourish.
+                Llorarás is two phrases of {phraseLength} 8-counts: the {phrases[0]!.section}, then
+                the {phrases[1]!.section}. Each song moment has a visible condition such as changing
+                Position or playing a Flourish.
               </p>
               <p>At the end of each phrase, clear the floor and score:</p>
               <ul>

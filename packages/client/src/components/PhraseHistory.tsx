@@ -3,7 +3,6 @@ import type { DanceCard as DanceCardDefinition } from "@clave/content";
 import type { DanceComboView, PlayerSnapshot, Role } from "@clave/engine";
 
 const roleName = (role: Role) => (role === "lead" ? "Lead" : "Follow");
-const phraseName = (phrase: number) => (phrase === 1 ? "Cuerpo" : "Montuno");
 
 function ComboThumbnail({
   card,
@@ -124,6 +123,8 @@ export function PhraseHistory({
   );
   const latestSequence = entries.reduce((latest, entry) => Math.max(latest, entry.sequence), 0);
   const currentCount = selectedPhrase === view.phrase.number ? view.phrase.count : null;
+  const phraseName = (phrase: number) =>
+    view.rules.phrases.find((entry) => entry.number === phrase)!.section;
 
   return (
     <section

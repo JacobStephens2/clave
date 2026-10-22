@@ -10,6 +10,7 @@ import {
   type MoveCard,
   type Position,
 } from "@clave/content";
+import { readSongPlace } from "./place.js";
 import { shuffle } from "./rng.js";
 import {
   ENGINE_VERSION,
@@ -262,12 +263,16 @@ function snapshotCheckpoint(state: GameState): TurnCheckpoint {
   });
 }
 
+function placeAt(contentSet: ContentSet, songIndex: number) {
+  return readSongPlace(contentSet.song.cards, songIndex).at;
+}
+
 function advancedLessonsOpen(state: GameState, contentSet: ContentSet): boolean {
-  return state.songIndex >= contentSet.song.cards.length / 2;
+  return placeAt(contentSet, state.songIndex)?.section === "Montuno";
 }
 
 function startTurn(state: GameState, role: Role, contentSet: ContentSet): void {
-  const advancedWereOpen = advancedLessonsOpen(state, contentSet);
+  const previousSection = placeAt(contentSet, state.songIndex)?.section;
   state.activeRole = role;
   state.phase = "dance";
   state.songIndex += 1;
@@ -278,7 +283,10 @@ function startTurn(state: GameState, role: Role, contentSet: ContentSet): void {
   state.turnDance = emptyTurnDance();
   state.signal = null;
   if (role === "lead") state.phrase.privateLessonTakenThisRound = false;
-  if (!advancedWereOpen && advancedLessonsOpen(state, contentSet)) {
+  if (
+    previousSection !== "Montuno" &&
+    placeAt(contentSet, state.songIndex)?.section === "Montuno"
+  ) {
     state.market.advancedDisplay.push(...takeDisplay(state.market.advancedDeck, 2));
     log(state, "system", "The montuno begins. Advanced lessons are now open.");
   }
@@ -504,14 +512,13 @@ function finishGame(state: GameState, contentSet: ContentSet): void {
 }
 
 function endPhraseOrTurn(state: GameState, role: Role, contentSet: ContentSet): void {
-  const phraseLength = contentSet.song.cards.length / 2;
-  const phraseEnd = (state.songIndex + 1) % phraseLength === 0;
-  if (phraseEnd) scorePhrase(state, contentSet);
-  if (state.songIndex === contentSet.song.cards.length - 1) {
+  const at = placeAt(contentSet, state.songIndex);
+  if (at?.phraseEnded) scorePhrase(state, contentSet);
+  if (at?.songEnded) {
     finishGame(state, contentSet);
     return;
   }
-  if (phraseEnd) {
+  if (at?.phraseEnded) {
     state.phrase = {
       number: 2,
       stumbled: false,
@@ -781,7 +788,7 @@ function checkPlayFlourish(
     state.turnDance.posePlayed = flourish.pose;
     state.turnDance.canTransition = false;
     state.phrase.flourishedBy[role] = true;
-    if (flourish.pose && (state.songIndex + 1) % (contentSet.song.cards.length / 2) === 0) {
+    if (flourish.pose && placeAt(contentSet, state.songIndex)?.phraseEnded) {
       state.phrase.poseOnFinalCount = true;
     }
     log(
