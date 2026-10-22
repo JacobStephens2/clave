@@ -5,6 +5,16 @@ import type { ResumeEnvelope, Role } from "@clave/engine";
 
 export type GameEventType = "game_started" | "completed" | "lost" | "abandoned" | "unresumable";
 
+// Stored hot-seat beacons only. Unfinished rooms keep their own floor of 50.
+const HOTSEAT_ROW_CAP = 50;
+
+export class HotseatStorageFullError extends Error {
+  constructor() {
+    super("Hot-seat storage is full.");
+    this.name = "HotseatStorageFullError";
+  }
+}
+
 export interface RoomRecord {
   code: string;
   envelope: ResumeEnvelope;
@@ -121,6 +131,14 @@ export class RoomDatabase {
     ).n;
   }
 
+  countHotseatRows(): number {
+    return (
+      this.db.prepare("SELECT COUNT(*) AS n FROM game_events WHERE mode = 'hotseat'").get() as {
+        n: number;
+      }
+    ).n;
+  }
+
   listActiveRooms(): RoomRecord[] {
     return (
       this.db.prepare("SELECT * FROM rooms WHERE terminal_event IS NULL").all() as RawRoom[]
@@ -164,6 +182,11 @@ export class RoomDatabase {
 
   recordHotseatEvent(gameId: string, type: "completed" | "lost", now: string): void {
     this.db.transaction(() => {
+      const existing = this.db
+        .prepare("SELECT 1 AS present FROM game_events WHERE room_code = ? AND mode = 'hotseat'")
+        .get(gameId) as { present: number } | undefined;
+      if (!existing && this.countHotseatRows() >= HOTSEAT_ROW_CAP)
+        throw new HotseatStorageFullError();
       this.db
         .prepare(
           `INSERT OR IGNORE INTO rooms
