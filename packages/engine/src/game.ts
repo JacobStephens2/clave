@@ -1027,12 +1027,17 @@ export function applyAction(
   }
 }
 
-function passesCheck(state: GameState, action: GameAction, contentSet: ContentSet): boolean {
+/** The reducer's failure code for `action`, or null when the check accepts it. */
+export function refusalCode(
+  state: GameState,
+  action: GameAction,
+  contentSet: ContentSet = defaultContent,
+): string | null {
   try {
     checkAction(state, action, contentSet);
-    return true;
+    return null;
   } catch (error) {
-    if (error instanceof RuleViolation) return false;
+    if (error instanceof RuleViolation) return error.code;
     throw error;
   }
 }
@@ -1099,7 +1104,8 @@ export function legalActions(
 ): GameAction[] {
   return candidateActions(state, role, contentSet).filter(
     (action) =>
-      passesCheck(state, action, contentSet) && (action.type !== "UNDO_TURN" || turnChanged(state)),
+      refusalCode(state, action, contentSet) === null &&
+      (action.type !== "UNDO_TURN" || turnChanged(state)),
   );
 }
 

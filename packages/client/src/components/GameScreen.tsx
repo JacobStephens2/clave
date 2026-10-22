@@ -7,6 +7,7 @@ import {
   floorDraggableIds,
   reconcileIntent,
   resolveDrop,
+  lessonUnavailableReason,
   stagedPosition,
   unavailableReason,
   type DropResolution,
@@ -114,22 +115,6 @@ function playLabel(play: DropResolution | null): string | undefined {
 function currentFloorPosition(view: PlayerSnapshot): Position | null {
   const card = view.table.position?.card;
   return card?.type === "position" ? card.position : null;
-}
-
-/** Why the viewer cannot take a lesson from `source` right now, or null when nothing explains it. */
-function lessonUnavailableReason(
-  view: PlayerSnapshot,
-  source: LessonBuyAction["source"],
-): string | null {
-  const cost = view.rules.lessonCosts[source];
-  if (view.status !== "playing" || view.activeRole !== view.viewerRole)
-    return "Learn on your turn, after you dance";
-  if (view.phase === "dance") return "Learn after you dance this 8-count";
-  if (view.turn.boughtLesson) return "You already took a lesson this turn";
-  if (source !== "beginner" && !view.market.privateLessonAvailable)
-    return "Private lesson already taken this round";
-  if (view.self.money < cost) return `Costs $${cost} · you have $${view.self.money}`;
-  return null;
 }
 
 /** What a screen reader hears when the turn or step changes. */
@@ -1906,7 +1891,8 @@ export function GameScreen() {
         (action): action is LessonBuyAction =>
           action.type === "BUY_LESSON" && action.source === source && action.cardId === card.id,
       );
-      if (!buy || lessonFlight) return { actions: [], note: lessonUnavailableReason(view, source) };
+      if (!buy || lessonFlight)
+        return { actions: [], note: lessonUnavailableReason(view, source, card.id) };
       return {
         actions: [
           {

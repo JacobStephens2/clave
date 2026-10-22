@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import {
   NO_INTENT,
   floorDraggableIds,
+  lessonUnavailableReason,
   reconcileIntent,
   resolveDrop,
   stagedPosition,
@@ -358,5 +359,101 @@ describe("unavailableReason on an empty floor", () => {
     ];
     const view = snapshotFor(state, "follow", content);
     expect(unavailableReason(view, NO_INTENT, "follow-mov_013")).toBeNull();
+  });
+
+  it("shows no sentence for a position-limit code", () => {
+    const view = snapshotFor(establishedState(), "lead", content);
+    view.floorRefusals = view.floorRefusals.map((entry) =>
+      entry.instanceId === id("pos_002") ? { ...entry, code: "POSITION_LIMIT" } : entry,
+    );
+    expect(unavailableReason(view, NO_INTENT, id("pos_002"))).toBeNull();
+  });
+});
+
+describe("lessonUnavailableReason", () => {
+  function lessonStep(): GameState {
+    return applyOk(establishedState(), { type: "END_DANCE", role: "lead" });
+  }
+
+  it("says to learn after the dance during the dance step", () => {
+    const view = snapshotFor(establishedState(), "lead", content);
+    const cardId = view.market.intermediate[0]!.id;
+    expect(lessonUnavailableReason(view, "intermediate", cardId)).toBe(
+      "Learn after you dance this 8-count",
+    );
+  });
+
+  it("says to learn on your own turn for the waiting partner", () => {
+    const view = snapshotFor(establishedState(), "follow", content);
+    const cardId = view.market.beginner[0]!.id;
+    expect(lessonUnavailableReason(view, "beginner", cardId)).toBe(
+      "Learn on your turn, after you dance",
+    );
+  });
+
+  it("shows the money sentence when the private lesson is also already taken", () => {
+    const state = lessonStep();
+    state.players.lead.money = 0;
+    state.phrase.privateLessonTakenThisRound = true;
+    const cardId = state.market.intermediateDisplay[0]!;
+    const view = snapshotFor(state, "lead", content);
+    expect(view.lessonRefusals).toContainEqual({
+      source: "intermediate",
+      cardId,
+      code: "NOT_ENOUGH_MONEY",
+    });
+    expect(lessonUnavailableReason(view, "intermediate", cardId)).toBe("Costs $2 · you have $0");
+  });
+
+  it("names the private lesson once the viewer can afford it", () => {
+    const state = lessonStep();
+    state.players.lead.money = 5;
+    state.phrase.privateLessonTakenThisRound = true;
+    const cardId = state.market.intermediateDisplay[0]!;
+    const view = snapshotFor(state, "lead", content);
+    expect(lessonUnavailableReason(view, "intermediate", cardId)).toBe(
+      "Private lesson already taken this round",
+    );
+  });
+
+  it("says the lesson was already taken this turn", () => {
+    let state = lessonStep();
+    state = applyOk(state, {
+      type: "BUY_LESSON",
+      role: "lead",
+      source: "beginner",
+      cardId: "flo_003",
+    });
+    const view = snapshotFor(state, "lead", content);
+    expect(lessonUnavailableReason(view, "beginner", "pos_001")).toBe(
+      "You already took a lesson this turn",
+    );
+  });
+
+  it("shows no sentence for a closed advanced lesson", () => {
+    const state = lessonStep();
+    state.players.lead.money = 10;
+    state.market.advancedDisplay = ["flo_004"];
+    const view = snapshotFor(state, "lead", content);
+    expect(view.lessonRefusals).toContainEqual({
+      source: "advanced",
+      cardId: "flo_004",
+      code: "ADVANCED_CLOSED",
+    });
+    expect(lessonUnavailableReason(view, "advanced", "flo_004")).toBeNull();
+  });
+
+  it("has nothing to explain for a lesson the reducer accepts", () => {
+    const view = snapshotFor(lessonStep(), "lead", content);
+    expect(lessonUnavailableReason(view, "beginner", "flo_003")).toBeNull();
+  });
+
+  it("maps a money code from the snapshot even when the viewer could afford the card", () => {
+    const state = lessonStep();
+    state.players.lead.money = 5;
+    const view = snapshotFor(state, "lead", content);
+    const cardId = view.market.intermediate[0]!.id;
+    view.lessonRefusals = [{ source: "intermediate", cardId, code: "NOT_ENOUGH_MONEY" }];
+    expect(lessonUnavailableReason(view, "intermediate", cardId)).toBe("Costs $2 · you have $5");
   });
 });

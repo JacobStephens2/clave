@@ -4,7 +4,7 @@ import {
   type DanceCard,
   type SongCard,
 } from "@clave/content";
-import { legalActions } from "./game.js";
+import { legalActions, refusalCode } from "./game.js";
 import type { CardInstance, GameAction, GameState, LogEntry, Role } from "./schemas.js";
 
 export interface CardView extends CardInstance {
@@ -89,9 +89,140 @@ export interface PlayerSnapshot {
   turn: GameState["turnDance"];
   signal: { role: Role; card: CardView } | null;
   legalActions: GameAction[];
+  /** Empty unless it is this viewer's dance step. Omitted means the chosen action is legal. */
+  floorRefusals: { instanceId: string; code: string }[];
+  /** Published on every snapshot. Omitted means that buy is legal. */
+  lessonRefusals: {
+    source: "beginner" | "intermediate" | "advanced";
+    cardId: string;
+    code: string;
+  }[];
   log: LogEntry[];
   finalScore: number | null;
   rating: { name: string; description: string } | null;
+}
+
+function viewersDanceStep(state: GameState, role: Role): boolean {
+  return state.status === "playing" && state.phase === "dance" && state.activeRole === role;
+}
+
+/**
+ * The one floor action a card attempts once a Position is on the table,
+ * and for a Flourish or Recovery on an empty floor.
+ */
+function establishedFloorAction(
+  role: Role,
+  instanceId: string,
+  type: DanceCard["type"],
+): GameAction {
+  switch (type) {
+    case "move":
+      return { type: "PLAY_MOVE", role, moveInstanceId: instanceId };
+    case "position":
+      return { type: "TRANSITION", role, positionInstanceId: instanceId };
+    case "flourish":
+      return { type: "PLAY_FLOURISH", role, flourishInstanceId: instanceId };
+    case "recovery":
+      return { type: "STUMBLE", role, recoveryInstanceId: instanceId };
+  }
+}
+
+/**
+ * Empty-floor Position or Move: `PLAY_OPEN` with each opposite card.
+ * A passing pair omits the card. A shared non-mismatch failure (turn and phase fail first)
+ * wins over `POSITION_MISMATCH`. No opposite card is a mismatch.
+ */
+function openingRefusal(
+  state: GameState,
+  role: Role,
+  contentSet: ContentSet,
+  hand: readonly CardInstance[],
+  instance: CardInstance,
+  cards: Record<string, DanceCard>,
+): string | null {
+  const card = cards[instance.cardId]!;
+  const opposite = card.type === "position" ? "move" : "position";
+  const oppositeCards = hand.filter((other) => cards[other.cardId]?.type === opposite);
+  if (oppositeCards.length === 0) return "POSITION_MISMATCH";
+  let shared: string | null = null;
+  for (const oppositeCard of oppositeCards) {
+    const action: GameAction =
+      card.type === "position"
+        ? {
+            type: "PLAY_OPEN",
+            role,
+            positionInstanceId: instance.instanceId,
+            moveInstanceId: oppositeCard.instanceId,
+          }
+        : {
+            type: "PLAY_OPEN",
+            role,
+            positionInstanceId: oppositeCard.instanceId,
+            moveInstanceId: instance.instanceId,
+          };
+    const code = refusalCode(state, action, contentSet);
+    if (code === null) return null;
+    if (code !== "POSITION_MISMATCH") shared ??= code;
+  }
+  return shared ?? "POSITION_MISMATCH";
+}
+
+function floorRefusalList(
+  state: GameState,
+  role: Role,
+  contentSet: ContentSet,
+  cards: Record<string, DanceCard>,
+): { instanceId: string; code: string }[] {
+  if (!viewersDanceStep(state, role)) return [];
+  const hand = state.players[role].hand;
+  const floorHasPosition = state.table.position !== null;
+  const refusals: { instanceId: string; code: string }[] = [];
+  for (const instance of hand) {
+    const card = cards[instance.cardId];
+    if (!card) throw new Error(`Missing content for ${instance.cardId}.`);
+    const code =
+      !floorHasPosition && (card.type === "position" || card.type === "move")
+        ? openingRefusal(state, role, contentSet, hand, instance, cards)
+        : refusalCode(
+            state,
+            establishedFloorAction(role, instance.instanceId, card.type),
+            contentSet,
+          );
+    if (code) refusals.push({ instanceId: instance.instanceId, code });
+  }
+  return refusals;
+}
+
+function lessonRefusalList(
+  state: GameState,
+  role: Role,
+  contentSet: ContentSet,
+): PlayerSnapshot["lessonRefusals"] {
+  const offered: { source: PlayerSnapshot["lessonRefusals"][number]["source"]; cardId: string }[] =
+    [
+      ...contentSet.decks.beginnerSupply.map((cardId) => ({
+        source: "beginner" as const,
+        cardId,
+      })),
+      ...state.market.intermediateDisplay.map((cardId) => ({
+        source: "intermediate" as const,
+        cardId,
+      })),
+      ...state.market.advancedDisplay.map((cardId) => ({
+        source: "advanced" as const,
+        cardId,
+      })),
+    ];
+  const refusals: PlayerSnapshot["lessonRefusals"] = [];
+  for (const entry of offered) {
+    const code = refusalCode(
+      state,
+      { type: "BUY_LESSON", role, source: entry.source, cardId: entry.cardId },
+      contentSet,
+    );
+    if (code) refusals.push({ source: entry.source, cardId: entry.cardId, code });
+  }
+  return refusals;
 }
 
 function lookup(contentSet: ContentSet): Record<string, DanceCard> {
@@ -207,6 +338,8 @@ export function snapshotFor(
         ? { role: state.signal.role, card: cardView(signaledInstance, cards)! }
         : null,
     legalActions: legalActions(state, role, contentSet),
+    floorRefusals: floorRefusalList(state, role, contentSet, cards),
+    lessonRefusals: lessonRefusalList(state, role, contentSet),
     log: state.log.slice(-80),
     finalScore: state.finalScore,
     rating: ratingDefinition

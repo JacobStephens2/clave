@@ -86,9 +86,77 @@ export function floorDraggableIds(view: PlayerSnapshot, intent: TurnIntent): Set
   return ids;
 }
 
+type HandCard = PlayerSnapshot["self"]["hand"][number]["card"];
+type LessonSource = PlayerSnapshot["lessonRefusals"][number]["source"];
+
+/**
+ * Gesture sentences. They describe the two-step opening and a legal Stumble, which the
+ * reducer does not know about, so they win over a refusal code. The pair check is membership
+ * in `legalActions`, not a position match.
+ */
+function gestureSentence(
+  view: PlayerSnapshot,
+  intent: TurnIntent,
+  instanceId: string,
+  card: HandCard,
+): string | null {
+  if (card.type === "move" && !view.table.position) {
+    const staged = stagedPosition(view, intent);
+    if (!staged || staged.card.type !== "position") return "Stage a Position first";
+    const paired = openingActions(view).some(
+      (action) =>
+        action.positionInstanceId === staged.instanceId && action.moveInstanceId === instanceId,
+    );
+    if (!paired) return `Needs ${alternatives(card.positions)} · ${staged.card.position} is staged`;
+  }
+  if (card.type === "position" && !view.table.position && stagedPosition(view, intent))
+    return "A Position is already staged";
+  if (
+    card.type === "recovery" &&
+    view.legalActions.some(
+      (action) => action.type === "STUMBLE" && action.recoveryInstanceId === instanceId,
+    )
+  )
+    return "Use with Stumble";
+  return null;
+}
+
+/** Instructional sentence for a floor refusal code. Any code not listed here has no sentence. */
+function floorSentence(view: PlayerSnapshot, card: HandCard, code: string): string | null {
+  switch (code) {
+    case "MOVE_LIMIT":
+      return "You already danced a Move this 8-count";
+    case "POSITION_MISMATCH": {
+      const floor = view.table.position?.card;
+      if (card.type === "move" && floor?.type === "position")
+        return `Needs ${alternatives(card.positions)} · Floor is ${floor.position}`;
+      if (card.type === "position" && !view.table.position)
+        return `No Move in hand dances from ${card.position}`;
+      return null;
+    }
+    case "TRANSITION_WINDOW_CLOSED":
+      return view.turn.moveCardId === null
+        ? "Play a Move first"
+        : "Transition immediately after your Move";
+    case "MOVE_REQUIRED":
+      return "Play a Move first";
+    case "FLOURISH_LIMIT":
+      return "You already added a Flourish this 8-count";
+    case "FLOURISH_MISMATCH":
+      if (card.type !== "flourish" || card.positions === "any" || !view.turn.fromPosition)
+        return null;
+      return `Needs ${alternatives(card.positions)} · Move started from ${view.turn.fromPosition}`;
+    case "ALREADY_DANCED":
+      return "Use with Stumble before playing dance cards";
+    default:
+      return null;
+  }
+}
+
 /**
  * Why a hand card cannot go to the floor on the viewer's dance step, or null when it can,
- * or when no explanation applies.
+ * or when no explanation applies. Gesture sentences win. Otherwise the sentence is the
+ * snapshot's refusal code, not a second check of the rule.
  */
 export function unavailableReason(
   view: PlayerSnapshot,
@@ -99,36 +167,40 @@ export function unavailableReason(
   if (floorDraggableIds(view, intent).has(instanceId)) return null;
   const card = view.self.hand.find((entry) => entry.instanceId === instanceId)?.card;
   if (!card) return null;
-  if (view.turn.moveCardId !== null) {
-    if (card.type === "move") return "You already danced a Move this 8-count";
-    if (card.type === "position") return "Transition immediately after your Move";
-    if (card.type === "recovery") return "Use with Stumble before playing dance cards";
-    if (view.turn.flourished) return "You already added a Flourish this 8-count";
-    if (card.positions !== "any" && view.turn.fromPosition)
-      return `Needs ${alternatives(card.positions)} · Move started from ${view.turn.fromPosition}`;
-    return null;
-  }
-  const floor = view.table.position?.card;
-  const staged = stagedPosition(view, intent)?.card;
+  const gesture = gestureSentence(view, intent, instanceId, card);
+  if (gesture) return gesture;
+  const code = view.floorRefusals.find((entry) => entry.instanceId === instanceId)?.code;
+  if (!code) return null;
+  return floorSentence(view, card, code);
+}
 
-  switch (card.type) {
-    case "move":
-      if (floor?.type === "position")
-        return card.positions.includes(floor.position)
-          ? null
-          : `Needs ${alternatives(card.positions)} · Floor is ${floor.position}`;
-      if (staged?.type === "position")
-        return `Needs ${alternatives(card.positions)} · ${staged.position} is staged`;
-      return "Stage a Position first";
-    case "position":
-      if (floor) return "Play a Move first";
-      return staged
-        ? "A Position is already staged"
-        : `No Move in hand dances from ${card.position}`;
-    case "flourish":
-      return "Play a Move first";
-    case "recovery":
-      return "Use with Stumble";
+/**
+ * Why the viewer cannot buy this market card, or null when the buy is legal or the code
+ * has no instructional sentence. Cost and money are read from the snapshot.
+ */
+export function lessonUnavailableReason(
+  view: PlayerSnapshot,
+  source: LessonSource,
+  cardId: string,
+): string | null {
+  const code = view.lessonRefusals.find(
+    (entry) => entry.source === source && entry.cardId === cardId,
+  )?.code;
+  if (!code) return null;
+  switch (code) {
+    case "GAME_NOT_PLAYING":
+    case "NOT_YOUR_TURN":
+      return "Learn on your turn, after you dance";
+    case "WRONG_PHASE":
+      return "Learn after you dance this 8-count";
+    case "LESSON_LIMIT":
+      return "You already took a lesson this turn";
+    case "PRIVATE_LESSON_TAKEN":
+      return "Private lesson already taken this round";
+    case "NOT_ENOUGH_MONEY":
+      return `Costs $${view.rules.lessonCosts[source]} · you have $${view.self.money}`;
+    default:
+      return null;
   }
 }
 
