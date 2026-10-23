@@ -35,4 +35,25 @@ derivative is duplicated under its own ID so the clients retain data-driven artw
 lookup. A future art pass may replace it with a more visibly framed Closed-position
 setup without changing content or rendering code.
 
+### 2026-10-23 repaint with GPT Image 2.5
+
+Every card was repainted with `gpt-image-2.5-sunburst` (`quality=high`,
+`1024x1536`) through the OpenAI Images API. The Open Position anchor was rendered
+first from the unchanged [anchor brief](open-position-anchor-prompt.txt) on
+`images/generations`. Every other card was rendered on `images/edits` with that
+anchor attached as a reference image, so the same two dancers, clothes, palette,
+outlines, and painted floor carry across the whole set. Each card's prompt keeps the
+locked fields from the first batch and adds three rules learned from it: faces stay
+apart in a respectful social frame, the Follow wears low practical shoes, and every
+joined hand is visibly connected. [card-art-prompts-v2.jsonl](card-art-prompts-v2.jsonl)
+records the exact prompt, model, endpoint, and reference for every card.
+
+Two candidates were rendered per card. Each was inspected at full size against the
+card's real handhold and defining action (using the veracity audit and the
+positions/moves research), its anatomy, and its match to the anchor; failing cards
+were re-prompted and re-rendered. `mov_013` now has its own composition that starts
+from a visibly Closed frame, replacing the `mov_005` duplicate. Delivery
+derivatives use the same pipeline as before: Pillow `LANCZOS` to 512×768, WebP
+quality 84.
+
 Run `npm run check:art` after adding or changing card content. It requires exactly one valid browser asset for every card definition and rejects missing, unexpected, undersized, or non-WebP files.
