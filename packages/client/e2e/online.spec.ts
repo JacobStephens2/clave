@@ -1,8 +1,65 @@
-import { expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { expect, test, type Browser, type BrowserContext, type Page } from "@playwright/test";
 
 async function finishTurn(page: Page) {
   await page.getByRole("button", { name: "Dance the basic" }).click();
   await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
+}
+
+/** Opens the two screens on one room, hands kept, with the Lead's 8-count on the floor. */
+async function pairUp(browser: Browser) {
+  const leadContext = await browser.newContext();
+  const followContext = await browser.newContext();
+  const lead = await leadContext.newPage();
+  const follow = await followContext.newPage();
+
+  await lead.goto("/");
+  await lead.getByRole("button", { name: /Two devices/ }).click();
+  await lead.getByRole("button", { name: "Create room" }).click();
+  const code = (await lead.locator(".room-code strong").textContent())!.trim();
+
+  await follow.goto("/");
+  await follow.getByRole("button", { name: /Two devices/ }).click();
+  await follow.getByLabel("Room code").fill(code);
+  await follow.getByRole("button", { name: "Join room" }).click();
+  await expect(follow.locator(".connection-status")).toHaveAttribute(
+    "data-connection",
+    "connected",
+  );
+
+  await lead.getByRole("button", { name: "Keep this hand" }).click();
+  await follow.getByRole("button", { name: "Keep this hand" }).click();
+  return { leadContext, followContext, lead, follow };
+}
+
+/**
+ * Leaves a Position on the floor — opening with a matching Move, or taking the hold with
+ * the Position alone — so the active screen can make a call. The room's deal is the
+ * server's, so this dances the basic and tries again on any 8-count that cannot open.
+ */
+async function danceUntilTheFloorIsSet(screens: readonly Page[]) {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    const active = screens[attempt % 2]!;
+    const position = active.locator(".hand-scroll .dance-card.position.playable").first();
+    if ((await position.count()) > 0) {
+      await position.click({ position: { x: 40, y: 56 } });
+      const detail = active.getByRole("dialog", { name: "Card detail" });
+      await expect(detail).toBeVisible();
+      const staging = detail.getByRole("button", { name: "Stage Position" });
+      const holding = detail.getByRole("button", { name: "Take the hold" });
+      if ((await staging.count()) > 0) {
+        await staging.click();
+        const move = active.locator(".hand-scroll .dance-card.move.playable").first();
+        await move.click({ position: { x: 40, y: 56 } });
+        await detail.getByRole("button", { name: "Dance move" }).click();
+      } else {
+        await holding.click();
+      }
+      await expect(active.locator('[data-slot="position"] .empty-slot')).toHaveCount(0);
+      return active;
+    }
+    await finishTurn(active);
+  }
+  throw new Error("Four 8-counts without a Position in hand: the deal cannot be danced.");
 }
 
 test("keeps two authoritative screens synchronized through reload and song end", async ({
@@ -128,4 +185,39 @@ test("invites a partner with a link that opens a prefilled join form", async ({ 
   await expect(host.locator(".connection-status")).toHaveAttribute("data-partner", "connected");
   await hostContext.close();
   await guestContext.close();
+});
+
+test("carries a call across to the partner's device", async ({ browser }) => {
+  const { leadContext, followContext, lead, follow } = await pairUp(browser);
+
+  const caller = await danceUntilTheFloorIsSet([lead, follow]);
+  const watcher = caller === lead ? follow : lead;
+  const callerName = caller === lead ? "Lead" : "Follow";
+
+  await caller.getByRole("button", { name: "Make a call" }).click();
+  const sheet = caller.getByRole("dialog", { name: "Make a call" });
+  const chosen = (await sheet.locator(".call-option-name").first().innerText())
+    .replace("★", "")
+    .trim();
+  await sheet.locator(".call-option").first().click();
+  await expect(sheet).toBeHidden();
+
+  // A call is public the moment it is made: both devices hear it, each in its own words.
+  await expect(caller.locator(".snapshot-cues .cue")).toContainText(`You call ${chosen}`);
+  await expect(watcher.locator(".snapshot-cues .cue")).toContainText(
+    `The ${callerName} calls ${chosen}`,
+  );
+  await expect(watcher.locator(".snapshot-cues").getByRole("status")).toContainText(chosen);
+
+  // It stands over the next 8-count, so the banner arrives with the handover of the turn.
+  await caller.getByRole("button", { name: "Finish turn · discard hand" }).click();
+  const banner = { name: "The call standing over this 8-count" };
+  await expect(watcher.getByRole("region", banner)).toContainText(`${callerName} calls ${chosen}`);
+  await expect(watcher.getByRole("region", banner).getByRole("status")).toContainText(
+    "Not answered yet",
+  );
+  await expect(caller.getByRole("region", banner)).toContainText(`You called ${chosen}`);
+  await expect(watcher.getByRole("status").filter({ hasText: "Your 8-count" })).toHaveCount(1);
+  await leadContext.close();
+  await followContext.close();
 });
