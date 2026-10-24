@@ -1,19 +1,37 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { DanceCard as DanceCardDefinition } from "@clave/content";
 import type { CardView, GameAction, PlayerSnapshot, Role } from "@clave/engine";
+import { rungLabel } from "../rungs.js";
+import { eventsBetween, type SnapshotEvent } from "../snapshot-events.js";
 import { useAppStore, type PartnerPresence } from "../store.js";
 import {
   NO_INTENT,
+  callHandoff,
+  callMadeNote,
   readDanceStep,
+  type CallStanding,
   type DanceTelling,
   type HandOffer,
   type TurnIntent,
 } from "../turn-intent.js";
+import { AfinqueMeter } from "./AfinqueMeter.js";
+import { CallBanner } from "./CallBanner.js";
+import { CallPickerTrigger, CallSheet } from "./CallPicker.js";
 import { DanceCard } from "./DanceCard.js";
 import { DancerDemo } from "./DancerDemo.js";
 import { MusicButton } from "./MusicPlayer.js";
 import { PhraseHistory, comboSummary } from "./PhraseHistory.js";
 import { RulesButton } from "./RulesDialog.js";
+import { SnapshotCues } from "./SnapshotCues.js";
+import { SongRecap } from "./SongRecap.js";
 import { SoundEffectsButton, useSoundEffects, type SoundEffect } from "./SoundEffects.js";
 
 const roleName = (role: Role) => (role === "lead" ? "Lead" : "Follow");
@@ -111,7 +129,11 @@ function viewersTurn(view: PlayerSnapshot | null): boolean {
   return view.status === "playing" && view.activeRole === view.viewerRole;
 }
 
-function soundForAction(action: GameAction): SoundEffect {
+/**
+ * The sound a tap makes on the device that taps it. Null where the moment it starts is one
+ * the snapshot differ cues on both devices instead (SnapshotCues), so nothing plays twice.
+ */
+function soundForAction(action: GameAction): SoundEffect | null {
   switch (action.type) {
     case "MULLIGAN":
     case "END_LESSON":
@@ -119,11 +141,14 @@ function soundForAction(action: GameAction): SoundEffect {
     case "PLAY_MOVE":
     case "PLAY_OPEN":
       return "card-move";
+    // The hold is a Position landing on the floor, the same as a transition.
     case "TRANSITION":
     case "ADJUST":
       return "card-position";
     case "PLAY_FLOURISH":
       return "card-flourish";
+    // The 8-count ending. Whatever it resolved — a call, an answer, a drop — the differ
+    // lays over the top of it, so this stays the plain sound of a step closing.
     case "END_DANCE":
       return "turn";
     case "BUY_LESSON":
@@ -135,8 +160,9 @@ function soundForAction(action: GameAction): SoundEffect {
       return "turn";
     case "SIGNAL_CARD":
       return "card-select";
+    // The save, not the card: the differ plays "cover" for it on both devices.
     case "COVER_CALL":
-      return "discard";
+      return null;
     case "CLEAR_SIGNAL":
     case "UNDO_TURN":
       return "undo";
@@ -152,56 +178,39 @@ interface ScoreChange {
   announcement: string;
 }
 
-interface ScoreReading {
-  gameId: string;
-  viewer: Role;
-  sequence: number;
-  connection: number;
-  style: number;
-  money: number;
+/** One moment of a kind out of a step's events, narrowed. */
+function momentOf<K extends SnapshotEvent["kind"]>(
+  events: readonly SnapshotEvent[],
+  kind: K,
+): Extract<SnapshotEvent, { kind: K }> | null {
+  return (
+    events.find((event): event is Extract<SnapshotEvent, { kind: K }> => event.kind === kind) ??
+    null
+  );
 }
 
-function readScore(view: PlayerSnapshot): ScoreReading {
-  return {
-    gameId: view.gameId,
-    viewer: view.viewerRole,
-    sequence: view.sequence,
-    connection: view.shared.connection,
-    style: view.shared.style,
-    money: view.self.money,
-  };
-}
-
-function scoreChange(previous: ScoreReading, view: PlayerSnapshot): ScoreChange | null {
-  if (
-    previous.gameId !== view.gameId ||
-    previous.viewer !== view.viewerRole ||
-    view.sequence <= previous.sequence
-  )
-    return null;
-  const change = {
-    connection: view.shared.connection - previous.connection,
-    style: view.shared.style - previous.style,
-    money: view.self.money - previous.money,
-  };
-  if (!change.connection && !change.style && !change.money) return null;
+/**
+ * The HUD's reading of a step: the couple's shared score, the viewer's own practice money,
+ * and the engine's own sentences for why. The differ already leaves a reset turn and a
+ * resumed dance eventless, so the scoreboard never flashes at a rewind.
+ */
+function scoreChange(events: readonly SnapshotEvent[]): ScoreChange | null {
+  const score = momentOf(events, "score");
+  const money = momentOf(events, "practice-money");
+  const at = score ?? money;
+  if (!at) return null;
   const said = (label: string, value: number) =>
     value ? `${label} ${value > 0 ? "up" : "down"} ${Math.abs(value)}.` : "";
-  // Only entries newer than the previous reading, so an undone play is never cited.
-  const causes = view.log
-    .filter(
-      (entry) =>
-        entry.sequence > previous.sequence && (entry.kind === "score" || entry.kind === "dance"),
-    )
-    .map((entry) => entry.message);
   return {
-    key: view.sequence,
-    ...change,
+    key: at.sequence,
+    connection: score?.connection ?? 0,
+    style: score?.style ?? 0,
+    money: money?.money ?? 0,
     announcement: [
-      said("Style", change.style),
-      said("Connection", change.connection),
-      said("Your practice money", change.money),
-      ...causes,
+      said("Style", score?.style ?? 0),
+      said("Connection", score?.connection ?? 0),
+      said("Your practice money", money?.money ?? 0),
+      ...(score?.causes ?? []),
     ]
       .filter(Boolean)
       .join(" "),
@@ -244,6 +253,7 @@ function Hud({
         <strong>{view.shared.style}</strong>
         {change && <HudDelta value={change.style} changeKey={change.key} />}
       </div>
+      <AfinqueMeter view={view} />
       <div className="hud-stat">
         <small>Your practice</small>
         <strong>${view.self.money}</strong>
@@ -619,6 +629,9 @@ function TurnActions({
   onCleanup,
   cleanupPending,
   telling,
+  call,
+  callSheetOpen,
+  onOpenCallSheet,
   returnStagedPosition,
   invite,
   partnerAway,
@@ -628,6 +641,9 @@ function TurnActions({
   onCleanup: (action: CleanupAction) => void;
   cleanupPending: boolean;
   telling: DanceTelling | null;
+  call: CallStanding | null;
+  callSheetOpen: boolean;
+  onOpenCallSheet: () => void;
   returnStagedPosition: () => void;
   /** The room code to share while the partner's seat is still empty. */
   invite: string | null;
@@ -681,11 +697,10 @@ function TurnActions({
     );
   }
   if (view.activeRole !== view.viewerRole)
+    // The standing call has its own band above the floor; this says who is dancing.
     return (
       <div className="turn-actions waiting-actions">
-        <strong>
-          {roleName(view.activeRole)} {partnerAway ? "stepped away" : "is dancing"}
-        </strong>
+        <strong>{`${roleName(view.activeRole)} ${partnerAway ? "stepped away" : "is dancing"}`}</strong>
         <span>
           {partnerAway
             ? "The dance resumes when they reconnect."
@@ -696,6 +711,8 @@ function TurnActions({
 
   if (view.phase === "dance") {
     if (!telling) return null;
+    const controls = telling.controls;
+    const hold = controls.kind === "return" ? controls.hold : null;
     return (
       <div className="turn-actions">
         <div className="step-heading">
@@ -703,6 +720,7 @@ function TurnActions({
           <div>
             <small>Dance</small>
             <strong>{telling.heading}</strong>
+            {telling.note && <span className="step-note">{telling.note}</span>}
             {telling.instruction && <span className="dance-step-note">{telling.instruction}</span>}
           </div>
         </div>
@@ -713,22 +731,62 @@ function TurnActions({
           </div>
         )}
         <div className="button-row wrap">
-          {telling.controls.kind === "return" ? (
-            <button type="button" className="button outline" onClick={returnStagedPosition}>
-              {telling.controls.label}
-            </button>
+          {controls.kind === "return" ? (
+            <>
+              {hold && (
+                <button
+                  type="button"
+                  className="button outline"
+                  title={hold.note}
+                  onClick={() => dispatch(hold.action)}
+                >
+                  {hold.label}
+                </button>
+              )}
+              <button type="button" className="button outline" onClick={returnStagedPosition}>
+                {controls.label}
+              </button>
+            </>
           ) : (
-            telling.controls.controls.map((control) => {
+            controls.controls.map((control) => {
               if (control.kind === "end")
                 return (
-                  <button
-                    type="button"
-                    className="button gold"
-                    key="end"
-                    onClick={() => dispatch(control.action)}
-                  >
-                    {control.label}
-                  </button>
+                  <Fragment key="end">
+                    <button
+                      type="button"
+                      className="button gold"
+                      onClick={() => dispatch(control.action)}
+                    >
+                      {control.label}
+                    </button>
+                    {telling.picker && (
+                      <CallPickerTrigger
+                        picker={telling.picker}
+                        open={callSheetOpen}
+                        onOpen={onOpenCallSheet}
+                      />
+                    )}
+                    {call?.covers.map((cover) => {
+                      // The note is read with the button, not only beside it: on the table it
+                      // is printed for the eye only on a phone, but always for a screen reader.
+                      const noteId = `cover-note-${cover.action.recoveryInstanceId}`;
+                      return (
+                        <span className="call-cover-control" key={cover.action.recoveryInstanceId}>
+                          <button
+                            type="button"
+                            className="button outline call-cover"
+                            aria-describedby={noteId}
+                            onClick={() => dispatch(cover.action)}
+                          >
+                            {cover.label}
+                          </button>
+                          <small className="call-cover-note" id={noteId}>
+                            {cover.note}
+                          </small>
+                        </span>
+                      );
+                    })}
+                  </Fragment>
                 );
               if (control.kind === "stumble")
                 return (
@@ -762,6 +820,7 @@ function TurnActions({
     const learn = byType("LEARN_FROM_PARTNER");
     const done = byType("END_LESSON")[0];
     const undo = byType("UNDO_TURN")[0];
+    const made = callMadeNote(view);
     return (
       <div className="turn-actions">
         <div className="step-heading">
@@ -769,6 +828,7 @@ function TurnActions({
           <div>
             <small>Take a lesson</small>
             <strong>Practice something new—or keep moving</strong>
+            {made && <span className="call-made-note">{made}</span>}
             <span className="cleanup-note">Your whole remaining hand discards automatically.</span>
           </div>
         </div>
@@ -1008,7 +1068,7 @@ function GameLog({ view }: { view: PlayerSnapshot }) {
       </summary>
       <ol>
         {[...view.log].reverse().map((entry, index) => (
-          <li key={`${entry.sequence}-${index}`}>
+          <li key={`${entry.sequence}-${index}`} data-kind={entry.kind}>
             <span>{entry.sequence || "·"}</span>
             <p>{entry.message}</p>
           </li>
@@ -1304,6 +1364,8 @@ function PassScreen({
     (entry) => entry.sequence === view.sequence && entry.kind === "score" && entry.role === null,
   );
   const nextSong = view.status === "playing" ? view.currentSong : null;
+  // The call the player taking the screen has to answer: the reason this handoff matters.
+  const handoff = view.status === "playing" ? callHandoff(view, role) : null;
   const readyButton = useRef<HTMLButtonElement>(null);
   useEffect(() => readyButton.current?.focus(), []);
   return (
@@ -1317,7 +1379,16 @@ function PassScreen({
         <br />
         <em>{roleName(role)}</em>
       </h2>
-      <p>When your partner has the screen, tap below.</p>
+      {handoff ? (
+        <section className="pass-call" aria-label="The call you have to answer">
+          <small>{handoff.caller} called</small>
+          <strong>{handoff.name}</strong>
+          <p>{handoff.ask}</p>
+          <span>Your answer · {handoff.reward}</span>
+        </section>
+      ) : (
+        <p>When your partner has the screen, tap below.</p>
+      )}
       <button ref={readyButton} type="button" className="button gold" onClick={onReady}>
         I’m the {roleName(role)}
       </button>
@@ -1326,7 +1397,9 @@ function PassScreen({
           {lastCombo && (
             <div>
               <dt>Last 8-count</dt>
-              <dd>{comboSummary(lastCombo)}</dd>
+              <dd>
+                {comboSummary(lastCombo)} · {rungLabel(lastCombo.rung)}
+              </dd>
             </div>
           )}
           {phraseResult && (
@@ -1410,42 +1483,17 @@ function Terminal({
   return (
     <main className="terminal-screen" inert={inert}>
       <div className="terminal-inner">
-        <small>
-          {won
-            ? "The final 8-count"
-            : unresumable
-              ? "This dance can’t continue"
-              : "The connection broke"}
-        </small>
-        <h2>
-          {won ? view.rating?.name : unresumable ? "The floor has changed" : "The dance ends here"}
-        </h2>
-        {!unresumable && (
+        {unresumable ? (
           <>
-            <div className="final-score">
-              <span>{view.finalScore ?? view.shared.style + view.shared.connection}</span>
-              <small>{won ? "final score" : "Style + Connection"}</small>
-            </div>
-            <div className="score-equation">
-              <span>
-                {view.shared.style}
-                <small>Style</small>
-              </span>
-              <b>+</b>
-              <span>
-                {view.shared.connection}
-                <small>Connection</small>
-              </span>
-            </div>
+            <small>This dance can’t continue</small>
+            <h2>The floor has changed</h2>
+            <p>
+              {`${view.terminalReason ?? "This saved dance cannot be read by the current release."} Nothing you did caused this; start a fresh dance.`}
+            </p>
           </>
+        ) : (
+          <SongRecap view={view} />
         )}
-        <p>
-          {won
-            ? view.rating?.description
-            : unresumable
-              ? `${view.terminalReason ?? "This saved dance cannot be read by the current release."} Nothing you did caused this; start a fresh dance.`
-              : "Take a breath, find each other, and try the song again."}
-        </p>
         {won && <RatingLadder view={view} />}
         {view.danceHistory.length > 0 && (
           <div className="terminal-choreography">
@@ -1496,9 +1544,11 @@ export function GameScreen() {
   const [lessonFlight, setLessonFlight] = useState<LessonFlight | null>(null);
   const [cleanupFlight, setCleanupFlight] = useState<CleanupFlight | null>(null);
   const [dancerDemoOpen, setDancerDemoOpen] = useState(false);
+  const [callSheetOpen, setCallSheetOpen] = useState(false);
   const [roomCopyStatus, setRoomCopyStatus] = useState<RoomCopyStatus>("idle");
   const [latestScoreChange, setLatestScoreChange] = useState<ScoreChange | null>(null);
-  const lastScoreReading = useRef<ScoreReading | null>(null);
+  // The HUD reads the same differ the cue layer does, each keeping its own last snapshot.
+  const lastScoredSnapshot = useRef<PlayerSnapshot | null>(null);
   const signalReturnFocus = useRef<Element | null>(null);
   const discardTargetRef = useRef<HTMLButtonElement>(null);
   const lessonDragRef = useRef<{
@@ -1538,7 +1588,8 @@ export function GameScreen() {
     // The enlarged card closes as the reveal opens; return to its surviving hand card.
     if (action.type === "SIGNAL_CARD")
       signalReturnFocus.current = inspection?.origin?.element ?? document.activeElement;
-    playSoundEffect(soundForAction(action));
+    const sound = soundForAction(action);
+    if (sound) playSoundEffect(sound);
     dispatchAction(action);
   };
   const acceptPass = () => {
@@ -1565,10 +1616,11 @@ export function GameScreen() {
   }, [mode, myTurn, playSoundEffect]);
   useEffect(() => {
     if (!view) return;
-    const previous = lastScoreReading.current;
-    lastScoreReading.current = readScore(view);
-    if (previous?.viewer !== view.viewerRole) setLatestScoreChange(null);
-    const change = previous ? scoreChange(previous, view) : null;
+    const previous = lastScoredSnapshot.current;
+    lastScoredSnapshot.current = view;
+    // A hot-seat handoff re-reads the same step for the other player: clear the stale delta.
+    if (previous?.viewerRole !== view.viewerRole) setLatestScoreChange(null);
+    const change = previous ? scoreChange(eventsBetween(previous, view)) : null;
     if (change) setLatestScoreChange(change);
   }, [view]);
   useEffect(() => {
@@ -1578,6 +1630,7 @@ export function GameScreen() {
     setLessonDropOver(false);
     lessonDragRef.current = null;
     setDiscardOpen(false);
+    setCallSheetOpen(false);
   }, [view?.sequence, view?.phase, view?.viewerRole, passTo]);
   useEffect(() => setLessonFlight(null), [view?.viewerRole, passTo]);
   useEffect(() => {
@@ -1863,7 +1916,8 @@ export function GameScreen() {
         run: closeThen(() => dispatch(signal)),
       });
     }
-    return { actions, note: offer.sentence };
+    // A card that can be played carries what the play costs; one that cannot, why not.
+    return { actions, note: offer.sentence ?? offer.playNote };
   };
 
   if (!view || !step)
@@ -1903,8 +1957,15 @@ export function GameScreen() {
   const passScreenOpen = Boolean(passTo && mode === "hotseat" && !cleanupFlight);
   const signalPeekOpen = view.signal?.role === view.viewerRole && mode === "hotseat";
   // While a dialog is up, the table behind it leaves the tab order and the accessibility tree.
+  const callPicker = step.telling?.picker ?? null;
+  const callSheetUp = callSheetOpen && Boolean(callPicker && callPicker.options.length > 0);
   const overlayOpen =
-    passScreenOpen || signalPeekOpen || Boolean(inspection) || discardOpen || dancerDemoOpen;
+    passScreenOpen ||
+    signalPeekOpen ||
+    Boolean(inspection) ||
+    discardOpen ||
+    dancerDemoOpen ||
+    callSheetUp;
 
   return (
     <main className="game">
@@ -1983,7 +2044,7 @@ export function GameScreen() {
       </p>
       <Hud view={view} change={latestScoreChange} inert={overlayOpen} />
       <div className="game-grid" inert={overlayOpen}>
-        <div className="main-table">
+        <div className={`main-table ${step.call ? "with-call" : ""}`}>
           <SongMoment view={view} />
           <PhraseHistory view={view} onInspect={inspectCard} />
           <DanceTable
@@ -1997,12 +2058,16 @@ export function GameScreen() {
             onCardDrop={playToFloor}
             onOpenDancerDemo={() => setDancerDemoOpen(true)}
           />
+          {step.call && <CallBanner call={step.call} />}
           <TurnActions
             view={view}
             dispatch={dispatch}
             onCleanup={cleanupTurn}
             cleanupPending={Boolean(cleanupFlight)}
             telling={step.telling}
+            call={step.call}
+            callSheetOpen={callSheetUp}
+            onOpenCallSheet={() => setCallSheetOpen(true)}
             returnStagedPosition={returnStagedPosition}
             invite={
               mode === "online" && partnerPresence === "absent" ? (onlineSeat?.code ?? null) : null
@@ -2062,6 +2127,17 @@ export function GameScreen() {
       {cleanupFlight && (
         <CleanupCardFlights flight={cleanupFlight} onComplete={() => setCleanupFlight(null)} />
       )}
+      {callSheetUp && callPicker && (
+        <CallSheet
+          picker={callPicker}
+          onChoose={(action) => {
+            setCallSheetOpen(false);
+            dispatch(action);
+          }}
+          onClose={() => setCallSheetOpen(false)}
+        />
+      )}
+      <SnapshotCues view={view} />
       {passScreenOpen && passTo && <PassScreen role={passTo} view={view} onReady={acceptPass} />}
       {signalPeekOpen && view.signal && (
         <SignalPeek

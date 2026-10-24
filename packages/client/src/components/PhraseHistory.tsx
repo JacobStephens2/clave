@@ -1,9 +1,39 @@
 import { useEffect, useMemo, useState } from "react";
 import type { DanceCard as DanceCardDefinition } from "@clave/content";
 import type { DanceComboView, PlayerSnapshot, Role } from "@clave/engine";
+import { RUNGS } from "../rungs.js";
 
 const roleName = (role: Role) => (role === "lead" ? "Lead" : "Follow");
 const phraseName = (phrase: number) => (phrase === 1 ? "Cuerpo" : "Montuno");
+
+/** The rung, the Style it earned, and the chain it left, as a screen reader hears it. */
+function rungSentence(entry: DanceComboView): string {
+  return [
+    `${RUNGS[entry.rung].said}.`,
+    entry.styleGained > 0 ? `+${entry.styleGained} Style.` : null,
+    entry.afinqueAfter > 0
+      ? `Afinque ${entry.afinqueAfter} ${entry.afinqueAfter === 1 ? "link" : "links"}.`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** The rung mark, with the afinque links it left as dots beside it. */
+function RungMark({ entry }: { entry: DanceComboView }) {
+  const rung = RUNGS[entry.rung];
+  return (
+    <span className={`combo-rung ${entry.rung}`} title={rung.word}>
+      <b aria-hidden="true">{rung.glyph}</b>
+      <span aria-hidden="true">{rung.word}</span>
+      {entry.afinqueAfter > 0 && (
+        <i className="combo-links" aria-hidden="true">
+          {"•".repeat(entry.afinqueAfter)}
+        </i>
+      )}
+    </span>
+  );
+}
 
 function ComboThumbnail({
   card,
@@ -60,13 +90,13 @@ function ComboSlot({
 }) {
   const state = entry?.outcome ?? (current ? "current" : "future");
   const label = entry
-    ? `8-count ${count}. ${comboSummary(entry)}.`
+    ? `8-count ${count}. ${comboSummary(entry)}. ${rungSentence(entry)}`
     : current
       ? `8-count ${count}. Building on the floor now.`
       : `8-count ${count}. Not danced yet.`;
   const footer = entry
     ? entry.outcome === "stumble"
-      ? "Stumble"
+      ? null
       : entry.outcome === "basic"
         ? `Basic · ${entry.endingPosition ?? "Position"}`
         : (entry.move?.name ?? "Dance")
@@ -97,7 +127,14 @@ function ComboSlot({
           <ComboThumbnail card={entry?.flourish ?? null} type="flourish" onInspect={onInspect} />
         </div>
       )}
-      <p title={footer}>{footer}</p>
+      <div className="combo-footer">
+        {entry && <RungMark entry={entry} />}
+        {footer && (
+          <p title={footer} aria-hidden="true">
+            {footer}
+          </p>
+        )}
+      </div>
     </article>
   );
 }
