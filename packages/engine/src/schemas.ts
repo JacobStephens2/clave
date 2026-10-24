@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { CallIdSchema, CardIdSchema, PositionSchema, SongIdSchema } from "@clave/content";
+import {
+  BonusEffectSchema,
+  CallIdSchema,
+  CardIdSchema,
+  PositionSchema,
+  SongIdSchema,
+} from "@clave/content";
 
 export const ENGINE_VERSION = 6;
 export const RoleSchema = z.enum(["lead", "follow"]);
@@ -34,6 +40,14 @@ export type DanceTable = z.infer<typeof DanceTableSchema>;
 export const RungSchema = z.enum(["pending", "perfect", "clean", "awkward", "recovered", "break"]);
 export type Rung = z.infer<typeof RungSchema>;
 
+/** The one Position card an 8-count plays before it dances: an empty floor, or an established one. */
+export const HoldSchema = z.enum(["taken", "adjusted"]);
+export type Hold = z.infer<typeof HoldSchema>;
+
+/** How the call standing over an 8-count resolved. A stumble drops the call, at no extra cost. */
+export const CallOutcomeSchema = z.enum(["answered", "dropped", "covered"]);
+export type CallOutcome = z.infer<typeof CallOutcomeSchema>;
+
 export const TurnDanceSchema = z.object({
   moveCardId: CardIdSchema.nullable(),
   moveStyle: z.number().int().nonnegative().nullable(),
@@ -55,7 +69,8 @@ export const TurnDanceSchema = z.object({
   callDropped: z.boolean().default(false),
   callCovered: z.boolean().default(false),
   callStyle: z.number().int().nonnegative().default(0),
-  adjusted: z.boolean().default(false),
+  // The Position card played before anything was danced, which gives up the song card's bonus.
+  hold: HoldSchema.nullable().default(null),
   rung: RungSchema.default("pending"),
 });
 export type TurnDance = z.infer<typeof TurnDanceSchema>;
@@ -102,6 +117,13 @@ export const DanceComboHistoryEntrySchema = z
     rung: RungSchema.optional(),
     styleGained: z.number().int().default(0),
     afinqueAfter: z.number().int().nonnegative().default(0),
+    // What the call and the song card did on this one 8-count, so the phrase strip and the
+    // end-of-song recap read them from the record rather than from the log's prose. Defaulted:
+    // an 8-count danced before the call made none, met none, and took no hold.
+    callMade: CallIdSchema.nullable().default(null),
+    callOutcome: CallOutcomeSchema.nullable().default(null),
+    songBonus: BonusEffectSchema.nullable().default(null),
+    hold: HoldSchema.nullable().default(null),
   })
   .transform((entry) => ({ ...entry, rung: entry.rung ?? RUNG_BY_OUTCOME[entry.outcome] }));
 export type DanceComboHistoryEntry = z.infer<typeof DanceComboHistoryEntrySchema>;

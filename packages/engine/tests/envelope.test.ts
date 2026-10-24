@@ -129,7 +129,7 @@ describe("resume envelope", () => {
       ["drift in the stored state", (envelope) => (envelope.state.shared.style += 3)],
       [
         "a log action the reducer rejects",
-        (envelope) => (envelope.actions[2] = { type: "END_DANCE", role: "follow" }),
+        (envelope) => (envelope.actions[2] = { type: "END_DANCE", role: "follow", callId: null }),
       ],
       [
         "a log that does not parse",
@@ -212,7 +212,15 @@ describe("resume envelope", () => {
       const old = storedByEngine(5, played(6));
       old.state.danceHistory[0]!.outcome = "stumble";
       for (const entry of old.state.danceHistory)
-        for (const key of ["rung", "styleGained", "afinqueAfter"] as const)
+        for (const key of [
+          "rung",
+          "styleGained",
+          "afinqueAfter",
+          "callMade",
+          "callOutcome",
+          "songBonus",
+          "hold",
+        ] as const)
           delete (entry as Partial<DanceComboHistoryEntry>)[key];
       const result = rehydrateEnvelope(stored(old));
       expect(result.kind).toBe("upgraded");
@@ -224,6 +232,11 @@ describe("resume envelope", () => {
       ).toEqual([
         { outcome: "stumble", rung: "break" },
         { outcome: "basic", rung: "awkward" },
+      ]);
+      // Nothing is invented for an 8-count danced before the call: it made none and met none.
+      expect(envelopeSnapshot(result.envelope, "lead").danceHistory).toEqual([
+        expect.objectContaining({ callMade: null, callOutcome: null, songBonus: null, hold: null }),
+        expect.objectContaining({ callMade: null, callOutcome: null, songBonus: null, hold: null }),
       ]);
     });
 
@@ -243,7 +256,7 @@ describe("resume envelope", () => {
     const old = freshenedEngineOneGame();
     const stamped = applied(
       storedByEngine(ENGINE_VERSION, old),
-      { type: "END_DANCE", role: "lead" },
+      { type: "END_DANCE", role: "lead", callId: null },
       { type: "END_LESSON", role: "lead" },
     );
     const first = rehydrateEnvelope(stored(stamped));
@@ -251,7 +264,7 @@ describe("resume envelope", () => {
     expect(first.envelope.state).toEqual(stamped.state);
     const second = rehydrateEnvelope(stored(first.envelope));
     expect(second.kind).toBe("resumed");
-    const continued = applied(second.envelope, { type: "END_DANCE", role: "follow" });
+    const continued = applied(second.envelope, { type: "END_DANCE", role: "follow", callId: null });
     expect(rehydrateEnvelope(stored(continued)).kind).toBe("resumed");
   });
 

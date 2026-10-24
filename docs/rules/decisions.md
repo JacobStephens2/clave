@@ -119,6 +119,12 @@ measured per-turn spread to 7.4–13.0 points and makes difficulty a dial the pa
 every 8-count: 0.0% losses for cautious calling, 0.5% sensible, 28.8% bold, 99.8%
 reckless.
 
+_"A stumble turns neither face" was enforced in the engine on 2026-10-24. Count 5 pays
+its +1 Connection for playing no Position card, which a stumble always satisfies, so a
+stumble on count 5 was being paid the bonus — and with Reconnect in hand it was a net
+Connection gain. The one guard that decides which face is turned now reads the stumble
+too, so the preview the table shows and the bonus the engine pays cannot disagree._
+
 ## 2026-10-23 — The seven calls are the game's own vocabulary, and `call_` is not a card
 
 The calls are Stay with me (0 Style), Open it up (1), Echo me (2), Change the room (3),
@@ -371,3 +377,23 @@ forgot the partner's ask would hand the resetting player a free answer.
 
 Reason: the checkpoint is the only record of the pre-turn call, and it is maintained by
 hand in four places, so the undo walk (4,738 states) checks both halves explicitly.
+
+## 2026-10-24 — The song card pays before the call over you is settled
+
+As an 8-count ends, the order is: the call standing over you is **judged** first (song
+card 15, "+4 Style if you answer the call standing over you", asks that very question),
+then **your own song card pays**, then the call is **settled** — the Style an answer
+earns, or the 1 Connection a drop costs. A Connection the song card pays is therefore in
+hand before a dropped call spends it, and an 8-count whose own card covers the drop does
+not lose the dance. Three 8-counts can show the difference: counts **5, 8 and 13** pay
+Connection and can have a call standing over them. Counts 1 and 9 pay Connection too, but
+no call crosses a phrase ending into them.
+
+Reason: it keeps §7's "apply it immediately" true — the song card pays as the dance
+resolves, while the drop is charged where §7.1 puts it, at the end of the dance step. The
+price of choosing this way is named rather than hidden: at the Connection ceiling the
+order runs against the couple, because the card's +1 is wasted at 10 before the drop takes
+one back, where settling the call first would have left them at 10. Of the two, losing the
+whole dance at Connection 1 is the louder, and this is the order that does not lose it.
+The engine already resolved it this way; what was missing was the decision, and
+`finishDance`'s own comment, which had it backwards.

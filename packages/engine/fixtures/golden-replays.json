@@ -161,7 +161,7 @@
         "role": "follow"
       }
     ],
-    "expectedStateHash": "ea9357024991775420326be437142a8d3c884b2194788a970b83d2b2f21594ad"
+    "expectedStateHash": "09af523f9da9544d0b6a4a16ec4f37e707037468421717bc9eb20a41f41333ec"
   },
   {
     "id": "basic-202",
@@ -325,7 +325,7 @@
         "role": "follow"
       }
     ],
-    "expectedStateHash": "6876e844424e14301b3735583b7ea49a78e6f56e0eb5703f0dd6918763f48b13"
+    "expectedStateHash": "3ac45c773b00586bb4dfeea7da3b71b8456bb63826cb303068251b8672cc230f"
   },
   {
     "id": "stumble-heavy-303",
@@ -489,7 +489,7 @@
         "role": "follow"
       }
     ],
-    "expectedStateHash": "1e08cf2a32a478248ddc2a289e64365986d72e9f2b8f956ac02c80cca2b2f3f4"
+    "expectedStateHash": "58003f6062e70d0c291800a2be7c378189da76fc38d15ffc43ac5ff9b1dfc625"
   },
   {
     "id": "connection-loss-404",
@@ -523,7 +523,7 @@
         "recoveryInstanceId": null
       }
     ],
-    "expectedStateHash": "748c6378a64613fd3603ee823a58155064c3035baa787ba1359dcc61ca394b33"
+    "expectedStateHash": "3b064fb15939fe13b07164f064870b59447c57b0c361d36accfd98124bd77ee2"
   },
   {
     "id": "maximum-lessons-505",
@@ -783,7 +783,7 @@
         "role": "follow"
       }
     ],
-    "expectedStateHash": "fc054d20f57274251a7eda37c97450a26c9330a01d47c687b6b35ca9cf8fe7d1"
+    "expectedStateHash": "63e62eeae8800895553180119c5124a1d87d74635707c37904ec3a06c52ef5b4"
   },
   {
     "id": "call-and-answer-606",
@@ -1082,6 +1082,6 @@
         "role": "follow"
       }
     ],
-    "expectedStateHash": "8ac81bca640772fb3314399cd2aa971389de5a7ec6bdb933583e9656ee016c50"
+    "expectedStateHash": "bb91e9b4ad13c696376ee61ed52d7b30301dc9181603c46f3549b02f5f586379"
   }
 ]

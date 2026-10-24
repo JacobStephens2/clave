@@ -9,6 +9,7 @@ import {
 import {
   afinqueBonus,
   afinqueCap,
+  applyAction,
   callDefinition,
   callMet,
   legalActions,
@@ -36,6 +37,14 @@ export interface DanceComboView {
   flourish: DanceCard | null;
   fromPosition: GameState["danceHistory"][number]["fromPosition"];
   endingPosition: GameState["danceHistory"][number]["endingPosition"];
+  /** The call this 8-count made, which stood over the next one. */
+  callMade: { id: string; name: string } | null;
+  /** How the call standing over this 8-count resolved; null when none stood over it. */
+  callOutcome: GameState["danceHistory"][number]["callOutcome"];
+  /** What the song card paid this 8-count, or null when it turned the other face or went unmet. */
+  songBonus: BonusEffect | null;
+  /** The Position card this 8-count played before dancing, which gave up the song card. */
+  hold: GameState["danceHistory"][number]["hold"];
 }
 
 export interface PlayerSnapshot {
@@ -56,10 +65,14 @@ export interface PlayerSnapshot {
   rules: {
     maximumConnection: number;
     lessonCosts: ContentSet["rules"]["lessonCosts"];
+    /** Which tiers' lessons land on top of the draw pile; null when every one goes to discard. */
+    lessonToDrawTop: NonNullable<ContentSet["rules"]["lessonToDrawTop"]> | null;
     songLength: number;
     phraseLength: number;
     ratings: ContentSet["rules"]["ratings"];
     phraseBonuses: ContentSet["rules"]["phraseBonuses"];
+    /** What a stumble costs by default; each Recovery card's own cost is on the card. */
+    stumble: ContentSet["rules"]["stumble"];
     call: CallRules | null;
   };
   cardCatalog: DanceCard[];
@@ -118,10 +131,27 @@ export interface PlayerSnapshot {
   } | null;
   /** The calls this game prints, with the one the current song card favours marked. */
   calls: { id: string; name: string; ask: string; style: number; favoured: boolean }[];
-  /** The run of answered calls: how long it is, how long it can get, what the next pays. */
-  afinque: { links: number; cap: number; nextBonus: number };
-  /** `songBonus` is what taking the song would pay the active player right now. */
-  turn: GameState["turnDance"] & { songBonus: BonusEffect | null };
+  /**
+   * The run of answered calls: how long it is, how long it can get, what answering the call
+   * standing over this 8-count would pay, and — for a call made as this 8-count ends — the run
+   * this 8-count will leave behind with what the answer to that call would then pay.
+   */
+  afinque: {
+    links: number;
+    cap: number;
+    nextBonus: number;
+    ifCalledNow: { links: number; nextBonus: number };
+  };
+  /**
+   * `songBonus` is what taking the song would pay the active player right now, and
+   * `ifEndedNow` what ending the 8-count here would pay in total — the song card and the call
+   * standing over it together, netted and clamped as the engine applies them, with `lost` set
+   * when the Connection it costs ends the dance. Null outside the active player's dance step.
+   */
+  turn: GameState["turnDance"] & {
+    songBonus: BonusEffect | null;
+    ifEndedNow: { style: number; connection: number; lost: boolean } | null;
+  };
   signal: { role: Role; card: CardView } | null;
   legalActions: GameAction[];
   /** Empty unless it is this viewer's dance step. Omitted means the chosen action is legal. */
@@ -312,6 +342,21 @@ function callView(state: GameState, contentSet: ContentSet): PlayerSnapshot["cal
   };
 }
 
+/**
+ * The 8-count as it would stand if the active player ended it here, run through the reducer
+ * rather than restated: the order the song card and the call resolve in, the Connection ceiling
+ * and the loss at zero are the engine's own. Null when there is no dance step to end.
+ */
+function endedNow(state: GameState, contentSet: ContentSet): GameState | null {
+  if (state.status !== "playing" || state.phase !== "dance") return null;
+  const ended = applyAction(
+    state,
+    { type: "END_DANCE", role: state.activeRole, callId: null },
+    contentSet,
+  );
+  return ended.ok ? ended.state : null;
+}
+
 function cardView(
   instance: CardInstance | null,
   cards: Record<string, DanceCard>,
@@ -339,6 +384,10 @@ export function snapshotFor(
   const ratingDefinition = state.rating
     ? (contentSet.rules.ratings.find((entry) => entry.name === state.rating) ?? null)
     : null;
+  const cap = afinqueCap(contentSet);
+  // Both projections read the active player's dance, so both roles' snapshots are identical.
+  const ended = endedNow(state, contentSet);
+  const linksAfter = ended ? ended.shared.afinque : state.shared.afinque;
 
   return {
     engineVersion: state.engineVersion,
@@ -357,10 +406,14 @@ export function snapshotFor(
     rules: {
       maximumConnection: contentSet.rules.maximumConnection,
       lessonCosts: { ...contentSet.rules.lessonCosts },
+      lessonToDrawTop: contentSet.rules.lessonToDrawTop
+        ? { ...contentSet.rules.lessonToDrawTop }
+        : null,
       songLength: contentSet.song.cards.length,
       phraseLength: contentSet.song.cards.length / 2,
       ratings: contentSet.rules.ratings.map((rating) => ({ ...rating })),
       phraseBonuses: { ...contentSet.rules.phraseBonuses },
+      stumble: { ...contentSet.rules.stumble },
       call: contentSet.rules.call
         ? {
             ...contentSet.rules.call,
@@ -392,6 +445,16 @@ export function snapshotFor(
       flourish: entry.flourishCardId ? (cards[entry.flourishCardId] ?? null) : null,
       fromPosition: entry.fromPosition,
       endingPosition: entry.endingPosition,
+      // The id stands even when this content no longer prints the call: it was still made.
+      callMade: entry.callMade
+        ? {
+            id: entry.callMade,
+            name: callDefinition(contentSet, entry.callMade)?.name ?? entry.callMade,
+          }
+        : null,
+      callOutcome: entry.callOutcome,
+      songBonus: entry.songBonus ? { ...entry.songBonus } : null,
+      hold: entry.hold,
     })),
     self: {
       role,
@@ -436,13 +499,24 @@ export function snapshotFor(
     })),
     afinque: {
       links: state.shared.afinque,
-      cap: afinqueCap(contentSet),
-      nextBonus: afinqueBonus(
-        Math.min(state.shared.afinque + 1, afinqueCap(contentSet)),
-        contentSet,
-      ),
+      cap,
+      nextBonus: afinqueBonus(Math.min(state.shared.afinque + 1, cap), contentSet),
+      ifCalledNow: {
+        links: linksAfter,
+        nextBonus: afinqueBonus(Math.min(linksAfter + 1, cap), contentSet),
+      },
     },
-    turn: { ...state.turnDance, songBonus: songBonusFor(state, state.activeRole, contentSet) },
+    turn: {
+      ...state.turnDance,
+      songBonus: songBonusFor(state, state.activeRole, contentSet),
+      ifEndedNow: ended
+        ? {
+            style: ended.shared.style - state.shared.style,
+            connection: ended.shared.connection - state.shared.connection,
+            lost: ended.status === "lost",
+          }
+        : null,
+    },
     signal:
       state.signal && signaledInstance
         ? { role: state.signal.role, card: cardView(signaledInstance, cards)! }
@@ -450,7 +524,12 @@ export function snapshotFor(
     legalActions: legalActions(state, role, contentSet),
     floorRefusals: floorRefusalList(state, role, contentSet, cards),
     lessonRefusals: lessonRefusalList(state, role, contentSet),
-    log: state.log.slice(-80),
+    // A window while the dance runs: a long song logs more than any screen in play shows. The
+    // end screen recaps the whole song from its own sentences, and is sent once.
+    log:
+      state.status === "completed" || state.status === "lost"
+        ? [...state.log]
+        : state.log.slice(-80),
     finalScore: state.finalScore,
     rating: ratingDefinition
       ? { name: ratingDefinition.name, description: ratingDefinition.description }

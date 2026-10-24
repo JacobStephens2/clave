@@ -17,7 +17,7 @@ function followCount(
   callId: string | null,
   hand: string[],
   plays: (state: GameState) => GameState,
-  ending: GameAction = { type: "END_DANCE", role: "follow" },
+  ending: GameAction = { type: "END_DANCE", role: "follow", callId: null },
 ): GameState {
   let state = readyGame();
   setHand(state, "lead", ["pos_001", "mov_002"]);
@@ -106,6 +106,40 @@ describe("the resolution ladder · rulebook §6.5", () => {
       styleGained: 3,
       afinqueAfter: 1,
     });
+  });
+
+  it("records how the call standing over each 8-count resolved, beside its rung", () => {
+    const dropped = followCount("call_005", ["mov_002"], danceFirst);
+    expect(dropped.danceHistory.at(-1)).toMatchObject({
+      rung: "awkward",
+      callOutcome: "dropped",
+      // Count 2 pays +1 Style for a Move from Open; a dropped call does not take it back.
+      songBonus: { style: 1, connection: 0 },
+    });
+    const stumbled = followCount("call_005", ["rec_001"], stay, {
+      type: "STUMBLE",
+      role: "follow",
+      recoveryInstanceId: null,
+    });
+    expect(stumbled.danceHistory.at(-1)).toMatchObject({
+      rung: "break",
+      callOutcome: "dropped",
+      songBonus: null,
+    });
+    const covered = followCount("call_005", ["rec_001"], (state) =>
+      applyOk(state, {
+        type: "COVER_CALL",
+        role: "follow",
+        recoveryInstanceId: state.players.follow.hand[0]!.instanceId,
+      }),
+    );
+    expect(covered.danceHistory.at(-1)).toMatchObject({
+      rung: "recovered",
+      callOutcome: "covered",
+      callMade: null,
+    });
+    const quiet = followCount(null, ["mov_002"], danceFirst);
+    expect(quiet.danceHistory.at(-1)).toMatchObject({ rung: "clean", callOutcome: null });
   });
 
   it("re-conditions the clean phrase on a dropped call as well as a stumble", () => {

@@ -31,7 +31,7 @@ describe("undo · FR-13", () => {
       role: "lead",
       positionInstanceId: position!.instanceId,
     });
-    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
     state.players.lead.money = 5;
     state = applyOk(state, {
       type: "BUY_LESSON",

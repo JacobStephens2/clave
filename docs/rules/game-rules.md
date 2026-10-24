@@ -177,7 +177,8 @@ After a stumble the state is empty, so the next dance play must open again with 
 position and a matching move.
 
 A stumble replaces only the **Dance** step of the turn. Unless Connection reaches 0,
-the player may still take a lesson and must still clean up normally.
+the player may still take a lesson and must still clean up normally. A stumbled 8-count
+turns neither face of the song card (7): no bonus, and no call.
 
 ### 6.4 The hold
 
@@ -233,9 +234,10 @@ The song has two phrases of eight 8-counts each:
 **Song card bonuses.** Each song card names a condition for its 8-count ("+1 Style if
 you play a Flourish", "+1 Connection if you change position", …). If the active
 player's dance meets it, apply it immediately — unless that player made a call or
-adjusted the hold, which turns the card's other face. The montuno's cards pay far more
-than the cuerpo's: the song gets louder as it goes. Every song card except the last of
-each phrase also prints a **favoured call** (★). The full deck is listed in
+adjusted the hold, which turns the card's other face. A stumble turns neither face: a
+stumbled 8-count takes no bonus, however little the card asked for. The montuno's cards
+pay far more than the cuerpo's: the song gets louder as it goes. Every song card except
+the last of each phrase also prints a **favoured call** (★). The full deck is listed in
 `docs/cards/v1-card-list.md`.
 
 ### 7.1 The call and the answer
@@ -276,6 +278,10 @@ song card or makes a call, as you choose.
 **Dropping.** If your dance step ends with the ask unmet, the call **drops**: the
 couple loses **1 Connection**, afinque breaks, and the phrase is no longer clean. A
 stumble drops the call too, at no cost beyond the stumble's own.
+
+**In what order.** Your 8-count takes its own song card first, and the call standing over
+you is settled after it — so a Connection your song card just paid is there to meet a
+dropped call, and an 8-count that pays for its own drop does not end the dance.
 
 **Covering.** At any point in your dance step you may **cover** the call standing over
 you by discarding a **Recovery card** from your hand. The call is cleared: no
@@ -424,7 +430,8 @@ flourish only on your own move, same turn.
 
 **The call:** one of the seven · not on 8-counts 8 or 16 · needs a position on the
 floor · answered = its Style, +1 in the pocket (★), + afinque · dropped = −1
-Connection · cover it by discarding a Recovery card.
+Connection, charged after your own song card pays · cover it by discarding a Recovery
+card.
 
 **The seven:** Stay with me 0 · Open it up 1 · Echo me 2 · Change the room 3 · Stay
 close 4 · Style it 4 · Show me something 8.
@@ -435,7 +442,7 @@ drop, a cover, a stumble, or an 8-count with no Move; resets each phrase.
 **Rungs:** perfect · clean · awkward · recovered · break.
 
 **Stumble:** clear the table, −2 Connection (−1 with Return to Basic, −0 with
-Reconnect).
+Reconnect) · turns neither face of the song card.
 
 **Phrase end (after 8-counts 8 and 16):** clean phrase +3 (no stumble, no dropped
 call) · variety +1/position after the first · both flourished +2 · pose finish +4.

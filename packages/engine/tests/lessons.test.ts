@@ -7,7 +7,7 @@ describe("lessons · rulebook §8", () => {
   it("lets both players buy Hand Twist as an always-available $1 Beginner Flourish", () => {
     let state = readyGame();
     for (const role of ["lead", "follow"] as const) {
-      state = applyOk(state, { type: "END_DANCE", role });
+      state = applyOk(state, { type: "END_DANCE", role, callId: null });
       const before = snapshotFor(state, role);
       expect(before.market.beginner).toContainEqual(
         expect.objectContaining({ id: "flo_003", type: "flourish", tier: "B" }),
@@ -33,7 +33,7 @@ describe("lessons · rulebook §8", () => {
 
   it("buys one Beginner card into the discard pile", () => {
     let state = readyGame();
-    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
     state = applyOk(state, {
       type: "BUY_LESSON",
       role: "lead",
@@ -53,7 +53,7 @@ describe("lessons · rulebook §8", () => {
   it("refills a private market and locks the teacher for the round", () => {
     let state = readyGame();
     state.players.lead.money = 3;
-    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
     const chosen = state.market.intermediateDisplay[0]!;
     state = applyOk(state, {
       type: "BUY_LESSON",
@@ -68,7 +68,7 @@ describe("lessons · rulebook §8", () => {
   it("puts a private lesson on top of the draw pile and a group class in the discard", () => {
     let state = readyGame();
     state.players.lead.money = 3;
-    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
     const chosen = state.market.intermediateDisplay[0]!;
     state = applyOk(state, {
       type: "BUY_LESSON",
@@ -82,6 +82,32 @@ describe("lessons · rulebook §8", () => {
     state = applyOk(state, { type: "END_LESSON", role: "lead" });
     expect(state.players.lead.hand.some((entry) => entry.cardId === chosen)).toBe(true);
     expect(content.rules.lessonToDrawTop).toMatchObject({ beginner: false, intermediate: true });
+    // Published, so the table says where a lesson lands in the game being played.
+    expect(snapshotFor(state, "lead", content).rules.lessonToDrawTop).toEqual(
+      content.rules.lessonToDrawTop,
+    );
+  });
+
+  it("publishes no destinations at all for content that sends every lesson to the discard", () => {
+    const rules = { ...content.rules };
+    delete rules.lessonToDrawTop;
+    const older = { ...content, rules };
+    let state = readyGame();
+    state.players.lead.money = 3;
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
+    const chosen = state.market.intermediateDisplay[0]!;
+    expect(snapshotFor(state, "lead", older).rules.lessonToDrawTop).toBeNull();
+    // The game played on that content sends the private lesson to the discard pile, and says so.
+    const bought = applyAction(
+      state,
+      { type: "BUY_LESSON", role: "lead", source: "intermediate", cardId: chosen },
+      older,
+    );
+    expect(bought.ok).toBe(true);
+    if (!bought.ok) return;
+    expect(bought.state.players.lead.discardPile.some((entry) => entry.cardId === chosen)).toBe(
+      true,
+    );
   });
 
   it("learns for free from a partner once per phrase", () => {

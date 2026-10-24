@@ -153,7 +153,7 @@ describe("snapshot refusal codes", () => {
   it("lists no floor refusal off the dance step", () => {
     let state = readyGame();
     setHand(state, "lead", ["mov_013"]);
-    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
     expect(snapshotFor(state, "lead", content).floorRefusals).toEqual([]);
   });
 
@@ -169,7 +169,7 @@ describe("snapshot refusal codes", () => {
 
   it("publishes each market card's buy failure and omits a legal buy", () => {
     let state = readyGame();
-    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
     const view = snapshotFor(state, "lead", content);
 
     for (const card of view.market.beginner) {
@@ -205,7 +205,7 @@ describe("snapshot refusal codes", () => {
 
   it("publishes the money failure when a private lesson is also already taken", () => {
     let state = readyGame();
-    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
     state.players.lead.money = 0;
     state.phrase.privateLessonTakenThisRound = true;
     const cardId = state.market.intermediateDisplay[0]!;
@@ -281,7 +281,7 @@ describe("snapshot refusal codes", () => {
 
   it("publishes ADVANCED_CLOSED for an advanced market card before the montuno", () => {
     let state = readyGame();
-    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
     state.players.lead.money = 10;
     state.market.advancedDisplay = ["flo_004"];
     const bought = applyAction(

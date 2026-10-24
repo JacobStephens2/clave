@@ -22,7 +22,8 @@ _Avoid_: streak, combo, multiplier, chain
 **Hold**:
 The position the couple is in, and the one play that changes it without a Move: taking
 the hold on an empty floor, or adjusting the hold on an established one, before any
-other card in the 8-count.
+other card in the 8-count. Which of the two it was is recorded on the 8-count, as
+`hold: "taken" | "adjusted"`, so a hold is never read back as the basic.
 _Avoid_: frame, grip; transition (a transition is the Position played _after_ a Move);
 "hold" for a held, staged, or paused card
 

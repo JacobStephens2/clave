@@ -22,7 +22,7 @@ describe("the hold · rulebook §6.4", () => {
     });
     expect(state.table.position?.cardId).toBe("pos_002");
     expect(state.turnDance).toMatchObject({
-      adjusted: true,
+      hold: "taken",
       changedPosition: false,
       cardsPlayed: 1,
       positionsPlayed: 1,
@@ -43,8 +43,43 @@ describe("the hold · rulebook §6.4", () => {
       positionInstanceId: position.instanceId,
     });
     expect(state.table.position?.cardId).toBe("pos_002");
-    expect(state.turnDance.changedPosition).toBe(true);
+    expect(state.turnDance).toMatchObject({ hold: "adjusted", changedPosition: true });
     expect(state.players.follow.discardPile.map((entry) => entry.cardId)).toEqual(["pos_001"]);
+  });
+
+  it("records the hold on the 8-count it was played on, so it is not read as the basic", () => {
+    let taken = onFloor(null);
+    setHand(taken, "lead", ["pos_002"]);
+    taken = applyOk(taken, {
+      type: "ADJUST",
+      role: "lead",
+      positionInstanceId: taken.players.lead.hand[0]!.instanceId,
+    });
+    taken = applyOk(taken, { type: "END_DANCE", role: "lead", callId: null });
+    expect(taken.danceHistory.at(-1)).toMatchObject({
+      outcome: "basic",
+      hold: "taken",
+      songBonus: null,
+    });
+    expect(snapshotFor(taken, "follow", content).danceHistory.at(-1)?.hold).toBe("taken");
+
+    let adjusted = onFloor("pos_001");
+    setHand(adjusted, "lead", ["pos_002"]);
+    adjusted = applyOk(adjusted, {
+      type: "ADJUST",
+      role: "lead",
+      positionInstanceId: adjusted.players.lead.hand[0]!.instanceId,
+    });
+    adjusted = applyOk(adjusted, { type: "END_DANCE", role: "lead", callId: null });
+    expect(adjusted.danceHistory.at(-1)?.hold).toBe("adjusted");
+    // An 8-count that played no Position card at all holds nothing to report.
+    expect(
+      applyOk(onFloor("pos_001"), {
+        type: "END_DANCE",
+        role: "lead",
+        callId: null,
+      }).danceHistory.at(-1),
+    ).toMatchObject({ hold: null });
   });
 
   it("forfeits the song card's bonus for the 8-count it is taken on", () => {
@@ -60,7 +95,7 @@ describe("the hold · rulebook §6.4", () => {
     });
     state = applyOk(state, { type: "PLAY_MOVE", role: "lead", moveInstanceId: move!.instanceId });
     const before = { ...state.shared };
-    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
     // Count 5 pays +1 Connection for playing no Position; the hold gives that up.
     expect(state.shared.connection).toBe(before.connection);
     expect(state.turnDance.bonusStyle).toBe(0);

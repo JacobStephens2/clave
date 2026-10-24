@@ -33,7 +33,7 @@ describe("visibility and signaling · rulebook §9", () => {
 
   it("shows both players the same public phrase choreography without card instances", () => {
     let state = readyGame();
-    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
     const lead = snapshotFor(state, "lead", content);
     const follow = snapshotFor(state, "follow", content);
     expect(lead.danceHistory).toEqual(follow.danceHistory);
@@ -68,7 +68,9 @@ describe("visibility and signaling · rulebook §9", () => {
     expect(lead.call).toEqual(follow.call);
     expect(JSON.stringify(lead.call)).toBe(JSON.stringify(follow.call));
     expect(lead.calls).toEqual(follow.calls);
-    expect(lead.afinque).toEqual(follow.afinque);
+    // The projections judge the active player's dance too, so they read the same for both.
+    expect(JSON.stringify(lead.afinque)).toBe(JSON.stringify(follow.afinque));
+    expect(JSON.stringify(lead.turn)).toBe(JSON.stringify(follow.turn));
     // `met` judges the answerer's dance, not the viewer's, so both roles read the same.
     expect(lead.call?.met).toBe(false);
     expect(JSON.stringify(lead)).not.toContain(state.players.follow.hand[0]!.instanceId);

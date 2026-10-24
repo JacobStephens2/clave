@@ -22,7 +22,7 @@ function finishedRoom(rooms: RoomManager): Record<"lead" | "follow", SeatCredent
       view.status === "setup"
         ? { type: "CONFIRM_HAND", role }
         : view.phase === "dance"
-          ? { type: "END_DANCE", role }
+          ? { type: "END_DANCE", role, callId: null }
           : { type: "END_LESSON", role };
     view = rooms.action(lead.code, role, seats[role].seatToken, view.sequence, action).snapshot;
   }
@@ -86,12 +86,20 @@ function storedByEngineFive(envelope: ResumeEnvelope): void {
     "callDropped",
     "callCovered",
     "callStyle",
-    "adjusted",
+    "hold",
     "rung",
   ] as const)
     delete (envelope.state.turnDance as Partial<GameState["turnDance"]>)[key];
   for (const entry of envelope.state.danceHistory)
-    for (const key of ["rung", "styleGained", "afinqueAfter"] as const)
+    for (const key of [
+      "rung",
+      "styleGained",
+      "afinqueAfter",
+      "callMade",
+      "callOutcome",
+      "songBonus",
+      "hold",
+    ] as const)
       delete (entry as Partial<GameState["danceHistory"][number]>)[key];
 }
 
@@ -387,7 +395,10 @@ describe("authoritative room persistence", () => {
       afinque: { links: 0, cap: 0, nextBonus: 0 },
     });
     expect(view.rules.call).toBeNull();
+    // Read from the room's own content: this game sends every lesson to the discard pile.
+    expect(view.rules.lessonToDrawTop).toBeNull();
     expect(view.turn.rung).toBe("pending");
+    expect(view.turn.hold).toBeNull();
     // The game plays on under this release: it simply has no call to make.
     const played = restarted.action(lead.code, "lead", lead.seatToken, view.sequence, {
       type: "END_DANCE",
@@ -395,7 +406,14 @@ describe("authoritative room persistence", () => {
       callId: null,
     });
     expect(played.snapshot.phase).toBe("lesson");
-    expect(played.snapshot.danceHistory.at(-1)).toMatchObject({ rung: "awkward", styleGained: 0 });
+    expect(played.snapshot.danceHistory.at(-1)).toMatchObject({
+      rung: "awkward",
+      styleGained: 0,
+      // The 8-counts this room danced before the call made none and met none.
+      callMade: null,
+      callOutcome: null,
+      hold: null,
+    });
     expect(() =>
       restarted.action(lead.code, "lead", lead.seatToken, played.snapshot.sequence, {
         type: "END_DANCE",
