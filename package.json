@@ -21,7 +21,7 @@
     "test": "npm run build:test-deps && vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present && tsc -p tsconfig.tools.json --noEmit",
     "lint": "eslint .",
     "format": "prettier --write \"packages/**/*.{ts,tsx,css,json,html}\" \"scripts/**/*.ts\" \"*.{js,ts,json}\" \".github/**/*.yml\"",
     "format:check": "prettier --check \"packages/**/*.{ts,tsx,css,json,html}\" \"scripts/**/*.ts\" \"*.{js,ts,json}\" \".github/**/*.yml\"",
