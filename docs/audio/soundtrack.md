@@ -652,7 +652,7 @@ FAQ (<https://platform.mureka.ai/docs/en/faq.html>):
 - The API FAQ states it plainly for API calls specifically: "All content generated through
   paid API calls comes with full usage rights and commercial authorization. You are free to
   use it in commercial products, platform distribution, advertisements, videos, and other
-  business scenarios." A free, open-source Clave is well inside that.
+  business scenarios." A free, public Clave is well inside that.
 - **No attribution is required on the paid tier**, and the terms impose no attribution
   obligation there — only the free tier does.
 - **Mureka keeps a broad licence back over your output.** §3(e) also grants Mureka "an
@@ -990,7 +990,7 @@ listening changes: even a take he likes cannot ship, for the licensing reasons b
 
 ### Licensing — this is the finding that matters
 
-Checked on 2026-10-24. **A free, open-source, public web game should not bundle and serve
+Checked on 2026-10-24. **A free, public web game should not bundle and serve
 tracks generated this way.** The sound is a side issue; the rights do not work.
 
 The chain has three links and the middle one is missing.
