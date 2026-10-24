@@ -1,8 +1,8 @@
-# Soundtrack — two attempts, nothing shipped
+# Soundtrack — three attempts, nothing shipped
 
-Clave ships **no music files**. This document records two attempts to generate an
+Clave ships **no music files**. This document records three attempts to generate an
 original two-part instrumental soundtrack ("Cuerpo" for the verse, "Montuno" for the
-mambo), the verification both failed, and the licensing homework, so a third attempt
+mambo), the verification they all failed, and the licensing homework, so a fourth attempt
 does not start from nothing. Nothing was added to `packages/client/public/audio/`, and
 the clients keep the synthesized rhythm cues and the "Open Llorarás in Spotify" link
 instead of a house-band toggle.
@@ -11,6 +11,11 @@ instead of a house-band toggle.
 | ------- | ---------- | ------------------------------- | ----------- | ---------- | ----------- |
 | 1       | 2026-10-23 | ElevenLabs Music `music_v2_5`   | 4           | —          | not shipped |
 | 2       | 2026-10-24 | Google Lyria 3.5 / Lyria 3 Clip | 7           | 4/10       | not shipped |
+| 3       | 2026-10-24 | Mureka `mureka-9.5`             | 2           | 4/10       | not shipped |
+
+All three failed the same way: the takes do not sound like a band playing. Attempt 3 adds
+a **listening pack** so a human ear gets a vote, after one AI listener was caught
+reporting a glitch that measurement shows is not in the file.
 
 ## Attempt 1 — ElevenLabs Music (2026-10-23)
 
@@ -448,3 +453,272 @@ The sparse prompt above, with the loop-variant paragraph in place of the time ra
 Two stray time-range lines (`[1:00 - 1:30]` and `[1:30 - 2:00]`) were left in by mistake
 when the ranges were stripped; the Clip model ignores length instructions anyway and
 returned its fixed 30 seconds, but the take is recorded as slightly contaminated.
+
+## Attempt 3 — Mureka (2026-10-24)
+
+Still nothing shipped, and for the third time the reason is the same. Mureka's
+`mureka-9.5` instrumental model is the best-behaved of the three services by a wide
+margin — it hit the requested tempo to within a few BPM, it serves lossless WAV and
+FLAC rather than a lossy MP3, it put no voice anywhere in any take, and it needed no
+bracketed structure syntax to hold one continuous groove. Six listening passes across
+three takes still scored every one of them between 1 and 4 out of 10 against a pass bar
+of 7, naming the same defect Lyria and ElevenLabs were named for: the instruments are
+sequenced, not played.
+
+This attempt also stopped for a reason the earlier two did not: **the account ran out of
+credits, not out of patience.** The budget was eight generation requests; two were spent,
+because at `mureka-9.5` prices the balance only covered three instrumentals.
+
+### The API, as it actually behaves
+
+- **Endpoints**: `POST https://api.mureka.ai/v1/instrumental/generate` returns an
+  asynchronous task; `GET https://api.mureka.ai/v1/instrumental/query/{task_id}` polls it.
+  Auth is `Authorization: Bearer $MUREKA_API_KEY`. Billing is
+  `GET https://api.mureka.ai/v1/account/billing`.
+- **The full request schema is four fields**: `model` (required; one of `auto`,
+  `mureka-7.6`, `mureka-8`, `mureka-9`, `mureka-9.5`), `n` (default 2, maximum 3), `prompt`
+  (**maximum 1024 characters**) and `stream`. There is no `duration`, no `bpm`, no `seed`
+  and no negative-prompt field, so tempo, length and instrumentation again have to go in
+  the prompt — but see below, because this time the prompt actually held them.
+- **The 1024-character cap is the real constraint on prompting.** Attempt 1's prompts ran
+  to about 1,900 characters and attempt 2's to about 1,500; both had to be cut by roughly
+  a third to fit. That is not obviously a loss — the long negative lists were what attempt
+  2 suspected of summoning what they named — but it does mean a prompt cannot carry both a
+  detailed arrangement and a long ban list.
+- `prompt` and `instrumental_id` are mutually exclusive: the docs say each control option
+  "does not support combination with other control options". A reference-audio upload
+  (`POST /v1/files/upload` with `purpose: instrumental`, which takes a fixed 30-second
+  clip) is therefore an _alternative_ to prompting, not an addition to it. No reference
+  upload was used here.
+- **Output is lossless.** Each choice carries `url` (MP3, 256 kbps), `flac_url` and
+  `wav_url` (16-bit 44.1 kHz stereo), all valid for 30 days. This is the one hard technical
+  advantage over both earlier services: any loop editing would start from PCM, not from a
+  192 kbps MP3.
+- **Cost is linear in `n`, and it is the binding budget.** `mureka-9.5` cost **15 credits
+  per instrumental**: the `n: 2` request cost 30 and the `n: 1` request cost 15. The
+  account started at 51 credits and ended at 6, so no third request was possible. Credits
+  are prepaid, non-refundable and valid 12 months from the last recharge.
+- `concurrent_request_limit` is **1** on this account, so tasks must be run one at a time.
+- Generation took 61 s for the two-choice request and 92 s for the one-choice request.
+  Status moved `preparing` → `running` → `succeeded`; no task failed or timed out.
+
+### What was generated
+
+Two requests, three instrumentals, one prompt per cue. No prompt names any artist, band,
+album or song, nothing imitates Llorarás or any specific recording, and both prompts ask
+for a live band in one room with human timing and real horn breath while explicitly
+banning synthesizers, drum machines, quantized MIDI, sampled loops, vinyl crackle and tape
+hiss. Both are reproduced verbatim at the end of this section.
+
+| Take         | Task            | Prompt                 | Delivered         | Loudness (LUFS / LRA / true peak) | Tempo  | Listener A (3.1) | Listener B (2.5) |
+| ------------ | --------------- | ---------------------- | ----------------- | --------------------------------- | ------ | ---------------- | ---------------- |
+| cuerpo-v1-1  | 168127849627650 | `cuerpo-v1`, 1023 ch.  | 212.55 s, WAV+MP3 | −13.1 / 3.1 / +0.3 dBFS           | 193.25 | 2/10 FAIL        | 4/10 FAIL        |
+| cuerpo-v1-2  | 168127849627650 | `cuerpo-v1`, 1023 ch.  | 222.75 s, WAV+MP3 | −11.9 / 3.6 / +0.5 dBFS           | 191.5  | 1/10 FAIL        | 4/10 FAIL        |
+| montuno-v1-1 | 168128562593794 | `montuno-v1`, 1012 ch. | 243.31 s, WAV+MP3 | −12.3 / 4.1 / +0.5 dBFS           | 198.75 | 1/10 FAIL        | 4/10 FAIL        |
+
+Both takes of `cuerpo-v1` came from the single `n: 2` request. All three are 44.1 kHz
+16-bit stereo; delivered sizes were 37.5 MB / 39.3 MB / 42.9 MB as WAV and 6.8 MB / 7.1 MB
+/ 7.8 MB as MP3. Tempo is the onset-autocorrelation estimate in quarter-note BPM; the
+listeners' own estimates were 190–192, 190–192 and 199–200, which agree with it for the
+first time across all three attempts. Every take overshoots 0 dBFS on decode by 0.3 to
+0.5 dB, which the two-pass `loudnorm` fixed.
+
+Nothing shipped, so no loop points were chosen and `packages/client/public/audio/` is
+still absent.
+
+### How each take was verified
+
+Identical to attempt 2, so the three attempts are comparable:
+
+1. `ffprobe` for container, duration, bitrate, sample rate and channels.
+2. `ffmpeg -af ebur128=peak=true` for integrated loudness, loudness range and true peak.
+3. A per-second RMS envelope in dBFS, flagging any second below −60 dBFS or more than
+   12 dB under the take's median.
+4. Tempo from an onset-strength envelope scored by autocorrelation, read as an octave
+   family, plus each listener's own estimate.
+5. Two independent listening passes per take, `gemini-3.1-pro-preview` and
+   `gemini-2.5-pro` (Gemini API `generateContent`, the normalized MP3 sent inline as
+   base64 `audio/mpeg`, `temperature: 0`), against the same strict eleven-point rubric:
+   real band or MIDI/sample library and what gave it away, genre, a per-instrument audible
+   checklist, clave and tumbao feel, tempo, any voice at all, every glitch with a
+   timestamp, whether it starts and ends inside the groove, resemblance to any specific
+   known recording, a 1–10 authenticity score, and PASS/FAIL. Both passes had to return
+   PASS and 7 or better.
+
+One detector was added, because attempt 2's per-second envelope is too coarse to see a
+stutter lasting tens of milliseconds. A 10 ms frame analysis now reports both level
+dropouts (frames far below a one-second local median) and sample-level discontinuities
+(frames whose peak first-difference is an outlier, which is what a splice or a dropped
+buffer leaves behind). It earned its place immediately — see below.
+
+### What the verification found
+
+Mechanically these are the best takes any attempt has produced. All three hold a steady
+tempo inside the requested 170–200 BPM range, with the loudness range of 3.1 to 4.1 LU
+confirming the energy barely moves. There is no digital silence, no dropout and no
+mid-take level collapse anywhere inside any take; the only sub-−60 dBFS second in each
+file is the short decay after the music stops. **No take contains any voice** — both
+listeners confirmed that independently on all three, which is a real improvement on
+attempt 2, where Lyria leaked eight seconds of spoken Spanish.
+
+The one structural defect is shared by all three: each take stops abruptly mid-groove
+rather than ending. `gemini-2.5-pro` called it "an abrupt, hard digital cut … It sounds
+like the DAW transport was simply stopped" and treated it as disqualifying on its own.
+That is fair as stated but it is also the cheapest defect here to fix: it sits outside any
+loop region and trimming plus a crossfade would remove it.
+
+The failure is realism, and both listeners reached it independently on every take.
+`gemini-2.5-pro` on cuerpo-v1-1:
+
+> This sounds like high-quality MIDI sequencing and premium sample libraries, not a real
+> band in a room. … The rhythmic precision is inhuman. Every single percussion hit, piano
+> chord, and bass note is perfectly locked to a metronomic grid. There is zero "push" or
+> "pull" from the rhythm section, which is the lifeblood of salsa. A real band breathes;
+> this doesn't. … There is no sense of a shared acoustic space.
+
+It scored that take 4/10 — "a high-quality _imitation_, but it is immediately identifiable
+as fake to an expert ear" — which is exactly the ceiling Lyria hit. `gemini-3.1-pro-preview`
+was harsher at 2/10, and on the montuno take named the most specific version of the
+complaint:
+
+> Severe "machine-gun" digital artifacts on the cowbell and guiro due to identical,
+> unvarying MIDI velocities.
+
+Asking for the hotter mambo texture did not help and may have hurt: `gemini-2.5-pro`
+called montuno-v1-1 "hyper-dense and somewhat chaotic, throwing every possible salsa
+cliché into the mix at once … a 'Salsa Construction Kit'", still 4/10. So the sparse
+texture tried in attempt 2 and the dense texture tried here fail the same way, which is
+further evidence the defect is not in the arrangement.
+
+**One listener claim was checked and is false.** `gemini-3.1-pro-preview` reported a
+"repeating digital stutter/skip artifact that occurs exactly every 10 seconds" on
+cuerpo-v1-1 and listed twenty-one timestamps for it. It is not there. The 10 ms analysis
+finds **zero** sample-level discontinuities anywhere in the file at an 8-sigma threshold,
+and the level dips at those exact timestamps are _shallower_ than the file's own
+background: 19% of the claimed points dip more than 15 dB below the local median against
+33% of all windows in the take, with a mean percentile of 65. `gemini-2.5-pro` heard
+nothing of the kind. The two listeners also contradict each other outright on
+instrumentation — `gemini-3.1-pro-preview` says cuerpo-v1-1 has no bongó, no maracas and
+no trombone, `gemini-2.5-pro` says all three are plainly audible — and on whether the
+montuno bass plays a tumbao at all, which one calls a "cardinal sin" of plodding on beat
+one and the other calls "a proper tumbao, correctly anticipating the downbeats".
+
+That matters for how much weight these scores carry. Attempt 2 closed by noting that the
+listeners' checkable claims had all held up, and used that to justify trusting them. Here
+one did not, and the detail-level disagreement is substantial. What survives is the thing
+both models say on every take in words they chose independently — quantized timing, static
+velocities, no room — which is also what four passes said in attempt 1 and thirteen in
+attempt 2. The harsh end of the range (the 1s and 2s) should be discounted; the 4s should
+not.
+
+### The listening pack
+
+Because the AI listeners may be biased against generated music, and because one of them
+was caught inventing a defect, this attempt also hands the decision to a human. All three
+takes were trimmed of their dead tail, two-pass `loudnorm`ed to −16.2 LUFS integrated with
+true peak between −2.6 and −3.6 dBFS, and encoded to 192 kbps 44.1 kHz stereo MP3:
+
+| File                | Take         | Duration | Size    | Scores (3.1 / 2.5) |
+| ------------------- | ------------ | -------- | ------- | ------------------ |
+| `cuerpo-take1.mp3`  | cuerpo-v1-1  | 211.70 s | 5.08 MB | 2/10 / 4/10        |
+| `montuno-take1.mp3` | montuno-v1-1 | 242.80 s | 5.83 MB | 1/10 / 4/10        |
+| `cuerpo-take2.mp3`  | cuerpo-v1-2  | 222.10 s | 5.33 MB | 1/10 / 4/10        |
+
+They sit outside the repo, in the attempt's scratch directory under
+`music/mureka/listen/`, with a `README.txt` that gives each file's scores, its main
+criticism in the listener's own words, and the timestamps to listen at — including the
+three places the two listeners flatly disagree, where a dancer's ear settles it faster
+than either model.
+
+### Licensing, for whoever tries again
+
+Checked on 2026-10-24 against Mureka's Terms of Service
+(<https://www.mureka.ai/terms>, release and effective date 18 October 2024) and the API
+FAQ (<https://platform.mureka.ai/docs/en/faq.html>):
+
+- **Ownership turns on whether the account is paid.** Terms §3(e): "If you are a user who
+  has purchased gold or subscribed to the paid tier of the Service, the ownership, title
+  and interest in and to the AI music content generated by Mureka (the 'Output'),
+  including, without limitation, all intellectual property rights (if any) contained
+  therein, belong to you." This account is prepaid (1,000 credits recharged, 994 spent),
+  so output from it falls on the paid side.
+- The free tier is the opposite and would not do for Clave even unmonetized: "Mureka owns
+  all rights, title and interest in and to the Output", licensed back "solely for your
+  lawful, internal, and non-commercial purposes, provided that you give attribution credit
+  to Mureka in each case."
+- The API FAQ states it plainly for API calls specifically: "All content generated through
+  paid API calls comes with full usage rights and commercial authorization. You are free to
+  use it in commercial products, platform distribution, advertisements, videos, and other
+  business scenarios." A free, open-source Clave is well inside that.
+- **No attribution is required on the paid tier**, and the terms impose no attribution
+  obligation there — only the free tier does.
+- **Mureka keeps a broad licence back over your output.** §3(e) also grants Mureka "an
+  unrestricted, assignable, sublicensable, irrevocable, royalty-free license throughout the
+  universe to reproduce, distribute, publicly display, communicate to the public, make
+  available, create derivative works from … and otherwise exploit and use … all or any part
+  of all your Output … including, without limitation, commercial use." Shipping a track in
+  Clave does not stop Mureka or anyone it sublicenses to from using the same track.
+- **Two disclaimers worth reading before relying on a generated track.** §3(f): the output
+  "may have certain similarities with the other music work created by other users on
+  Mureka, i.e., Mureka does not guarantee the uniqueness of the Output". §3(g): "due to the
+  particularity and complexity of AIGC and the uncertainty of copyright law, Mureka does
+  not guarantee that your Output by using Mureka can be used for copyright registration."
+- **No watermark or content ID is documented anywhere.** Neither the Terms of Service nor
+  the API reference nor the FAQ mentions a watermark, SynthID-style identifier or content
+  ID on generated audio — unlike Lyria, whose docs state every output carries a SynthID
+  watermark. Absence from the documentation is not proof of absence in the audio, so treat
+  this as undocumented rather than confirmed clean.
+- Credits are **non-refundable** and expire 12 months after the last recharge; the website
+  membership and the API balance are separate systems.
+
+### Next time
+
+Three services, three ceilings, one defect. The honest summary is that prompt-level text
+control over a general-purpose music model does not produce music that sounds played, and
+Clave has now spent four, seven and two generations finding that out. What changed this
+time is only that the mechanical problems went away: tempo, length, structure, lossless
+output and the absence of any voice are all solved, and only timbre and feel are left.
+
+- **Do not spend more on prompt variations of a text-to-music model.** That is now
+  fifteen takes across three services and six prompt strategies, with a hard ceiling of
+  4/10 from the more forgiving of two listeners.
+- **Let Jacob's ears decide whether 4/10 is actually unshippable.** The listening pack
+  exists for that. One listener invented a defect in this round, so the scores are
+  evidence, not a verdict. If cuerpo-take1 sounds fine in the game at low volume under
+  the rhythm cues, the gate was stricter than the product needed.
+- If another generation round is funded, the one untried lever on Mureka is
+  `instrumental_id`: a 30-second reference clip instead of a prompt, which specifies
+  timbre and feel by example rather than in prose. That needs a reference recording whose
+  licence permits it — which is a licensing problem, not a prompting one, and it is
+  exactly the "audio reference" attempt 2 recommended.
+- The cheaper fix remains the one attempt 2 named: a human session player or a licensed
+  salsa-dura library. Two 30-second loops is a small commission, and it is the only route
+  that attacks the defect every listener has named.
+- Keep the gate. It has now caught a truncated response, a spoken vocal, and — new this
+  round — a listener confabulating a glitch, because the measurements were run alongside
+  the listening rather than instead of it.
+
+### The exact prompts
+
+Reproduced verbatim, as sent. Both are within the API's 1024-character limit. No artist,
+band, album or song name appears in either.
+
+**Cuerpo — `mureka-9.5`, `n: 2`, 1023 characters**
+
+```
+Original instrumental salsa dura, 1970s New York style, 190 BPM in 4/4 on son clave. One nine-piece band playing live together in one room, close-miked: you hear the room, the players breathing, palms on conga skin, the wooden action of the piano. Human timing - they push and pull, nobody sits exactly on the grid, every stroke a different weight.
+Acoustic piano hammers a two-bar montuno guajeo. Upright bass plays a tumbao that leaves beat one open. Congas on tumbao with ringing open tones, bongo on martillo, timbales riding cascara on the shells, maracas and guiro. Two trumpets and a trombone take an audible breath, answer the piano with short punchy stabs, then leave space.
+One unbroken verse groove, one tempo, one key, full energy on the first beat and the last: no intro, no count-in, no build, no breakdown, no solo, no ending, no fade.
+Instrumental only: no singing, coro, chanting, shouts or spoken words.
+No synthesizer, no drum machine, no quantized MIDI, no sampled loops, no vinyl crackle, no tape hiss.
+```
+
+**Montuno — `mureka-9.5`, `n: 1`, 1012 characters**
+
+```
+Original instrumental salsa dura mambo, 1970s New York style, 190 BPM in 4/4 on son clave, hot and loud. One nine-piece band live in one room, close-miked: you hear the room, the players breathing, palms cracking on conga skin, sticks on metal. Human timing - they push and pull, nobody sits exactly on the grid, every stroke a different weight.
+The timbalero is off the shells and onto a loud hand-struck campana bell riding every bar. Congas open up loud, bongo player on the bongo bell, piano driving a hard montuno guajeo, upright bass pushing a strong tumbao. Two trumpets and a trombone blow loud interlocking mambo riffs in tight harmony, breathing between phrases.
+One unbroken driving groove, one tempo, one key, full tilt on the first beat and the last: no intro, no count-in, no build, no breakdown, no solo, no ending, no fade.
+Instrumental only: no singing, coro, chanting, shouts or spoken words.
+No synthesizer, no drum machine, no quantized MIDI, no sampled loops, no vinyl crackle, no tape hiss.
+```

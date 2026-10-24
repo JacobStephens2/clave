@@ -706,14 +706,16 @@ fallback link. That left D7 describing a feature the deployed app does not have 
 open question raised as issue #29, and answered here: the drawer is a link to the
 recording, not a player, and widening the CSP for a third-party script is not worth it.
 
-An original instrumental soundtrack was tried as the replacement twice — ElevenLabs Music
-on this same date, Google Lyria on 2026-10-24 — and **did not ship** either time. All four
-ElevenLabs generations were dropped or came back unusable, carrying silences, stutters or
-unloopable endings. The seven Lyria takes held their tempo, their length and one unbroken
-groove, but none sounded played rather than programmed: two independent listening passes
-scored every one between 1 and 4 out of 10 against a pass bar of 7, and one leaked eight
-seconds of spoken Spanish despite an instrumental-only instruction. Not one of the eleven
-passed as a real salsa-dura band, so no music files were added.
+An original instrumental soundtrack was tried as the replacement three times — ElevenLabs
+Music on this same date, Google Lyria and Mureka on 2026-10-24 — and **did not ship** any
+time. All four ElevenLabs generations were dropped or came back unusable, carrying
+silences, stutters or unloopable endings. The seven Lyria takes held their tempo, their
+length and one unbroken groove, but none sounded played rather than programmed: two
+independent listening passes scored every one between 1 and 4 out of 10 against a pass bar
+of 7, and one leaked eight seconds of spoken Spanish despite an instrumental-only
+instruction. The three Mureka takes were the best behaved — on tempo, voice-free and
+lossless — and still scored 1 to 4. Not one of the fourteen passed as a real salsa-dura
+band, so no music files were added.
 `docs/audio/soundtrack.md` records the services, the prompts, the terms, every
 measurement, and what to do differently. v1's non-goal on "bundled music files, original
 soundtracks" therefore stands unamended, and the clients keep the synthesized cues plus
@@ -727,4 +729,4 @@ plays the actual record on a speaker, and its pass criterion is untouched — th
 deck's order, sections, and moments are unchanged. Its bonus numbers, the starter deck,
 and one new Beginner card are not, so those pages of the physical prototype are
 rebuilt before the gate. Phase 6's post-v1 menu is untouched too: "a bundled or original
-soundtrack" is still on it, now with two failed attempts behind it.
+soundtrack" is still on it, now with three failed attempts behind it.
