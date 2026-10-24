@@ -39,6 +39,8 @@ async function pairUp(browser: Browser) {
 async function danceUntilTheFloorIsSet(screens: readonly Page[]) {
   for (let attempt = 0; attempt < 4; attempt += 1) {
     const active = screens[attempt % 2]!;
+    // The turn arrives over the network: read the hand only once this screen has its 8-count.
+    await expect(active.getByRole("status").filter({ hasText: "Your 8-count" })).toHaveCount(1);
     const position = active.locator(".hand-scroll .dance-card.position.playable").first();
     if ((await position.count()) > 0) {
       await position.click({ position: { x: 40, y: 56 } });
