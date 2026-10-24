@@ -27,7 +27,7 @@ describe("turn loop · rulebook §5", () => {
       cardId,
       owner: role,
     }));
-    state = applyOk(state, { type: "END_DANCE", role });
+    state = applyOk(state, { type: "END_DANCE", role, callId: null });
     state.players[role].drawPile = replacements;
     state.players[role].discardPile = [];
     state = applyOk(state, { type: "END_LESSON", role });
@@ -41,7 +41,7 @@ describe("turn loop · rulebook §5", () => {
     let state = readyGame(203);
     const role = state.activeRole;
     const handBeforeCleanup = [...state.players[role].hand];
-    state = applyOk(state, { type: "END_DANCE", role });
+    state = applyOk(state, { type: "END_DANCE", role, callId: null });
     state.players[role].drawPile = [];
     state = applyOk(state, { type: "END_LESSON", role });
     expect(state.players[role].hand).toHaveLength(4);

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { content } from "@clave/content";
 import type { Role } from "@clave/engine";
 import { useAppStore } from "../store.js";
 import { MusicButton } from "./MusicPlayer.js";
-import { RulesButton } from "./RulesDialog.js";
+import { CALL_SECTION, RulesButton, useRules } from "./RulesDialog.js";
 import { SoundEffectsButton } from "./SoundEffects.js";
 
 function RoleChoice({
@@ -51,6 +52,7 @@ export function HomeScreen() {
   const [joinCode, setJoinCode] = useState("");
   const [showNetwork, setShowNetwork] = useState(false);
   const joinButton = useRef<HTMLButtonElement>(null);
+  const { openRules } = useRules();
   const {
     hasHotseatResume,
     hasOnlineResume,
@@ -89,6 +91,24 @@ export function HomeScreen() {
       </header>
 
       <section className="home-intro">
+        <figure className="home-hero">
+          {/*
+           * The phone clause is capped so a 3x screen asks for the 960 derivative and not the
+           * 1536 one: 449 KB against 163 KB, at fetchPriority high, on the screen every session
+           * starts from — and the small file still paints this painting sharply at that size.
+           */}
+          <img
+            src="/art/home-hero.webp"
+            srcSet="/art/home-hero-960.webp 960w, /art/home-hero.webp 1536w"
+            sizes="(max-width: 740px) min(calc(100vw - 32px), 320px), (max-width: 1240px) 44vw, 520px"
+            width={1536}
+            height={1024}
+            alt="A couple dancing salsa on a painted floor while a six-piece band plays behind them: piano, congas, double bass, timbales, trumpet, and trombone."
+            fetchPriority="high"
+            decoding="async"
+            draggable={false}
+          />
+        </figure>
         <div className="home-copy">
           <p className="kicker">Two players · Cooperative · One salsa song</p>
           <h2>
@@ -100,24 +120,22 @@ export function HomeScreen() {
             Take turns as Lead and Follow through all sixteen 8-counts of
             <em> Llorarás</em>. Build Style without losing your Connection.
           </p>
+          {content.rules.call && (
+            <button
+              type="button"
+              className="home-whats-new"
+              onClick={() => openRules(CALL_SECTION)}
+              aria-haspopup="dialog"
+            >
+              <span>New</span>
+              <span>Call and answer</span>
+              <span aria-hidden="true">→</span>
+            </button>
+          )}
           <div className="home-audio-controls" role="group" aria-label="Audio controls">
             <MusicButton />
             <SoundEffectsButton />
           </div>
-        </div>
-        <div className="rhythm-mark" aria-hidden="true">
-          <img src="/card-art/pos_001.webp" alt="" decoding="async" draggable={false} />
-          <span>1</span>
-          <i></i>
-          <span>2</span>
-          <i></i>
-          <span>3</span>
-          <b></b>
-          <span>5</span>
-          <i></i>
-          <span>6</span>
-          <i></i>
-          <span>7</span>
         </div>
       </section>
 

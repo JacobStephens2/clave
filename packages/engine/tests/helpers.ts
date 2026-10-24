@@ -22,7 +22,7 @@ export function readyGame(seed = 42): GameState {
 
 export function finishTurn(
   state: GameState,
-  danceAction: GameAction = { type: "END_DANCE", role: state.activeRole },
+  danceAction: GameAction = { type: "END_DANCE", role: state.activeRole, callId: null },
 ): GameState {
   const role = state.activeRole;
   state = applyOk(state, danceAction);
@@ -40,7 +40,7 @@ export function playBasicGame(seed = 42): { state: GameState; actions: GameActio
   while (state.status === "playing") {
     const role: Role = state.activeRole;
     const turn: GameAction[] = [
-      { type: "END_DANCE", role },
+      { type: "END_DANCE", role, callId: null },
       { type: "END_LESSON", role },
     ];
     for (const action of turn) {

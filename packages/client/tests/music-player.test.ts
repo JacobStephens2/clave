@@ -28,9 +28,10 @@ describe("Llorarás music player", () => {
     });
 
     expect(document.querySelector(`script[src="${SPOTIFY_SCRIPT}"]`)).toBeNull();
-    expect(host.textContent).toContain(
-      "The embedded player could not load. Open the recording in Spotify.",
-    );
+    // The drawer is a link to the recording, not a player: nothing here ever fails to load.
+    expect(host.textContent).toContain("Clave doesn’t play the music.");
+    expect(host.textContent).not.toContain("could not load");
+    expect(host.querySelector("[role='status']")).toBeNull();
     const link = host.querySelector<HTMLAnchorElement>(`a[href="${LLORARAS_URL}"]`);
     expect(link?.textContent).toContain("Open in Spotify");
   });

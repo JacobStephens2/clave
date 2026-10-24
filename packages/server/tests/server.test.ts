@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
+import { canonicalStringify, sha256Hex } from "@clave/content";
 import {
   ENGINE_VERSION,
   type GameAction,
@@ -21,7 +22,7 @@ function finishedRoom(rooms: RoomManager): Record<"lead" | "follow", SeatCredent
       view.status === "setup"
         ? { type: "CONFIRM_HAND", role }
         : view.phase === "dance"
-          ? { type: "END_DANCE", role }
+          ? { type: "END_DANCE", role, callId: null }
           : { type: "END_LESSON", role };
     view = rooms.action(lead.code, role, seats[role].seatToken, view.sequence, action).snapshot;
   }
@@ -52,6 +53,54 @@ function rewriteStoredEnvelope(
 function storedByEngineThree(envelope: ResumeEnvelope): void {
   envelope.engineVersion = 3;
   envelope.state.engineVersion = 3;
+}
+
+/**
+ * An engine 5 game: stored before the call, by content that printed none. Every field engine 6
+ * added is removed from the state, and every key it added from the embedded content, which is
+ * then re-hashed as that release would have stored it.
+ */
+function storedByEngineFive(envelope: ResumeEnvelope): void {
+  envelope.engineVersion = 5;
+  envelope.state.engineVersion = 5;
+  const content = JSON.parse(envelope.contentBytes) as {
+    rules: Record<string, unknown>;
+    cards: { id: string }[];
+    decks: { beginnerSupply: string[] };
+    song: { cards: Record<string, unknown>[] };
+  };
+  delete content.rules.call;
+  delete content.rules.lessonToDrawTop;
+  content.cards = content.cards.filter((card) => card.id !== "flo_005");
+  content.decks.beginnerSupply = content.decks.beginnerSupply.filter((id) => id !== "flo_005");
+  for (const song of content.song.cards) delete song.favouredCall;
+  envelope.contentBytes = canonicalStringify(content);
+  envelope.contentHash = sha256Hex(envelope.contentBytes);
+  envelope.state.contentHash = envelope.contentHash;
+  delete (envelope.state as Partial<GameState>).call;
+  delete (envelope.state.shared as Partial<GameState["shared"]>).afinque;
+  delete (envelope.state.phrase as Partial<GameState["phrase"]>).droppedCall;
+  for (const key of [
+    "callMade",
+    "callAnswered",
+    "callDropped",
+    "callCovered",
+    "callStyle",
+    "hold",
+    "rung",
+  ] as const)
+    delete (envelope.state.turnDance as Partial<GameState["turnDance"]>)[key];
+  for (const entry of envelope.state.danceHistory)
+    for (const key of [
+      "rung",
+      "styleGained",
+      "afinqueAfter",
+      "callMade",
+      "callOutcome",
+      "songBonus",
+      "hold",
+    ] as const)
+      delete (entry as Partial<GameState["danceHistory"][number]>)[key];
 }
 
 function tamperedContent(envelope: ResumeEnvelope): void {
@@ -318,6 +367,60 @@ describe("authoritative room persistence", () => {
     log.mockClear();
     new RoomManager(database);
     expect(log).not.toHaveBeenCalled();
+    database.close();
+  });
+
+  it("resumes a room stored by engine 5, before the call, on this release's defaults", () => {
+    const database = new RoomDatabase(":memory:");
+    const rooms = new RoomManager(database);
+    const lead = rooms.create("lead", true);
+    const follow = rooms.join(lead.code, "follow");
+    for (const seat of [lead, follow])
+      rooms.action(
+        lead.code,
+        seat.role,
+        seat.seatToken,
+        rooms.snapshot(lead.code, seat.role, seat.seatToken).sequence,
+        { type: "CONFIRM_HAND", role: seat.role },
+      );
+    rewriteStoredEnvelope(database, lead.code, storedByEngineFive);
+
+    const restarted = new RoomManager(database);
+    const view = restarted.snapshot(lead.code, "lead", lead.seatToken);
+    expect(view).toMatchObject({
+      status: "playing",
+      engineVersion: ENGINE_VERSION,
+      call: null,
+      calls: [],
+      afinque: { links: 0, cap: 0, nextBonus: 0 },
+    });
+    expect(view.rules.call).toBeNull();
+    // Read from the room's own content: this game sends every lesson to the discard pile.
+    expect(view.rules.lessonToDrawTop).toBeNull();
+    expect(view.turn.rung).toBe("pending");
+    expect(view.turn.hold).toBeNull();
+    // The game plays on under this release: it simply has no call to make.
+    const played = restarted.action(lead.code, "lead", lead.seatToken, view.sequence, {
+      type: "END_DANCE",
+      role: "lead",
+      callId: null,
+    });
+    expect(played.snapshot.phase).toBe("lesson");
+    expect(played.snapshot.danceHistory.at(-1)).toMatchObject({
+      rung: "awkward",
+      styleGained: 0,
+      // The 8-counts this room danced before the call made none and met none.
+      callMade: null,
+      callOutcome: null,
+      hold: null,
+    });
+    expect(() =>
+      restarted.action(lead.code, "lead", lead.seatToken, played.snapshot.sequence, {
+        type: "END_DANCE",
+        role: "lead",
+        callId: "call_001",
+      }),
+    ).toThrow();
     database.close();
   });
 

@@ -68,6 +68,11 @@ function qualify(state: ReturnType<typeof readyGame>, condition: BonusCondition)
     case "cardsPlayedAtLeast":
       state.turnDance.cardsPlayed = condition.value;
       break;
+    case "answeredCall":
+      // The call the engine will resolve into `callAnswered` as this 8-count ends.
+      state.call = { byRole: "follow", callId: "call_001", forSongIndex: index, inPocket: false };
+      state.turnDance.callAnswered = true;
+      break;
   }
 }
 
@@ -84,9 +89,27 @@ describe("Llorarás song bonuses · rulebook §7", () => {
         bonusConditionMet(branch.condition, { state, role: "lead", contentSet: content }),
       ).toBe(true);
       const before = { ...state.shared };
-      state = applyOk(state, { type: "END_DANCE", role: "lead" });
+      state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
       expect(state.shared.style - before.style).toBe(branch.effect.style);
       expect(state.shared.connection - before.connection).toBe(branch.effect.connection);
+    });
+  }
+
+  // A stumble turns neither of the song card's faces. Count 5 asks for no Position card, which
+  // a stumble leaves true: a stumble may only be declared before any card is played.
+  for (const [index, song] of content.song.cards.entries()) {
+    it(`${song.id} · ${song.title} · pays a stumble nothing`, () => {
+      let state = readyGame(400 + index);
+      state.songIndex = index;
+      state.currentSongId = song.id;
+      state.phrase.number = index < 8 ? 1 : 2;
+      const before = { ...state.shared };
+      state = applyOk(state, { type: "STUMBLE", role: "lead", recoveryInstanceId: null });
+      expect(state.turnDance).toMatchObject({ bonusStyle: 0, bonusConnection: 0 });
+      expect(state.shared.style).toBe(before.style);
+      expect(state.shared.connection).toBe(
+        before.connection - content.rules.stumble.defaultConnectionCost,
+      );
     });
   }
 
@@ -98,7 +121,7 @@ describe("Llorarás song bonuses · rulebook §7", () => {
     state.turnDance.flourished = true;
     state.turnDance.posePlayed = true;
     const before = state.shared.style;
-    state = applyOk(state, { type: "END_DANCE", role: "lead" });
-    expect(state.shared.style - before).toBe(3);
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
+    expect(state.shared.style - before).toBe(7);
   });
 });

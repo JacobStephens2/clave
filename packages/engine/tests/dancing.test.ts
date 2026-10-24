@@ -1,6 +1,6 @@
 import { content } from "@clave/content";
 import { describe, expect, it } from "vitest";
-import { applyAction } from "../src/index.js";
+import { applyAction, snapshotFor } from "../src/index.js";
 import { applyOk, readyGame, setHand } from "./helpers.js";
 
 describe("dancing · rulebook §6", () => {
@@ -29,7 +29,7 @@ describe("dancing · rulebook §6", () => {
     expect(state.shared.style).toBe(3);
     expect(state.table.position?.cardId).toBe("pos_001");
     expect(state.phrase.flourishedBy.lead).toBe(true);
-    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
     expect(state.danceHistory).toEqual([
       {
         sequence: state.sequence,
@@ -42,6 +42,14 @@ describe("dancing · rulebook §6", () => {
         flourishCardId: "flo_001",
         fromPosition: "Closed",
         endingPosition: "Open",
+        rung: "clean",
+        styleGained: 3,
+        afinqueAfter: 0,
+        callMade: null,
+        callOutcome: null,
+        // Count 1 pays +1 Connection for a Move worth 2 Style or less, which this one is.
+        songBonus: { style: 0, connection: 1 },
+        hold: null,
       },
     ]);
   });
@@ -104,7 +112,7 @@ describe("dancing · rulebook §6", () => {
   it("records a basic as a visible 8-count with the carried Position", () => {
     let state = readyGame();
     state.table.position = { instanceId: "previous-position", cardId: "pos_001", owner: "follow" };
-    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
     expect(state.danceHistory).toEqual([
       expect.objectContaining({
         phrase: 1,
@@ -122,6 +130,12 @@ describe("dancing · rulebook §6", () => {
   it("applies recovery-card costs from content", () => {
     let state = readyGame();
     setHand(state, "lead", ["rec_001", "rec_002", "pos_001", "mov_001"]);
+    // The costs a stumble charges are this game's own, so the table can name them: the default
+    // in the published rules, and each Recovery card's own in the card catalog.
+    expect(snapshotFor(state, "lead", content).rules.stumble).toEqual(content.rules.stumble);
+    expect(snapshotFor(state, "lead", content).self.hand.map((entry) => entry.card)).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "rec_002", connectionCost: 0 })]),
+    );
     const recovery = state.players.lead.hand[1]!;
     state = applyOk(state, {
       type: "STUMBLE",

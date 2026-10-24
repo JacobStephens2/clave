@@ -19,7 +19,8 @@ engine + hot-seat and two-device play). The governing build plan is
   hardcode card behavior or balance numbers in engine or UI code.
 - Deterministic, seedable RNG only; no wall-clock and no unseeded randomness in
   the engine.
-- Card IDs follow `<type>_<###>`: `pos_`, `mov_`, `flo_`, `rec_`, `song_`.
+- Card and content IDs follow `<type>_<###>`: `pos_`, `mov_`, `flo_`, `rec_`,
+  `song_`, and `call_` (a call is a clause in `rules.call.options`, not a card).
 - Rules ambiguities are resolved as rulings appended to `docs/rules/decisions.md`
   (with the rulebook amended in the same commit) — never silently decided in code.
 

@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export const CardIdSchema = z.string().regex(/^(pos|mov|flo|rec)_\d{3}$/);
 export const SongIdSchema = z.string().regex(/^song_\d{3}$/);
+// A call is a clause in rules.call.options, not a card: it has no art and no copies.
+export const CallIdSchema = z.string().regex(/^call_\d{3}$/);
 export const TierSchema = z.enum(["B", "I", "A"]);
 export const PositionSchema = z.enum(["Open", "Closed", "Half-Open", "Half-Closed"]);
 
@@ -54,7 +56,34 @@ export const BonusConditionSchema = z.discriminatedUnion("op", [
   z.object({ op: z.literal("partnerPlayedMoveGame") }),
   z.object({ op: z.literal("partnerPlayedMovePhrase") }),
   z.object({ op: z.literal("cardsPlayedAtLeast"), value: z.number().int().positive() }),
+  z.object({ op: z.literal("answeredCall") }),
 ]);
+
+/** Every op the engine evaluates. The content test asserts the content asks for no other. */
+export const IMPLEMENTED_OPS = [
+  "moveStyleAtMost",
+  "moveStyleAtLeast",
+  "moveFrom",
+  "flourishPlayed",
+  "posePlayed",
+  "noPositionPlayed",
+  "samePositionAsPreviousMove",
+  "endsInPosition",
+  "positionChanged",
+  "partnerPlayedMoveGame",
+  "partnerPlayedMovePhrase",
+  "cardsPlayedAtLeast",
+  "answeredCall",
+] as const;
+
+export const CallSchema = z.object({
+  id: CallIdSchema,
+  name: z.string().min(1),
+  // What the caller is asking for, in the second person: "dance your Move from Closed".
+  ask: z.string().min(1),
+  style: z.number().int().nonnegative(),
+  condition: BonusConditionSchema,
+});
 
 export const BonusEffectSchema = z.object({
   style: z.number().int().nonnegative().default(0),
@@ -68,6 +97,9 @@ export const SongCardSchema = z.object({
   moment: z.string().min(1),
   title: z.string().min(1),
   description: z.string().min(1),
+  // Absent on the 8-counts a call may not be made on (8 and 16). Optional, not defaulted, so
+  // content stored before the call existed still hashes to the hash it was stored under.
+  favouredCall: CallIdSchema.optional(),
   bonuses: z
     .array(
       z.object({
@@ -117,6 +149,26 @@ export const ContentSetSchema = z.object({
         }),
       )
       .min(1),
+    // Which lessons land on top of your draw pile instead of in your discard pile. Absent
+    // means none of them do, which is how every game stored before the call played.
+    lessonToDrawTop: z
+      .object({
+        beginner: z.boolean().default(false),
+        intermediate: z.boolean().default(false),
+        advanced: z.boolean().default(false),
+      })
+      .optional(),
+    // Absent: this content prints no calls, so the call is simply unavailable in that game.
+    call: z
+      .object({
+        missConnectionCost: z.number().int().nonnegative(),
+        inPocketStyle: z.number().int().nonnegative(),
+        // The extra Style an answer earns at each number of links; its length is the cap.
+        afinqueBonus: z.array(z.number().int().nonnegative()).min(1),
+        resetAfinqueAtPhraseEnd: z.boolean(),
+        options: z.array(CallSchema).min(1),
+      })
+      .optional(),
   }),
   cards: z.array(DanceCardSchema).min(1),
   decks: z.object({
@@ -136,6 +188,9 @@ export const ContentSetSchema = z.object({
 
 export type CardId = z.infer<typeof CardIdSchema>;
 export type SongId = z.infer<typeof SongIdSchema>;
+export type CallId = z.infer<typeof CallIdSchema>;
+export type Call = z.infer<typeof CallSchema>;
+export type CallRules = NonNullable<z.infer<typeof ContentSetSchema>["rules"]["call"]>;
 export type Position = z.infer<typeof PositionSchema>;
 export type DanceCard = z.infer<typeof DanceCardSchema>;
 export type MoveCard = z.infer<typeof MoveCardSchema>;

@@ -14,7 +14,7 @@
       "clean": 3,
       "varietyPerExtraPosition": 1,
       "sharedFlair": 2,
-      "poseFinish": 3
+      "poseFinish": 4
     },
     "ratings": [
       {
@@ -23,31 +23,89 @@
         "description": "You survived, and that's salsa too."
       },
       {
-        "minimum": 20,
+        "minimum": 36,
         "name": "Social Dancers",
         "description": "The floor is starting to feel like home."
       },
       {
-        "minimum": 30,
+        "minimum": 50,
         "name": "Regulars of the Social",
         "description": "People know to make room when you arrive."
       },
       {
-        "minimum": 40,
+        "minimum": 60,
         "name": "Crowd Favorites",
         "description": "The room felt every break with you."
       },
       {
-        "minimum": 50,
+        "minimum": 70,
         "name": "Festival Performers",
         "description": "A polished, fearless partnership."
       },
       {
-        "minimum": 60,
+        "minimum": 82,
         "name": "Soneros of the Floor",
         "description": "You didn't follow the song. You spoke with it."
       }
-    ]
+    ],
+    "lessonToDrawTop": { "beginner": false, "intermediate": true, "advanced": true },
+    "call": {
+      "missConnectionCost": 1,
+      "inPocketStyle": 1,
+      "afinqueBonus": [0, 0, 1, 1, 2],
+      "resetAfinqueAtPhraseEnd": true,
+      "options": [
+        {
+          "id": "call_001",
+          "name": "Stay with me",
+          "ask": "dance a Move — any Move",
+          "style": 0,
+          "condition": { "op": "moveStyleAtLeast", "value": 0 }
+        },
+        {
+          "id": "call_002",
+          "name": "Open it up",
+          "ask": "dance your Move from Open or Half-Open",
+          "style": 1,
+          "condition": { "op": "moveFrom", "positions": ["Open", "Half-Open"] }
+        },
+        {
+          "id": "call_003",
+          "name": "Change the room",
+          "ask": "change the position during your 8-count",
+          "style": 3,
+          "condition": { "op": "positionChanged" }
+        },
+        {
+          "id": "call_004",
+          "name": "Echo me",
+          "ask": "dance a Move I have already danced this phrase",
+          "style": 2,
+          "condition": { "op": "partnerPlayedMovePhrase" }
+        },
+        {
+          "id": "call_005",
+          "name": "Stay close",
+          "ask": "dance your Move from Closed or Half-Closed",
+          "style": 4,
+          "condition": { "op": "moveFrom", "positions": ["Closed", "Half-Closed"] }
+        },
+        {
+          "id": "call_006",
+          "name": "Style it",
+          "ask": "include a Flourish",
+          "style": 4,
+          "condition": { "op": "flourishPlayed" }
+        },
+        {
+          "id": "call_007",
+          "name": "Show me something",
+          "ask": "dance a Move worth 3 Style or more",
+          "style": 8,
+          "condition": { "op": "moveStyleAtLeast", "value": 3 }
+        }
+      ]
+    }
   },
   "cards": [
     {
@@ -219,6 +277,15 @@
       "pose": true
     },
     {
+      "id": "flo_005",
+      "name": "Ponche",
+      "tier": "B",
+      "type": "flourish",
+      "positions": "any",
+      "style": 0,
+      "pose": true
+    },
+    {
       "id": "rec_001",
       "name": "Return to Basic",
       "tier": "B",
@@ -234,8 +301,8 @@
       { "cardId": "mov_001", "count": 1 },
       { "cardId": "mov_002", "count": 1 },
       { "cardId": "mov_003", "count": 1 },
-      { "cardId": "mov_004", "count": 1 },
-      { "cardId": "mov_013", "count": 1 }
+      { "cardId": "mov_013", "count": 1 },
+      { "cardId": "flo_003", "count": 1 }
     ],
     "beginnerSupply": [
       "pos_001",
@@ -248,6 +315,7 @@
       "mov_013",
       "mov_006",
       "flo_003",
+      "flo_005",
       "rec_001"
     ],
     "intermediate": [

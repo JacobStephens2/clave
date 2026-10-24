@@ -9,7 +9,11 @@ import {
 import { describe, expect, it } from "vitest";
 import {
   NO_INTENT,
+  callHandoff,
+  callMadeNote,
   readDanceStep,
+  type CallPicker,
+  type DanceRowControl,
   type DanceStep,
   type HandOffer,
   type TurnIntent,
@@ -46,6 +50,27 @@ function openingState(): GameState {
 const staged = (positionInstanceId: string): TurnIntent => ({
   stagedPositionId: positionInstanceId,
 });
+
+/** The Follow's call standing over the Lead's 8-count, as END_DANCE would have left it. */
+function withCall(state: GameState, callId: string, inPocket = false): GameState {
+  state.call = { byRole: "follow", callId, forSongIndex: state.songIndex, inPocket };
+  return state;
+}
+
+function pickerOf(step: DanceStep): CallPicker {
+  const picker = step.telling?.picker;
+  if (!picker) throw new Error("No call picker on this step");
+  return picker;
+}
+
+/** The gold control that commits the 8-count, whose label has to state the whole trade. */
+function endControlOf(step: DanceStep): Extract<DanceRowControl, { kind: "end" }> {
+  const controls = step.telling?.controls;
+  const end =
+    controls?.kind === "row" ? controls.controls.find((control) => control.kind === "end") : null;
+  if (!end || end.kind !== "end") throw new Error("No end control on this step");
+  return end;
+}
 
 function offerFor(step: DanceStep, instanceId: string): HandOffer {
   const offer = step.offers.find((entry) => entry.instanceId === instanceId);
@@ -126,13 +151,13 @@ describe("opening with a staged Position", () => {
         action.positionInstanceId === id("pos_002") &&
         action.moveInstanceId === id("mov_013"),
     );
-    expectPlayable(offerFor(closed, id("mov_013")), "Dance move", {
+    const closedOffer = offerFor(closed, id("mov_013"));
+    expectPlayable(closedOffer, "Dance move", {
       kind: "dispatch",
       action: opening!,
       intent: NO_INTENT,
     });
-    if (offerFor(closed, id("mov_013")).drop.kind === "dispatch")
-      expect(offerFor(closed, id("mov_013")).drop.action).toBe(opening);
+    if (closedOffer.drop.kind === "dispatch") expect(closedOffer.drop.action).toBe(opening);
 
     const open = readDanceStep(view, staged(id("pos_001")));
     expect(open.offers.filter((offer) => offer.draggable).map((offer) => offer.instanceId)).toEqual(
@@ -177,13 +202,13 @@ describe("with a Position on the table", () => {
       [id("pos_001")],
     );
     const transition = view.legalActions.find((action) => action.type === "TRANSITION");
-    expectPlayable(offerFor(step, id("pos_001")), "Transition", {
+    const positionOffer = offerFor(step, id("pos_001"));
+    expectPlayable(positionOffer, "Transition", {
       kind: "dispatch",
       action: transition!,
       intent: NO_INTENT,
     });
-    if (offerFor(step, id("pos_001")).drop.kind === "dispatch")
-      expect(offerFor(step, id("pos_001")).drop.action).toBe(transition);
+    if (positionOffer.drop.kind === "dispatch") expect(positionOffer.drop.action).toBe(transition);
   });
 
   it("holds a card with no floor action", () => {
@@ -204,7 +229,7 @@ describe("when it is not the viewer's dance step", () => {
   });
 
   it("lets nothing be dragged outside the dance phase", () => {
-    const state = applyOk(openingState(), { type: "END_DANCE", role: "lead" });
+    const state = applyOk(openingState(), { type: "END_DANCE", role: "lead", callId: null });
     const view = snapshotFor(state, "lead", content);
     const step = readDanceStep(view, NO_INTENT);
     expect(view.phase).toBe("lesson");
@@ -257,7 +282,7 @@ describe("reconciling a staged Position", () => {
   });
 
   it("clears the staged Position when the phase moves on", () => {
-    const state = applyOk(openingState(), { type: "END_DANCE", role: "lead" });
+    const state = applyOk(openingState(), { type: "END_DANCE", role: "lead", callId: null });
     const view = snapshotFor(state, "lead", content);
     expect(readDanceStep(view, staged(id("pos_002"))).intent).toBe(NO_INTENT);
   });
@@ -294,18 +319,20 @@ describe("the heading and the floor hint share one moment", () => {
       controls: [
         {
           kind: "end",
-          action: { type: "END_DANCE", role: "lead" },
+          action: { type: "END_DANCE", role: "lead", callId: null },
           label: "Dance the basic",
         },
         {
           kind: "stumble",
           action: { type: "STUMBLE", role: "lead", recoveryInstanceId: null },
           label: "Stumble · −2 Connection",
+          note: null,
         },
         {
           kind: "stumble",
           action: { type: "STUMBLE", role: "lead", recoveryInstanceId: id("rec_001") },
           label: "Stumble · Return to Basic",
+          note: "Return to Basic: −1 Connection instead of −2.",
         },
         { kind: "undo", action: { type: "UNDO_TURN", role: "lead" }, label: "Reset turn" },
       ],
@@ -327,8 +354,19 @@ describe("the heading and the floor hint share one moment", () => {
     expect(step.telling).toEqual({
       heading: "Complete the opening",
       instruction: null,
-      openingGuide: "Closed Position is staged. Play a highlighted matching Move next.",
-      controls: { kind: "return", label: "Return Position to hand" },
+      note: "The hold gives up this 8-count\u2019s song bonus.",
+      openingGuide:
+        "Closed Position is staged. Play a highlighted matching Move next. Or take the hold with it alone — that gives up the song bonus.",
+      picker: null,
+      controls: {
+        kind: "return",
+        label: "Return Position to hand",
+        hold: {
+          action: { type: "ADJUST", role: "lead", positionInstanceId: id("pos_002") },
+          label: "Take the hold instead",
+          note: "Opens the floor with this Position alone — gives up the song bonus.",
+        },
+      },
     });
     expect(step.clearSignal).toBe(
       view.legalActions.find((action) => action.type === "CLEAR_SIGNAL"),
@@ -343,7 +381,7 @@ describe("the heading and the floor hint share one moment", () => {
     expect(step.telling).toMatchObject({
       heading: "Play a Move first",
       instruction:
-        "Current Position: Open. Play a Move whose top edge includes Open. Or choose Dance the basic or Stumble below.",
+        "Current Position: Open. Play a Move whose top edge includes Open. A Position alone adjusts the hold instead, giving up the song bonus. Or choose Dance the basic or Stumble below.",
       openingGuide: null,
     });
     expectPlayable(offerFor(step, id("mov_002")), "Dance move", {
@@ -355,7 +393,7 @@ describe("the heading and the floor hint share one moment", () => {
     });
   });
 
-  it("asks for a Move that the hand does not have, and the hint falls back to the active role", () => {
+  it("offers the hold when no Move in hand dances from the floor", () => {
     const state = establishedState();
     state.players.lead.hand = state.players.lead.hand.filter(
       (entry) => entry.instanceId !== id("mov_002"),
@@ -363,6 +401,23 @@ describe("the heading and the floor hint share one moment", () => {
     const view = snapshotFor(state, "lead", content);
     const step = readDanceStep(view, NO_INTENT);
     expect(view.legalActions.some((action) => action.type === "PLAY_MOVE")).toBe(false);
+    expect(step.floorHint).toBe("Drag a highlighted Position here for the hold");
+    expect(step.telling).toMatchObject({
+      heading: "Adjust the hold—or dance the basic",
+      instruction:
+        "No Move in your hand includes Open. A Position alone adjusts the hold: that gives up the song bonus, and you can still call.",
+      openingGuide: null,
+    });
+    expect(step.acceptsDrop).toBe(true);
+  });
+
+  it("falls back to the active role when neither a Move nor the hold is available", () => {
+    const state = establishedState();
+    state.players.lead.hand = [{ instanceId: id("rec_001"), cardId: "rec_001", owner: "lead" }];
+    const view = snapshotFor(state, "lead", content);
+    const step = readDanceStep(view, NO_INTENT);
+    expect(view.legalActions.some((action) => action.type === "PLAY_MOVE")).toBe(false);
+    expect(view.legalActions.some((action) => action.type === "ADJUST")).toBe(false);
     expect(step.floorHint).toBe("Your 8-count");
     expect(step.telling).toMatchObject({
       heading: "Play a Move first",
@@ -370,6 +425,27 @@ describe("the heading and the floor hint share one moment", () => {
       openingGuide: null,
     });
     expect(step.acceptsDrop).toBe(false);
+  });
+
+  it("names only the ways out the hold has left once it is taken", () => {
+    const state = establishedState();
+    state.players.lead.hand = ["pos_002", "mov_002", "rec_001"].map((cardId) => ({
+      instanceId: id(cardId),
+      cardId,
+      owner: "lead" as const,
+    }));
+    const held = applyOk(state, {
+      type: "ADJUST",
+      role: "lead",
+      positionInstanceId: id("pos_002"),
+    });
+    const view = snapshotFor(held, "lead", content);
+    expect(view.turn.cardsPlayed).toBe(1);
+    expect(view.legalActions.some((action) => action.type === "STUMBLE")).toBe(false);
+    expect(view.legalActions.some((action) => action.type === "PLAY_MOVE")).toBe(false);
+    expect(readDanceStep(view, NO_INTENT).telling?.instruction).toBe(
+      "No Move in your hand includes Closed. Finish the 8-count below.",
+    );
   });
 
   it("prefers a legal Transition over a legal Flourish in the heading and the hint", () => {
@@ -433,8 +509,8 @@ describe("the heading and the floor hint share one moment", () => {
         controls: [
           {
             kind: "end",
-            action: { type: "END_DANCE", role: "lead" },
-            label: "Finish the 8-count",
+            action: { type: "END_DANCE", role: "lead", callId: null },
+            label: "Take the song · +1 Connection",
           },
           { kind: "undo", action: { type: "UNDO_TURN", role: "lead" }, label: "Reset turn" },
         ],
@@ -452,7 +528,7 @@ describe("the heading and the floor hint share one moment", () => {
 
   it("uses the active role on the Follow's own 8-count, not the role who confirmed", () => {
     let state = openingState();
-    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: null });
     state = applyOk(state, { type: "END_LESSON", role: "lead" });
     state.players.follow.hand = [{ instanceId: "follow-rec", cardId: "rec_001", owner: "follow" }];
     const view = snapshotFor(state, "follow", content);
@@ -491,11 +567,10 @@ describe("sentences on an established floor", () => {
     );
   });
 
-  it("asks for the Move before a Position", () => {
+  it("needs no sentence for a Position, which can adjust the hold before the Move", () => {
     const view = snapshotFor(establishedState(), "lead", content);
-    expect(offerFor(readDanceStep(view, NO_INTENT), id("pos_002")).sentence).toBe(
-      "Play a Move first",
-    );
+    expect(view.floorRefusals.map((entry) => entry.instanceId)).not.toContain(id("pos_002"));
+    expect(offerFor(readDanceStep(view, NO_INTENT), id("pos_002")).sentence).toBeNull();
   });
 
   it("points a Recovery card at Stumble", () => {
@@ -590,15 +665,14 @@ describe("sentences on an established floor", () => {
 });
 
 describe("sentences on an empty floor", () => {
-  it("explains a Position that no Move in hand can dance from", () => {
+  it("needs no sentence for a Position no Move dances from, which can take the hold", () => {
     const state = openingState();
     state.players.lead.hand = state.players.lead.hand.filter(
       (entry) => entry.instanceId !== id("mov_002"),
     );
     const view = snapshotFor(state, "lead", content);
-    expect(offerFor(readDanceStep(view, NO_INTENT), id("pos_001")).sentence).toBe(
-      "No Move in hand dances from Open",
-    );
+    expect(view.floorRefusals.map((entry) => entry.instanceId)).not.toContain(id("pos_001"));
+    expect(offerFor(readDanceStep(view, NO_INTENT), id("pos_001")).sentence).toBeNull();
   });
 
   it("holds other Positions back while one is staged", () => {
@@ -648,7 +722,7 @@ describe("sentences on an empty floor", () => {
 
 describe("lesson sentences", () => {
   function lessonStep(): GameState {
-    return applyOk(establishedState(), { type: "END_DANCE", role: "lead" });
+    return applyOk(establishedState(), { type: "END_DANCE", role: "lead", callId: null });
   }
 
   it("says to learn after the dance during the dance step", () => {
@@ -735,5 +809,557 @@ describe("lesson sentences", () => {
     expect(readDanceStep(view, NO_INTENT).lessonSentence("intermediate", cardId)).toBe(
       "Costs $2 · you have $5",
     );
+  });
+});
+
+describe("ending the dance step", () => {
+  it("names what taking the song pays, from the snapshot's own bonus", () => {
+    const state = applyOk(establishedState(), {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: id("mov_002"),
+    });
+    const view = snapshotFor(state, "lead", content);
+    expect(view.turn.songBonus).toEqual({ style: 0, connection: 1 });
+    const step = readDanceStep(view, NO_INTENT);
+    const controls = step.telling?.controls;
+    expect(controls?.kind).toBe("row");
+    expect(controls?.kind === "row" && controls.controls[0]).toMatchObject({
+      kind: "end",
+      label: "Take the song · +1 Connection",
+    });
+  });
+
+  it("nets the dropped call against the song card instead of promising its Connection", () => {
+    // 8-count 5, "Stay close": +1 Connection for playing no Position, straight back out again.
+    const state = establishedState();
+    state.songIndex = 4;
+    const view = snapshotFor(withCall(state, "call_002", true), "lead", content);
+    expect(view.turn.songBonus).toEqual({ style: 0, connection: 1 });
+    expect(view.turn.ifEndedNow).toEqual({ style: 0, connection: 0, lost: false });
+    expect(endControlOf(readDanceStep(view, NO_INTENT)).label).toBe(
+      "Dance the basic · drops the call",
+    );
+  });
+
+  it("names both sides when the song pays and the dropped call charges", () => {
+    const state = establishedState();
+    state.songIndex = 1;
+    const danced = applyOk(withCall(state, "call_005"), {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: id("mov_002"),
+    });
+    const view = snapshotFor(danced, "lead", content);
+    expect(view.call?.met).toBe(false);
+    expect(view.turn.ifEndedNow).toEqual({ style: 1, connection: -1, lost: false });
+    expect(endControlOf(readDanceStep(view, NO_INTENT)).label).toBe(
+      "Take the song · +1 Style, −1 Connection · drops the call",
+    );
+  });
+
+  it("counts the answered call's own Style in what ending the 8-count pays", () => {
+    const state = establishedState();
+    state.songIndex = 1;
+    const danced = applyOk(withCall(state, "call_002"), {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: id("mov_002"),
+    });
+    const view = snapshotFor(danced, "lead", content);
+    expect(view.call?.met).toBe(true);
+    // The song card's +1 Style, and the call's own 1 Style collected with it.
+    expect(view.turn.ifEndedNow).toEqual({ style: 2, connection: 0, lost: false });
+    expect(endControlOf(readDanceStep(view, NO_INTENT)).label).toBe("Take the song · +2 Style");
+  });
+
+  it("says when the Connection a dropped call costs ends the dance", () => {
+    const state = withCall(establishedState(), "call_005");
+    state.shared.connection = 1;
+    const view = snapshotFor(state, "lead", content);
+    expect(view.turn.ifEndedNow?.lost).toBe(true);
+    expect(endControlOf(readDanceStep(view, NO_INTENT)).label).toBe(
+      "Dance the basic · −1 Connection · drops the call · ends the dance",
+    );
+  });
+
+  it("keeps the plain labels when the song pays nothing", () => {
+    const view = snapshotFor(establishedState(), "lead", content);
+    expect(view.turn.songBonus).toBeNull();
+    const step = readDanceStep(view, NO_INTENT);
+    const controls = step.telling?.controls;
+    expect(controls?.kind).toBe("row");
+    expect(controls?.kind === "row" && controls.controls[0]).toMatchObject({
+      kind: "end",
+      label: "Dance the basic",
+    });
+  });
+
+  it("offers every call the snapshot makes legal, with its ask, Style, and chain", () => {
+    const view = snapshotFor(establishedState(), "lead", content);
+    const picker = pickerOf(readDanceStep(view, NO_INTENT));
+    expect(picker.label).toBe("Make a call");
+    expect(picker.closed).toBeNull();
+    expect(picker.options.map((option) => option.callId)).toEqual(
+      view.calls.map((call) => call.id),
+    );
+    expect(picker.options).toHaveLength(7);
+    const stayClose = picker.options.find((option) => option.callId === "call_005")!;
+    expect(stayClose.action).toEqual({ type: "END_DANCE", role: "lead", callId: "call_005" });
+    expect(stayClose).toMatchObject({
+      name: "Stay close",
+      ask: "dance your Move from Closed or Half-Closed",
+      style: 4,
+      favoured: false,
+      inPocket: 0,
+      afinque: 0,
+    });
+    expect(stayClose.sentence).toBe(
+      "Stay close. Ask your partner to dance your Move from Closed or Half-Closed. Pays 4 Style when answered.",
+    );
+  });
+
+  it("marks the song card's favoured call with the in-pocket Style it pays", () => {
+    const view = snapshotFor(establishedState(), "lead", content);
+    const picker = pickerOf(readDanceStep(view, NO_INTENT));
+    const favoured = picker.options.filter((option) => option.favoured);
+    expect(favoured.map((option) => option.callId)).toEqual(["call_001"]);
+    expect(favoured[0]!.inPocket).toBe(view.rules.call?.inPocketStyle);
+    expect(favoured[0]!.sentence).toBe(
+      "Stay with me. Ask your partner to dance a Move — any Move. Pays no Style of its own. This song card favours it: 1 more Style.",
+    );
+  });
+
+  it("adds what the next link of the chain would pay after this 8-count", () => {
+    const state = applyOk(establishedState(), {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: id("mov_002"),
+    });
+    state.shared.afinque = 2;
+    const view = snapshotFor(state, "lead", content);
+    expect(view.afinque.ifCalledNow.links).toBe(2);
+    const picker = pickerOf(readDanceStep(view, NO_INTENT));
+    const option = picker.options.find((entry) => entry.callId === "call_006")!;
+    expect(option.afinque).toBe(1);
+    expect(option.sentence).toContain("The next answer in a row adds 1 Style.");
+  });
+
+  it("promises nothing from the chain this 8-count is about to break", () => {
+    const state = establishedState();
+    state.shared.afinque = 2;
+    const view = snapshotFor(state, "lead", content);
+    // Nothing danced, so the basic this call is made on ends the run: the raw reading is wrong.
+    expect(view.afinque.nextBonus).toBe(1);
+    expect(view.afinque.ifCalledNow.links).toBe(0);
+    const picker = pickerOf(readDanceStep(view, NO_INTENT));
+    expect(picker.options.map((option) => option.afinque)).toEqual([0, 0, 0, 0, 0, 0, 0]);
+    expect(picker.options[0]?.sentence).not.toContain("in a row");
+  });
+
+  it("counts the link this 8-count's own answer is about to add", () => {
+    const state = applyOk(withCall(establishedState(), "call_002"), {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: id("mov_002"),
+    });
+    state.shared.afinque = 1;
+    const view = snapshotFor(state, "lead", content);
+    expect(view.call?.met).toBe(true);
+    expect(view.afinque.nextBonus).toBe(0);
+    expect(view.afinque.ifCalledNow.links).toBe(2);
+    const picker = pickerOf(readDanceStep(view, NO_INTENT));
+    expect(picker.options.every((option) => option.afinque === 1)).toBe(true);
+  });
+
+  it("pays the partner's answer exactly what the sheet promised it would", () => {
+    const state = establishedState();
+    state.shared.afinque = 2;
+    const view = snapshotFor(state, "lead", content);
+    const option = pickerOf(readDanceStep(view, NO_INTENT)).options.find(
+      (entry) => entry.callId === "call_001",
+    )!;
+    expect(option.afinque).toBe(0);
+
+    // The Lead dances no Move and calls, the Follow answers it, and the engine pays the answer.
+    let answered = applyOk(state, option.action);
+    answered = applyOk(answered, { type: "END_LESSON", role: "lead" });
+    answered.players.follow.hand = [
+      { instanceId: "follow-hand-mov_002", cardId: "mov_002", owner: "follow" },
+    ];
+    answered = applyOk(answered, {
+      type: "PLAY_MOVE",
+      role: "follow",
+      moveInstanceId: "follow-hand-mov_002",
+    });
+    answered = applyOk(answered, { type: "END_DANCE", role: "follow", callId: null });
+    const paid = snapshotFor(answered, "follow", content);
+    expect(paid.turn.callAnswered).toBe(true);
+    expect(paid.turn.callStyle).toBe(option.style + option.inPocket + option.afinque);
+  });
+
+  it("says what a call gives up while the song bonus is met", () => {
+    const state = applyOk(establishedState(), {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: id("mov_002"),
+    });
+    const view = snapshotFor(state, "lead", content);
+    expect(pickerOf(readDanceStep(view, NO_INTENT)).givesUp).toBe(
+      "A call gives up the song’s +1 Connection.",
+    );
+  });
+
+  it("gives up nothing to say when the song bonus is not met", () => {
+    const view = snapshotFor(establishedState(), "lead", content);
+    expect(pickerOf(readDanceStep(view, NO_INTENT)).givesUp).toBeNull();
+  });
+
+  it("names the standing call's price too, since the open sheet covers the banner", () => {
+    const view = snapshotFor(withCall(establishedState(), "call_005"), "lead", content);
+    const step = readDanceStep(view, NO_INTENT);
+    // Both ways out of this 8-count — the sheet and the gold control — name one price.
+    expect(pickerOf(step).price).toBe(
+      "Unanswered: −1 Connection, and the phrase loses its clean +3",
+    );
+    expect(pickerOf(step).price).toBe(step.call?.price);
+  });
+
+  it("names no price in the sheet when nothing stands over the player holding it", () => {
+    const quiet = snapshotFor(establishedState(), "lead", content);
+    expect(pickerOf(readDanceStep(quiet, NO_INTENT)).price).toBeNull();
+
+    const met = applyOk(withCall(establishedState(), "call_002"), {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: id("mov_002"),
+    });
+    const answered = snapshotFor(met, "lead", content);
+    expect(answered.call?.met).toBe(true);
+    expect(pickerOf(readDanceStep(answered, NO_INTENT)).price).toBeNull();
+  });
+
+  it("closes the picker on a phrase's last 8-count and says why", () => {
+    const state = establishedState();
+    state.songIndex = 7;
+    const view = snapshotFor(state, "lead", content);
+    expect(view.phrase.count).toBe(view.rules.phraseLength);
+    expect(
+      view.legalActions.some((action) => action.type === "END_DANCE" && action.callId !== null),
+    ).toBe(false);
+    const picker = pickerOf(readDanceStep(view, NO_INTENT));
+    expect(picker.options).toEqual([]);
+    expect(picker.closed).toBe("The phrase ends here — there is nothing to call into.");
+    // The greyed trigger carries the reason itself: on the table there is no room beside it.
+    expect(picker.label).toBe("No call · the phrase ends here");
+  });
+
+  it("closes the picker over an empty floor and asks for a Position", () => {
+    const view = snapshotFor(openingState(), "lead", content);
+    const picker = pickerOf(readDanceStep(view, NO_INTENT));
+    expect(picker.options).toEqual([]);
+    expect(picker.closed).toBe("Leave a Position on the floor to make a call.");
+    expect(picker.label).toBe("No call · open the floor first");
+  });
+
+  it("grows no picker while a Position is staged", () => {
+    const view = snapshotFor(openingState(), "lead", content);
+    expect(readDanceStep(view, staged(id("pos_002"))).telling?.picker).toBeNull();
+  });
+
+  it("grows no picker for the partner who is only watching", () => {
+    const view = snapshotFor(establishedState(), "follow", content);
+    expect(readDanceStep(view, NO_INTENT).telling).toBeNull();
+  });
+});
+
+describe("the call standing over an 8-count", () => {
+  it("tells the answering player what to dance and that it is not answered yet", () => {
+    const view = snapshotFor(withCall(establishedState(), "call_005", true), "lead", content);
+    const step = readDanceStep(view, NO_INTENT);
+    expect(step.call).toMatchObject({
+      answering: true,
+      headline: "Follow calls Stay close",
+      ask: "Follow asks: dance your Move from Closed or Half-Closed.",
+      reward: "4 Style · ★ +1 in the pocket",
+      price: "Unanswered: −1 Connection, and the phrase loses its clean +3",
+      met: false,
+      state: "Not answered yet",
+    });
+  });
+
+  it("quotes an ask written in the caller's voice to the caller, not to the answerer", () => {
+    const echo = content.rules.call?.options.find((option) => option.id === "call_004");
+    expect(echo?.ask).toContain("I have already danced");
+    const view = snapshotFor(withCall(establishedState(), "call_004"), "lead", content);
+    const step = readDanceStep(view, NO_INTENT);
+    expect(step.call?.ask).toBe("Follow asks: dance a Move I have already danced this phrase.");
+  });
+
+  it("stops naming a price once the dance answers the call", () => {
+    const state = applyOk(withCall(establishedState(), "call_002"), {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: id("mov_002"),
+    });
+    const step = readDanceStep(snapshotFor(state, "lead", content), NO_INTENT);
+    expect(step.call?.met).toBe(true);
+    expect(step.call?.price).toBeNull();
+  });
+
+  it("names no price on the device that made the call", () => {
+    const view = snapshotFor(withCall(establishedState(), "call_005"), "follow", content);
+    expect(readDanceStep(view, NO_INTENT).call?.price).toBeNull();
+  });
+
+  it("drops the clean bonus from the price once the phrase has already stumbled", () => {
+    const state = withCall(establishedState(), "call_005");
+    state.phrase.stumbled = true;
+    const view = snapshotFor(state, "lead", content);
+    expect(readDanceStep(view, NO_INTENT).call?.price).toBe("Unanswered: −1 Connection");
+  });
+
+  it("drops it too once an earlier call in this phrase already went unanswered", () => {
+    // The engine takes the clean bonus away on the first drop (scorePhrase), so the second
+    // call of a phrase can no longer cost it: only the Connection is still in play.
+    const state = withCall(establishedState(), "call_005");
+    state.phrase.droppedCall = true;
+    const view = snapshotFor(state, "lead", content);
+    expect(view.phrase.stumbled).toBe(false);
+    expect(readDanceStep(view, NO_INTENT).call?.price).toBe("Unanswered: −1 Connection");
+    expect(callHandoff(snapshotFor(state, "follow", content), "lead")?.price).toBe(
+      "Unanswered: −1 Connection",
+    );
+  });
+
+  it("turns to answered the moment the dance meets the call", () => {
+    const state = applyOk(withCall(establishedState(), "call_002"), {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: id("mov_002"),
+    });
+    const step = readDanceStep(snapshotFor(state, "lead", content), NO_INTENT);
+    expect(step.call).toMatchObject({
+      met: true,
+      state: "Answered · finish to collect",
+      reward: "1 Style",
+    });
+  });
+
+  it("words the same call for the partner who made it and is watching", () => {
+    const view = snapshotFor(withCall(establishedState(), "call_005", true), "follow", content);
+    const step = readDanceStep(view, NO_INTENT);
+    expect(step.telling).toBeNull();
+    expect(step.call).toMatchObject({
+      answering: false,
+      headline: "You called Stay close",
+      ask: "You asked: dance your Move from Closed or Half-Closed.",
+      state: "Lead is answering",
+      covers: [],
+    });
+  });
+
+  it("offers a cover for each Recovery card in hand, with what it costs", () => {
+    const view = snapshotFor(withCall(establishedState(), "call_005"), "lead", content);
+    const covers = readDanceStep(view, NO_INTENT).call?.covers ?? [];
+    expect(covers).toEqual([
+      {
+        action: { type: "COVER_CALL", role: "lead", recoveryInstanceId: id("rec_001") },
+        label: "Cover with Return to Basic",
+        note: "Keeps your Connection and the clean phrase. The afinque chain starts over.",
+      },
+    ]);
+  });
+
+  it("names what the cover throws away once the 8-count already answers the call", () => {
+    const state = applyOk(withCall(establishedState(), "call_002", true), {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: id("mov_002"),
+    });
+    state.shared.afinque = 2;
+    const view = snapshotFor(state, "lead", content);
+    const step = readDanceStep(view, NO_INTENT);
+    expect(view.call?.met).toBe(true);
+    // 1 Style printed, 1 more in the pocket, 1 from the chain: all of it, for nothing at risk.
+    expect(step.call?.covers[0]?.note).toBe(
+      "Your 8-count already answers this call — covering gives up its 3 Style and breaks the chain.",
+    );
+    expect(offerFor(step, id("rec_001")).playNote).toBe(step.call?.covers[0]?.note);
+  });
+
+  it("plays a Recovery card to the floor as the cover", () => {
+    const view = snapshotFor(withCall(establishedState(), "call_005"), "lead", content);
+    const offer = offerFor(readDanceStep(view, NO_INTENT), id("rec_001"));
+    expectPlayable(offer, "Cover the call", {
+      kind: "dispatch",
+      action: view.legalActions.find((action) => action.type === "COVER_CALL")!,
+      intent: NO_INTENT,
+    });
+    expect(offer.playNote).toBe(
+      "Keeps your Connection and the clean phrase. The afinque chain starts over.",
+    );
+  });
+
+  it("has no banner when no call stands", () => {
+    expect(
+      readDanceStep(snapshotFor(establishedState(), "lead", content), NO_INTENT).call,
+    ).toBeNull();
+  });
+});
+
+describe("the hold", () => {
+  it("maps a Position played before the dance to the adjust, with what it gives up", () => {
+    const view = snapshotFor(establishedState(), "lead", content);
+    const step = readDanceStep(view, NO_INTENT);
+    const adjust = view.legalActions.find(
+      (action) => action.type === "ADJUST" && action.positionInstanceId === id("pos_002"),
+    );
+    expectPlayable(offerFor(step, id("pos_002")), "Adjust the hold", {
+      kind: "dispatch",
+      action: adjust!,
+      intent: NO_INTENT,
+    });
+    expect(offerFor(step, id("pos_002")).playNote).toBe(
+      "Adjusts the hold before you dance — gives up the song bonus this 8-count.",
+    );
+  });
+
+  it("still transitions with the same card after the Move", () => {
+    const state = applyOk(establishedState(), {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: id("mov_002"),
+    });
+    const view = snapshotFor(state, "lead", content);
+    const step = readDanceStep(view, NO_INTENT);
+    expectPlayable(offerFor(step, id("pos_002")), "Transition", {
+      kind: "dispatch",
+      action: view.legalActions.find((action) => action.type === "TRANSITION")!,
+      intent: NO_INTENT,
+    });
+    expect(offerFor(step, id("pos_002")).playNote).toBeNull();
+  });
+
+  it("takes the hold with a Position no Move in hand dances from", () => {
+    const state = openingState();
+    state.players.lead.hand = state.players.lead.hand.filter(
+      (entry) => entry.instanceId !== id("mov_002"),
+    );
+    const view = snapshotFor(state, "lead", content);
+    const step = readDanceStep(view, NO_INTENT);
+    const adjust = view.legalActions.find(
+      (action) => action.type === "ADJUST" && action.positionInstanceId === id("pos_001"),
+    );
+    expectPlayable(offerFor(step, id("pos_001")), "Take the hold", {
+      kind: "dispatch",
+      action: adjust!,
+      intent: NO_INTENT,
+    });
+    expect(offerFor(step, id("pos_001")).playNote).toBe(
+      "Opens the floor with this Position alone — gives up the song bonus this 8-count.",
+    );
+  });
+
+  it("keeps staging the Position that a Move can open with", () => {
+    const view = snapshotFor(openingState(), "lead", content);
+    const step = readDanceStep(view, NO_INTENT);
+    expectPlayable(offerFor(step, id("pos_002")), "Stage Position", {
+      kind: "stage",
+      intent: staged(id("pos_002")),
+    });
+    expect(offerFor(step, id("pos_002")).playNote).toBeNull();
+  });
+
+  it("explains a Position that matches the floor it would replace", () => {
+    const view = snapshotFor(establishedState(), "lead", content);
+    expect(view.floorRefusals).toContainEqual({
+      instanceId: id("pos_001"),
+      code: "SAME_POSITION",
+    });
+    expect(offerFor(readDanceStep(view, NO_INTENT), id("pos_001")).sentence).toBe(
+      "The floor is already Open",
+    );
+  });
+});
+
+describe("the hot-seat handoff", () => {
+  it("hands the incoming player the call they have to answer", () => {
+    const view = snapshotFor(withCall(establishedState(), "call_005", true), "follow", content);
+    expect(callHandoff(view, "lead")).toEqual({
+      caller: "Follow",
+      name: "Stay close",
+      ask: "Follow asks: dance your Move from Closed or Half-Closed.",
+      reward: "4 Style · ★ +1 in the pocket",
+      price: "Unanswered: −1 Connection, and the phrase loses its clean +3",
+      sentence:
+        "Follow called Stay close: dance your Move from Closed or Half-Closed. Your answer.",
+    });
+  });
+
+  it("attributes an ask written in the caller's voice, exactly as the banner does", () => {
+    // "Echo me" asks for "a Move I have already danced": the I is the caller's, on every
+    // screen the answering player reads it from.
+    const state = withCall(establishedState(), "call_004");
+    const handoff = callHandoff(snapshotFor(state, "follow", content), "lead");
+    const banner = readDanceStep(snapshotFor(state, "lead", content), NO_INTENT).call;
+    expect(handoff?.ask).toBe("Follow asks: dance a Move I have already danced this phrase.");
+    expect(handoff?.ask).toBe(banner?.ask);
+  });
+
+  it("reads the same reward and price as the banner the next screen shows", () => {
+    const state = withCall(establishedState(), "call_005", true);
+    state.shared.afinque = 3;
+    const handoff = callHandoff(snapshotFor(state, "follow", content), "lead");
+    const banner = readDanceStep(snapshotFor(state, "lead", content), NO_INTENT).call;
+    expect(handoff?.reward).toBe("4 Style · ★ +1 in the pocket · +1 afinque");
+    expect(handoff?.reward).toBe(banner?.reward);
+    expect(handoff?.price).toBe(banner?.price);
+  });
+
+  it("hands the caller nothing to answer", () => {
+    const view = snapshotFor(withCall(establishedState(), "call_005"), "lead", content);
+    expect(callHandoff(view, "follow")).toBeNull();
+  });
+
+  it("hands nothing over when no call stands", () => {
+    const view = snapshotFor(establishedState(), "lead", content);
+    expect(callHandoff(view, "follow")).toBeNull();
+  });
+
+  it("names the call the viewer just made during their lesson step", () => {
+    const state = applyOk(establishedState(), {
+      type: "END_DANCE",
+      role: "lead",
+      callId: "call_003",
+    });
+    const view = snapshotFor(state, "lead", content);
+    expect(view.call).toBeNull();
+    expect(callMadeNote(view)).toBe(
+      "You called Change the room. Your partner answers next 8-count.",
+    );
+  });
+
+  it("names no call when the song was taken instead", () => {
+    const state = applyOk(establishedState(), { type: "END_DANCE", role: "lead", callId: null });
+    expect(callMadeNote(snapshotFor(state, "lead", content))).toBeNull();
+  });
+});
+
+describe("the note that survives a phone width", () => {
+  it("names what the hold costs wherever the hold is legal", () => {
+    const view = snapshotFor(establishedState(), "lead", content);
+    expect(view.legalActions.some((action) => action.type === "ADJUST")).toBe(true);
+    expect(readDanceStep(view, NO_INTENT).telling?.note).toBe(
+      "The hold gives up this 8-count’s song bonus.",
+    );
+  });
+
+  it("says nothing when no Position can take the hold", () => {
+    const state = establishedState();
+    state.players.lead.hand = [{ instanceId: id("mov_002"), cardId: "mov_002", owner: "lead" }];
+    const view = snapshotFor(state, "lead", content);
+    expect(view.legalActions.some((action) => action.type === "ADJUST")).toBe(false);
+    expect(readDanceStep(view, NO_INTENT).telling?.note).toBeNull();
   });
 });

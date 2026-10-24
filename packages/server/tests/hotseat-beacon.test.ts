@@ -27,7 +27,7 @@ describe("hot-seat completion beacon", () => {
     return harness().application;
   }
 
-  function postBeacon(
+  async function postBeacon(
     application: Hono,
     peer: string,
     gameId: string,
@@ -47,7 +47,11 @@ describe("hot-seat completion beacon", () => {
     );
   }
 
-  function createRoom(application: Hono, peer: string, forwardedFor?: string): Promise<Response> {
+  async function createRoom(
+    application: Hono,
+    peer: string,
+    forwardedFor?: string,
+  ): Promise<Response> {
     const headers: Record<string, string> = { "content-type": "application/json" };
     if (forwardedFor !== undefined) headers["x-forwarded-for"] = forwardedFor;
     return application.request(
