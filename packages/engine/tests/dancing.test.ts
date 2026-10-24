@@ -42,6 +42,9 @@ describe("dancing · rulebook §6", () => {
         flourishCardId: "flo_001",
         fromPosition: "Closed",
         endingPosition: "Open",
+        rung: "clean",
+        styleGained: 3,
+        afinqueAfter: 0,
       },
     ]);
   });

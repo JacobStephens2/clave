@@ -1,6 +1,13 @@
 import { content } from "@clave/content";
 import { describe, expect, it } from "vitest";
-import { ENGINE_VERSION, applyAction, createEnvelope, snapshotFor } from "../src/index.js";
+import {
+  ENGINE_VERSION,
+  applyAction,
+  createEnvelope,
+  refusalCode,
+  snapshotFor,
+  type GameAction,
+} from "../src/index.js";
 import { applyOk, readyGame, setHand } from "./helpers.js";
 
 describe("snapshot refusal codes", () => {
@@ -42,15 +49,22 @@ describe("snapshot refusal codes", () => {
     expect(flourishPlay.ok).toBe(false);
     expect(matchingMove.ok).toBe(true);
     expect(stumble.ok).toBe(true);
-    if (!mismatchedMove.ok && !transition.ok && !flourishPlay.ok) {
+    if (!mismatchedMove.ok && !flourishPlay.ok) {
       expect(view.floorRefusals).toEqual([
         { instanceId: closedMove!.instanceId, code: mismatchedMove.error.code },
-        { instanceId: position!.instanceId, code: transition.error.code },
         { instanceId: flourish!.instanceId, code: flourishPlay.error.code },
       ]);
     }
+    // The Position is published as playable: a transition is too early, but the hold is not.
+    expect(
+      applyAction(
+        state,
+        { type: "ADJUST", role: "lead", positionInstanceId: position!.instanceId },
+        content,
+      ).ok,
+    ).toBe(true);
     expect(view.engineVersion).toBe(state.engineVersion);
-    expect(ENGINE_VERSION).toBe(5);
+    expect(ENGINE_VERSION).toBe(6);
   });
 
   it("omits an empty-floor card when any opening pair passes", () => {
@@ -100,18 +114,15 @@ describe("snapshot refusal codes", () => {
     expect(mismatch.ok).toBe(false);
     if (!mismatch.ok) {
       expect(snapshotFor(mismatched, "lead", content).floorRefusals).toEqual([
-        { instanceId: open!.instanceId, code: mismatch.error.code },
         { instanceId: closedMove!.instanceId, code: mismatch.error.code },
       ]);
       expect(mismatch.error.code).toBe("POSITION_MISMATCH");
     }
 
+    // A Position with no Move to open from is not stuck: it can still take the hold.
     const alone = readyGame();
     setHand(alone, "lead", ["pos_001"]);
-    const position = alone.players.lead.hand[0]!;
-    expect(snapshotFor(alone, "lead", content).floorRefusals).toEqual([
-      { instanceId: position.instanceId, code: "POSITION_MISMATCH" },
-    ]);
+    expect(snapshotFor(alone, "lead", content).floorRefusals).toEqual([]);
   });
 
   it("publishes the shared opening failure when it is not a position mismatch", () => {
@@ -289,11 +300,30 @@ describe("snapshot refusal codes", () => {
     }
   });
 
+  it("reads an action the same way the reducer does, defaults included", () => {
+    const state = readyGame();
+    // An action stored before the call names no `callId` at all: the reducer's parse fills
+    // in null, so the published code has to read that same object the same way.
+    const unnamed = { type: "END_DANCE", role: state.activeRole } as GameAction;
+    expect(applyAction(state, unnamed, content).ok).toBe(true);
+    expect(refusalCode(state, unnamed, content)).toBeNull();
+    const malformed = {
+      type: "END_DANCE",
+      role: state.activeRole,
+      callId: "nope",
+    } as GameAction;
+    expect(applyAction(state, malformed, content)).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_ACTION" },
+    });
+    expect(refusalCode(state, malformed, content)).toBe("INVALID_ACTION");
+  });
+
   it("does not store refusal codes in the resume envelope", () => {
     const envelope = createEnvelope({ seed: 1 });
     const stored = JSON.stringify(envelope);
     expect(stored).not.toContain("floorRefusals");
     expect(stored).not.toContain("lessonRefusals");
-    expect(envelope.engineVersion).toBe(5);
+    expect(envelope.engineVersion).toBe(6);
   });
 });

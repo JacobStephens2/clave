@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { CardIdSchema, PositionSchema, SongIdSchema } from "@clave/content";
+import { CallIdSchema, CardIdSchema, PositionSchema, SongIdSchema } from "@clave/content";
 
-export const ENGINE_VERSION = 5;
+export const ENGINE_VERSION = 6;
 export const RoleSchema = z.enum(["lead", "follow"]);
 export type Role = z.infer<typeof RoleSchema>;
 
@@ -30,6 +30,10 @@ export const DanceTableSchema = z.object({
 });
 export type DanceTable = z.infer<typeof DanceTableSchema>;
 
+/** Which rung of the resolution ladder an 8-count ended on; "pending" until it ends. */
+export const RungSchema = z.enum(["pending", "perfect", "clean", "awkward", "recovered", "break"]);
+export type Rung = z.infer<typeof RungSchema>;
+
 export const TurnDanceSchema = z.object({
   moveCardId: CardIdSchema.nullable(),
   moveStyle: z.number().int().nonnegative().nullable(),
@@ -45,6 +49,14 @@ export const TurnDanceSchema = z.object({
   learnedFromPartner: z.boolean(),
   bonusStyle: z.number().int().nonnegative(),
   bonusConnection: z.number().int().nonnegative(),
+  // The call this 8-count made, and how the call standing over it resolved.
+  callMade: CallIdSchema.nullable().default(null),
+  callAnswered: z.boolean().default(false),
+  callDropped: z.boolean().default(false),
+  callCovered: z.boolean().default(false),
+  callStyle: z.number().int().nonnegative().default(0),
+  adjusted: z.boolean().default(false),
+  rung: RungSchema.default("pending"),
 });
 export type TurnDance = z.infer<typeof TurnDanceSchema>;
 
@@ -56,6 +68,7 @@ export const PhraseStatsSchema = z.object({
   poseOnFinalCount: z.boolean(),
   learnedBy: z.object({ lead: z.boolean(), follow: z.boolean() }),
   privateLessonTakenThisRound: z.boolean(),
+  droppedCall: z.boolean().default(false),
 });
 export type PhraseStats = z.infer<typeof PhraseStatsSchema>;
 
@@ -68,18 +81,29 @@ export const MoveHistoryEntrySchema = z.object({
 });
 export type MoveHistoryEntry = z.infer<typeof MoveHistoryEntrySchema>;
 
-export const DanceComboHistoryEntrySchema = z.object({
-  sequence: z.number().int().positive(),
-  phrase: z.number().int().min(1).max(2),
-  songIndex: z.number().int().min(0).max(15),
-  role: RoleSchema,
-  outcome: z.enum(["dance", "basic", "stumble"]),
-  moveCardId: CardIdSchema.nullable(),
-  positionCardId: CardIdSchema.nullable(),
-  flourishCardId: CardIdSchema.nullable(),
-  fromPosition: PositionSchema.nullable(),
-  endingPosition: PositionSchema.nullable(),
-});
+/** The rung an 8-count stored before the ladder ended on, read from its `outcome`. */
+const RUNG_BY_OUTCOME = { dance: "clean", basic: "awkward", stumble: "break" } as const;
+
+export const DanceComboHistoryEntrySchema = z
+  .object({
+    sequence: z.number().int().positive(),
+    phrase: z.number().int().min(1).max(2),
+    songIndex: z.number().int().min(0).max(15),
+    role: RoleSchema,
+    outcome: z.enum(["dance", "basic", "stumble"]),
+    moveCardId: CardIdSchema.nullable(),
+    positionCardId: CardIdSchema.nullable(),
+    flourishCardId: CardIdSchema.nullable(),
+    fromPosition: PositionSchema.nullable(),
+    endingPosition: PositionSchema.nullable(),
+    // `outcome` keeps its three values for compatibility; `rung` is the fuller one beside it.
+    // Derived rather than defaulted: calling an old stumble clean would contradict its own
+    // outcome in the phrase strip and the end screen's ladder.
+    rung: RungSchema.optional(),
+    styleGained: z.number().int().default(0),
+    afinqueAfter: z.number().int().nonnegative().default(0),
+  })
+  .transform((entry) => ({ ...entry, rung: entry.rung ?? RUNG_BY_OUTCOME[entry.outcome] }));
 export type DanceComboHistoryEntry = z.infer<typeof DanceComboHistoryEntrySchema>;
 
 export const MarketSchema = z.object({
@@ -93,7 +117,21 @@ export type Market = z.infer<typeof MarketSchema>;
 export const SharedScoreSchema = z.object({
   connection: z.number().int().nonnegative(),
   style: z.number().int().nonnegative(),
+  // Defaulted: a score stored before the call has no run of answered calls behind it.
+  afinque: z.number().int().nonnegative().default(0),
 });
+
+/** The call one player has made over the other's next 8-count, until it resolves. */
+export const StandingCallSchema = z
+  .object({
+    byRole: RoleSchema,
+    callId: CallIdSchema,
+    // The 8-count the call stands over: the one after the 8-count that made it.
+    forSongIndex: z.number().int().min(0).max(15),
+    inPocket: z.boolean(),
+  })
+  .nullable();
+export type StandingCall = z.infer<typeof StandingCallSchema>;
 
 export const SignalSchema = z.object({ role: RoleSchema, instanceId: z.string() }).nullable();
 
@@ -109,13 +147,14 @@ export const TurnCheckpointSchema = z.object({
   nextInstance: z.number().int().positive(),
   turnDance: TurnDanceSchema,
   signal: SignalSchema,
+  call: StandingCallSchema.default(null),
 });
 export type TurnCheckpoint = z.infer<typeof TurnCheckpointSchema>;
 
 export const LogEntrySchema = z.object({
   sequence: z.number().int().nonnegative(),
   role: RoleSchema.nullable(),
-  kind: z.enum(["song", "dance", "lesson", "score", "system", "signal"]),
+  kind: z.enum(["song", "dance", "lesson", "score", "system", "signal", "call"]),
   message: z.string(),
 });
 export type LogEntry = z.infer<typeof LogEntrySchema>;
@@ -144,6 +183,7 @@ export const GameStateSchema = z.object({
   danceHistory: z.array(DanceComboHistoryEntrySchema).default([]),
   turnDance: TurnDanceSchema,
   signal: SignalSchema,
+  call: StandingCallSchema.default(null),
   log: z.array(LogEntrySchema),
   checkpoint: TurnCheckpointSchema.nullable(),
   finalScore: z.number().int().nonnegative().nullable(),
@@ -164,7 +204,13 @@ export const GameActionSchema = z.discriminatedUnion("type", [
   ActorSchema.extend({ type: z.literal("PLAY_MOVE"), moveInstanceId: z.string() }),
   ActorSchema.extend({ type: z.literal("TRANSITION"), positionInstanceId: z.string() }),
   ActorSchema.extend({ type: z.literal("PLAY_FLOURISH"), flourishInstanceId: z.string() }),
-  ActorSchema.extend({ type: z.literal("END_DANCE") }),
+  ActorSchema.extend({ type: z.literal("ADJUST"), positionInstanceId: z.string() }),
+  // Defaulted: an action log stored before the call ends every 8-count by taking the song.
+  ActorSchema.extend({
+    type: z.literal("END_DANCE"),
+    callId: CallIdSchema.nullable().default(null),
+  }),
+  ActorSchema.extend({ type: z.literal("COVER_CALL"), recoveryInstanceId: z.string() }),
   ActorSchema.extend({ type: z.literal("STUMBLE"), recoveryInstanceId: z.string().nullable() }),
   ActorSchema.extend({
     type: z.literal("BUY_LESSON"),

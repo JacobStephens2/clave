@@ -65,6 +65,25 @@ describe("lessons · rulebook §8", () => {
     expect(state.phrase.privateLessonTakenThisRound).toBe(true);
   });
 
+  it("puts a private lesson on top of the draw pile and a group class in the discard", () => {
+    let state = readyGame();
+    state.players.lead.money = 3;
+    state = applyOk(state, { type: "END_DANCE", role: "lead" });
+    const chosen = state.market.intermediateDisplay[0]!;
+    state = applyOk(state, {
+      type: "BUY_LESSON",
+      role: "lead",
+      source: "intermediate",
+      cardId: chosen,
+    });
+    expect(state.players.lead.drawPile[0]?.cardId).toBe(chosen);
+    expect(state.players.lead.discardPile.some((entry) => entry.cardId === chosen)).toBe(false);
+    // You just learned it, so it is in the hand you draw at the end of this turn.
+    state = applyOk(state, { type: "END_LESSON", role: "lead" });
+    expect(state.players.lead.hand.some((entry) => entry.cardId === chosen)).toBe(true);
+    expect(content.rules.lessonToDrawTop).toMatchObject({ beginner: false, intermediate: true });
+  });
+
   it("learns for free from a partner once per phrase", () => {
     let state = readyGame();
     state.songIndex = 3;
@@ -78,7 +97,9 @@ describe("lessons · rulebook §8", () => {
       fromPosition: "Open",
     });
     state = applyOk(state, { type: "LEARN_FROM_PARTNER", role: "lead", cardId: "mov_007" });
+    // Learning from your partner is watching, not a lesson: it lands in the discard pile.
     expect(state.players.lead.discardPile.some((entry) => entry.cardId === "mov_007")).toBe(true);
+    expect(state.players.lead.drawPile.some((entry) => entry.cardId === "mov_007")).toBe(false);
     expect(state.phrase.learnedBy.lead).toBe(true);
   });
 });

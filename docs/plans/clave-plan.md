@@ -648,3 +648,78 @@ No open questions remain. Resolution log:
 | OQ-2 | Stumble-turn semantics: may the stumbling player still take a lesson and clean up? | **Resolved 2026-07-18: yes; cleanup revised 2026-07-20.** A stumble replaces only turn step 2 (Dance); steps 1, 3, and 4 proceed. Cleanup now discards the whole remaining hand automatically and draws four. Rationale: §6's literal text ("no other *dance* cards"), avoiding a bad-hand death spiral, and the "recovery is a skill" pillar. Recorded in `docs/rules/decisions.md` and enforced by engine tests. |
 | OQ-3 | Is speaker-played music acceptable for v1 evenings? | **Resolved 2026-07-18: yes**, confirmed by Jacob; playback remains ambient and unsynchronized. **Scope updated 2026-07-20:** Clave may start and pause Spotify's official embed while retaining external-player fallback and never bundling the recording (D7). |
 | — | Adversarial review 2026-07-18 | All six findings adjudicated (2 accepted, 4 partially accepted) plus two new findings accepted; this revision incorporates every accepted change. See `docs/plans/reviews/clave-plan-adjudication-2026-07-18.md`. |
+
+## 9. Post-v1 amendments
+
+This section is appended rather than merged: §§1–8 record the plan as adjudicated on
+2026-07-18 and revised through launch, and they stay as they were. Each amendment is
+dated and names exactly what it changes.
+
+### 2026-10-23 — The call, afinque, the hold, and the ladder
+
+v1 shipped, and then it was measured. A simulation of 1,000 competent games found a
+game that could not be lost (0.0% losses, 0.00 stumbles per game), scored inside a very
+narrow band (sd/mean 0.08, with 76% of games in one of the six rating bands), and
+offered 1.90 Style-plus-Connection of decision per turn with ~2.9 complete card
+sequences tied for best. Five of the sixteen song cards fired in under 1% of games and
+count 3 could not fire at all; the clean-phrase bonus fired in 100.0% of phrases and
+the pose finish in 1.2%. §7 risk 2 — "thirty minutes of rules administration kills the
+evening" — is why the answer is four small rules rather than a new system:
+
+- **The call and the answer** (rulebook 7.1). As a dance step ends, a player takes the
+  song card's bonus _or_ makes one of seven named calls over their partner's next
+  8-count. An answered call pays Style; a dropped one costs 1 Connection — the game's
+  first involuntary Connection cost, and its only loss path besides the stumble.
+- **Afinque** (7.2) — calls answered in a row, paying each answer extra Style, breaking
+  on a drop, a cover, a stumble, or an 8-count with no Move.
+- **The hold** (6.4) — one Position card played before anything else in the 8-count,
+  taking an empty floor or adjusting an established one, priced at that 8-count's song
+  bonus.
+- **The resolution ladder** (6.5) — every 8-count ends on one of five named rungs: the
+  transcript the phrase strip and the end-of-song recap read. That is the naming and
+  recording half of the concept brief's resolution pillar; the scoring half is the drop
+  and the cover, not the ladder.
+
+Shipped with them: the starter swap (Hand Twist in, Lead Left Turn out), private lessons
+to the top of the draw pile, Ponche (`flo_005`), a retuned song deck, re-fit ratings,
+and a re-conditioned clean phrase. Measured after, on the real engine and the content
+that ships here: 0.0% losses for cautious calling, 0.5% sensible, 28.8% bold, and 99.8%
+reckless; score spread sd/mean 0.158–0.223 across the four plausible-human dials; a
+rating ladder of 0.5 / 11.1 / 21.1 / 29.1 / 23.2 / 15.0% — no band above 29.1%, five of
+six above 8%; 13 of 16 song bonuses live; and the best deck beating $1-per-turn spam by
+11.1% instead of 2.2%. Every rule landed as a dated ruling in
+`docs/rules/decisions.md` with the rulebook amended in the same commit (D6, and §7 risk
+6), and every tunable number stayed in content JSON, tabulated in
+`docs/cards/v1-card-list.md`.
+
+**D6 amendment.** The condition DSL grows by one op — `answeredCall`, for song card
+15's "Response" — so "~12 condition ops cover all 16 Llorarás cards" now reads 13.
+Calls get their own id space (`call_###`) and schema rather than a sixth card prefix;
+`CLAUDE.md` and `AGENTS.md` list `call_` on the ID line.
+
+**D7 amendment: the embed is gone, and nothing has taken its place yet.** D7's "the web
+UI may control Spotify's licensed embed" no longer describes production. Pull request 28
+stopped the client from appending Spotify's iframe API script and sent
+`Content-Security-Policy: script-src 'self'` on the static HTML response, which would
+block that classic script in any case; since then the drawer has offered only its
+fallback link. That left D7 describing a feature the deployed app does not have — the
+open question raised as issue #29, and answered here: the drawer is a link to the
+recording, not a player, and widening the CSP for a third-party script is not worth it.
+
+An original instrumental soundtrack was tried as the replacement on this same date and
+**did not ship**: all four generations were dropped or came back unusable — none of them
+passed as a real salsa-dura band, and most carried silences, stutters or unloopable
+endings — so no music files were added. `docs/audio/soundtrack.md` records the service,
+the prompts, the terms, every measurement, and what to do differently. v1's non-goal on
+"bundled music files, original soundtracks" therefore stands unamended, and the clients
+keep the synthesized cues plus the "Open Llorarás in Spotify" link.
+
+What this amendment does **not** change: the Oscar D'León recording is still never
+hosted, bundled, proxied, or cached; playback is still ambient and still local UI state
+rather than a game action or a room event; and the game is still turn-based and untimed,
+with its 16 "8-counts" remaining thematic game units. The Phase 0b couch gate still
+plays the actual record on a speaker, and its pass criterion is untouched — the song
+deck's order, sections, and moments are unchanged. Its bonus numbers, the starter deck,
+and one new Beginner card are not, so those pages of the physical prototype are
+rebuilt before the gate. Phase 6's post-v1 menu is untouched too: "a bundled or original
+soundtrack" is still on it, now with one failed attempt behind it.

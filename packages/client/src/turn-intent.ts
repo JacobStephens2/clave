@@ -395,7 +395,8 @@ function danceControls(view: PlayerSnapshot, staged: boolean): DanceControls {
   if (staged) return { kind: "return", label: "Return Position to hand" };
   const controls: DanceRowControl[] = [];
   for (const action of view.legalActions) {
-    if (action.type === "END_DANCE")
+    // Taking the song. The calls are a picker of their own, not more buttons in this row.
+    if (action.type === "END_DANCE" && action.callId === null)
       controls.push({
         kind: "end",
         action,

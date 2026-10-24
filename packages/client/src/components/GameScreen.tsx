@@ -120,6 +120,7 @@ function soundForAction(action: GameAction): SoundEffect {
     case "PLAY_OPEN":
       return "card-move";
     case "TRANSITION":
+    case "ADJUST":
       return "card-position";
     case "PLAY_FLOURISH":
       return "card-flourish";
@@ -134,6 +135,8 @@ function soundForAction(action: GameAction): SoundEffect {
       return "turn";
     case "SIGNAL_CARD":
       return "card-select";
+    case "COVER_CALL":
+      return "discard";
     case "CLEAR_SIGNAL":
     case "UNDO_TURN":
       return "undo";

@@ -10,6 +10,7 @@
       "moment": "Verse 1",
       "title": "Settle in",
       "description": "+1 Connection if you play a Move worth 2 Style or less",
+      "favouredCall": "call_001",
       "bonuses": [
         {
           "condition": { "op": "moveStyleAtMost", "value": 2 },
@@ -24,6 +25,7 @@
       "moment": "Verse 1",
       "title": "Open invitation",
       "description": "+1 Style if your Move is danced from Open",
+      "favouredCall": "call_002",
       "bonuses": [
         {
           "condition": { "op": "moveFrom", "positions": ["Open"] },
@@ -37,9 +39,10 @@
       "section": "Cuerpo",
       "moment": "Horns",
       "title": "Catch the horns",
-      "description": "+2 Style if you play a Flourish",
+      "description": "+1 Style if you play a Flourish",
+      "favouredCall": "call_003",
       "bonuses": [
-        { "condition": { "op": "flourishPlayed" }, "effect": { "style": 2, "connection": 0 } }
+        { "condition": { "op": "flourishPlayed" }, "effect": { "style": 1, "connection": 0 } }
       ]
     },
     {
@@ -49,6 +52,7 @@
       "moment": "Horns",
       "title": "Make it count",
       "description": "+1 Style if your Move is worth 2+ Style",
+      "favouredCall": "call_002",
       "bonuses": [
         {
           "condition": { "op": "moveStyleAtLeast", "value": 2 },
@@ -63,6 +67,7 @@
       "moment": "Verse 2",
       "title": "Stay close",
       "description": "+1 Connection if you play no Position card",
+      "favouredCall": "call_005",
       "bonuses": [
         { "condition": { "op": "noPositionPlayed" }, "effect": { "style": 0, "connection": 1 } }
       ]
@@ -74,6 +79,7 @@
       "moment": "Verse 2",
       "title": "Hold the thread",
       "description": "+1 Style if your Move is danced from the same position as the previous Move",
+      "favouredCall": "call_004",
       "bonuses": [
         {
           "condition": { "op": "samePositionAsPreviousMove" },
@@ -87,9 +93,10 @@
       "section": "Cuerpo",
       "moment": "Horns",
       "title": "Answer the horns",
-      "description": "+2 Style if you play a Flourish",
+      "description": "+1 Style if you play a Flourish",
+      "favouredCall": "call_006",
       "bonuses": [
-        { "condition": { "op": "flourishPlayed" }, "effect": { "style": 2, "connection": 0 } }
+        { "condition": { "op": "flourishPlayed" }, "effect": { "style": 1, "connection": 0 } }
       ]
     },
     {
@@ -112,9 +119,10 @@
       "section": "Montuno",
       "moment": "Puente",
       "title": "Cross the bridge",
-      "description": "+1 Connection if you change position this 8-count",
+      "description": "+1 Style and +1 Connection if you change position this 8-count",
+      "favouredCall": "call_003",
       "bonuses": [
-        { "condition": { "op": "positionChanged" }, "effect": { "style": 0, "connection": 1 } }
+        { "condition": { "op": "positionChanged" }, "effect": { "style": 1, "connection": 1 } }
       ]
     },
     {
@@ -123,11 +131,12 @@
       "section": "Montuno",
       "moment": "Puente",
       "title": "Echo",
-      "description": "+2 Style if you play a Move your partner has played this game",
+      "description": "+4 Style if you play a Move your partner has played this game",
+      "favouredCall": "call_004",
       "bonuses": [
         {
           "condition": { "op": "partnerPlayedMoveGame" },
-          "effect": { "style": 2, "connection": 0 }
+          "effect": { "style": 4, "connection": 0 }
         }
       ]
     },
@@ -137,11 +146,12 @@
       "section": "Montuno",
       "moment": "Mambo",
       "title": "Bring the mambo",
-      "description": "+2 Style if your Move is worth 3+ Style",
+      "description": "+6 Style if your Move is worth 3+ Style",
+      "favouredCall": "call_007",
       "bonuses": [
         {
           "condition": { "op": "moveStyleAtLeast", "value": 3 },
-          "effect": { "style": 2, "connection": 0 }
+          "effect": { "style": 6, "connection": 0 }
         }
       ]
     },
@@ -151,9 +161,10 @@
       "section": "Montuno",
       "moment": "Mambo",
       "title": "Shine",
-      "description": "+2 Style if you play a Flourish",
+      "description": "+4 Style if you play a Flourish",
+      "favouredCall": "call_006",
       "bonuses": [
-        { "condition": { "op": "flourishPlayed" }, "effect": { "style": 2, "connection": 0 } }
+        { "condition": { "op": "flourishPlayed" }, "effect": { "style": 4, "connection": 0 } }
       ]
     },
     {
@@ -162,11 +173,12 @@
       "section": "Montuno",
       "moment": "Mambo",
       "title": "In full swing",
-      "description": "+1 Style and +1 Connection if you play 3+ cards",
+      "description": "+3 Style and +1 Connection if you play 3+ cards",
+      "favouredCall": "call_004",
       "bonuses": [
         {
           "condition": { "op": "cardsPlayedAtLeast", "value": 3 },
-          "effect": { "style": 1, "connection": 1 }
+          "effect": { "style": 3, "connection": 1 }
         }
       ]
     },
@@ -176,11 +188,12 @@
       "section": "Montuno",
       "moment": "Pregón",
       "title": "Call",
-      "description": "+2 Style if you play a Move your partner played earlier this phrase",
+      "description": "+4 Style if you play a Move your partner played earlier this phrase",
+      "favouredCall": "call_006",
       "bonuses": [
         {
           "condition": { "op": "partnerPlayedMovePhrase" },
-          "effect": { "style": 2, "connection": 0 }
+          "effect": { "style": 4, "connection": 0 }
         }
       ]
     },
@@ -190,12 +203,10 @@
       "section": "Montuno",
       "moment": "Coro",
       "title": "Response",
-      "description": "+2 Style if your Move is danced from Half-Open or Half-Closed",
+      "description": "+4 Style if you answer the call standing over you",
+      "favouredCall": "call_006",
       "bonuses": [
-        {
-          "condition": { "op": "moveFrom", "positions": ["Half-Open", "Half-Closed"] },
-          "effect": { "style": 2, "connection": 0 }
-        }
+        { "condition": { "op": "answeredCall" }, "effect": { "style": 4, "connection": 0 } }
       ]
     },
     {
@@ -204,10 +215,10 @@
       "section": "Montuno",
       "moment": "Coro",
       "title": "Big finish",
-      "description": "+3 Style if you play a Pose; otherwise +1 Style if you play a Flourish",
+      "description": "+7 Style if you play a Pose; otherwise +3 Style if you play a Flourish",
       "bonuses": [
-        { "condition": { "op": "posePlayed" }, "effect": { "style": 3, "connection": 0 } },
-        { "condition": { "op": "flourishPlayed" }, "effect": { "style": 1, "connection": 0 } }
+        { "condition": { "op": "posePlayed" }, "effect": { "style": 7, "connection": 0 } },
+        { "condition": { "op": "flourishPlayed" }, "effect": { "style": 3, "connection": 0 } }
       ]
     }
   ]

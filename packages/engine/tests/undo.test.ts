@@ -16,6 +16,7 @@ describe("undo · FR-13", () => {
       moveHistory: structuredClone(state.moveHistory),
       danceHistory: structuredClone(state.danceHistory),
       turnDance: structuredClone(state.turnDance),
+      call: state.call,
     };
     const checkpointHash = hashCanonical(state.checkpoint);
     const [move, position, , opening] = state.players.lead.hand;
@@ -52,6 +53,7 @@ describe("undo · FR-13", () => {
         nextInstance: state.nextInstance,
         turnDance: state.turnDance,
         signal: state.signal,
+        call: state.call,
       }),
     ).toBe(checkpointHash);
     expect(state.phase).toBe("dance");

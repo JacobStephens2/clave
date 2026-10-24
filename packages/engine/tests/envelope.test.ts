@@ -14,6 +14,7 @@ import {
   createGame,
   envelopeSnapshot,
   rehydrateEnvelope,
+  type DanceComboHistoryEntry,
   type GameAction,
   type ResumeEnvelope,
   type Role,
@@ -42,7 +43,7 @@ function played(
       state.status === "setup"
         ? { type: "CONFIRM_HAND", role }
         : state.phase === "dance"
-          ? { type: "END_DANCE", role }
+          ? { type: "END_DANCE", role, callId: null }
           : { type: "END_LESSON", role },
     );
   }
@@ -197,7 +198,7 @@ describe("resume envelope", () => {
       const upgraded = rehydrateEnvelope(stored(storedByEngine(3, played(6)))).envelope;
       const continued = applied(
         upgraded,
-        { type: "END_DANCE", role: "lead" },
+        { type: "END_DANCE", role: "lead", callId: null },
         { type: "END_LESSON", role: "lead" },
       );
       expect(rehydrateEnvelope(stored(continued))).toEqual({
@@ -205,6 +206,25 @@ describe("resume envelope", () => {
         envelope: continued,
         detail: null,
       });
+    });
+
+    it("reads the rung of an 8-count danced before the ladder from its own outcome", () => {
+      const old = storedByEngine(5, played(6));
+      old.state.danceHistory[0]!.outcome = "stumble";
+      for (const entry of old.state.danceHistory)
+        for (const key of ["rung", "styleGained", "afinqueAfter"] as const)
+          delete (entry as Partial<DanceComboHistoryEntry>)[key];
+      const result = rehydrateEnvelope(stored(old));
+      expect(result.kind).toBe("upgraded");
+      expect(
+        envelopeSnapshot(result.envelope, "lead").danceHistory.map(({ outcome, rung }) => ({
+          outcome,
+          rung,
+        })),
+      ).toEqual([
+        { outcome: "stumble", rung: "break" },
+        { outcome: "basic", rung: "awkward" },
+      ]);
     });
 
     it("upgrades an old log holding an action type this release does not know", () => {

@@ -294,7 +294,7 @@ describe("the heading and the floor hint share one moment", () => {
       controls: [
         {
           kind: "end",
-          action: { type: "END_DANCE", role: "lead" },
+          action: { type: "END_DANCE", role: "lead", callId: null },
           label: "Dance the basic",
         },
         {
@@ -433,7 +433,7 @@ describe("the heading and the floor hint share one moment", () => {
         controls: [
           {
             kind: "end",
-            action: { type: "END_DANCE", role: "lead" },
+            action: { type: "END_DANCE", role: "lead", callId: null },
             label: "Finish the 8-count",
           },
           { kind: "undo", action: { type: "UNDO_TURN", role: "lead" }, label: "Reset turn" },
@@ -491,11 +491,10 @@ describe("sentences on an established floor", () => {
     );
   });
 
-  it("asks for the Move before a Position", () => {
+  it("needs no sentence for a Position, which can adjust the hold before the Move", () => {
     const view = snapshotFor(establishedState(), "lead", content);
-    expect(offerFor(readDanceStep(view, NO_INTENT), id("pos_002")).sentence).toBe(
-      "Play a Move first",
-    );
+    expect(view.floorRefusals.map((entry) => entry.instanceId)).not.toContain(id("pos_002"));
+    expect(offerFor(readDanceStep(view, NO_INTENT), id("pos_002")).sentence).toBeNull();
   });
 
   it("points a Recovery card at Stumble", () => {
@@ -590,15 +589,14 @@ describe("sentences on an established floor", () => {
 });
 
 describe("sentences on an empty floor", () => {
-  it("explains a Position that no Move in hand can dance from", () => {
+  it("needs no sentence for a Position no Move dances from, which can take the hold", () => {
     const state = openingState();
     state.players.lead.hand = state.players.lead.hand.filter(
       (entry) => entry.instanceId !== id("mov_002"),
     );
     const view = snapshotFor(state, "lead", content);
-    expect(offerFor(readDanceStep(view, NO_INTENT), id("pos_001")).sentence).toBe(
-      "No Move in hand dances from Open",
-    );
+    expect(view.floorRefusals.map((entry) => entry.instanceId)).not.toContain(id("pos_001"));
+    expect(offerFor(readDanceStep(view, NO_INTENT), id("pos_001")).sentence).toBeNull();
   });
 
   it("holds other Positions back while one is staged", () => {

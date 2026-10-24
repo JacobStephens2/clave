@@ -68,6 +68,11 @@ function qualify(state: ReturnType<typeof readyGame>, condition: BonusCondition)
     case "cardsPlayedAtLeast":
       state.turnDance.cardsPlayed = condition.value;
       break;
+    case "answeredCall":
+      // The call the engine will resolve into `callAnswered` as this 8-count ends.
+      state.call = { byRole: "follow", callId: "call_001", forSongIndex: index, inPocket: false };
+      state.turnDance.callAnswered = true;
+      break;
   }
 }
 
@@ -99,6 +104,6 @@ describe("Llorarás song bonuses · rulebook §7", () => {
     state.turnDance.posePlayed = true;
     const before = state.shared.style;
     state = applyOk(state, { type: "END_DANCE", role: "lead" });
-    expect(state.shared.style - before).toBe(3);
+    expect(state.shared.style - before).toBe(7);
   });
 });
