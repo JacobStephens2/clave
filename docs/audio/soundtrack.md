@@ -1,8 +1,8 @@
-# Soundtrack — three attempts, nothing shipped
+# Soundtrack — four attempts, nothing shipped
 
-Clave ships **no music files**. This document records three attempts to generate an
+Clave ships **no music files**. This document records four attempts to generate an
 original two-part instrumental soundtrack ("Cuerpo" for the verse, "Montuno" for the
-mambo), the verification they all failed, and the licensing homework, so a fourth attempt
+mambo), the verification they all failed, and the licensing homework, so a fifth attempt
 does not start from nothing. Nothing was added to `packages/client/public/audio/`, and
 the clients keep the synthesized rhythm cues and the "Open Llorarás in Spotify" link
 instead of a house-band toggle.
@@ -12,10 +12,13 @@ instead of a house-band toggle.
 | 1       | 2026-10-23 | ElevenLabs Music `music_v2_5`   | 4           | —          | not shipped |
 | 2       | 2026-10-24 | Google Lyria 3.5 / Lyria 3 Clip | 7           | 4/10       | not shipped |
 | 3       | 2026-10-24 | Mureka `mureka-9.5`             | 2           | 4/10       | not shipped |
+| 4       | 2026-10-24 | Suno `V5_5` via APIFRAME        | 5           | 6/10       | not shipped |
 
-All three failed the same way: the takes do not sound like a band playing. Attempt 3 adds
+All four failed the same way: the takes do not sound like a band playing. Attempt 3 adds
 a **listening pack** so a human ear gets a vote, after one AI listener was caught
-reporting a glitch that measurement shows is not in the file.
+reporting a glitch that measurement shows is not in the file. Attempt 4 raised the best
+score to 6/10, then spent a request proving that score was a lucky draw — and found a
+licensing problem that rules the whole service out regardless of how it sounds.
 
 ## Attempt 1 — ElevenLabs Music (2026-10-23)
 
@@ -721,4 +724,391 @@ The timbalero is off the shells and onto a loud hand-struck campana bell riding 
 One unbroken driving groove, one tempo, one key, full tilt on the first beat and the last: no intro, no count-in, no build, no breakdown, no solo, no ending, no fade.
 Instrumental only: no singing, coro, chanting, shouts or spoken words.
 No synthesizer, no drum machine, no quantized MIDI, no sampled loops, no vinyl crackle, no tape hiss.
+```
+
+## Attempt 4 — Suno via APIFRAME (2026-10-24)
+
+Still nothing shipped, and this time the blocker is not only the sound. Suno `V5_5`
+reached through APIFRAME produced the ten most convincing takes any attempt has made:
+both listeners agree, on every one of the ten, that there is a real son clave and a real
+bass tumbao that anticipates the downbeat — something no earlier attempt achieved on a
+single take. No take contains any voice. None contains a dropout or a sample-level
+discontinuity. All ten sit inside the requested tempo range. One drew a **6/10**, two
+points above the ceiling the three earlier services shared.
+
+Then a request spent re-running that exact setting returned 4/10 and 4/10, so the 6 was a
+lucky draw rather than a property of the configuration. And the licensing homework below
+is the real verdict: **APIFRAME is not an authorised Suno partner**, Suno has no public
+API, and Suno assigns output rights only to its own paying subscribers. Nothing generated
+this way can ship in Clave at any quality.
+
+### The API, as it actually behaves
+
+- **Endpoints**: `POST https://api.apiframe.ai/v2/music/generate` returns `202` with a
+  `jobId`; `GET https://api.apiframe.ai/v2/jobs/{jobId}` polls it to `COMPLETED`. Auth is
+  an `X-API-Key` header. Account and credit balance are
+  `GET https://api.apiframe.ai/v2/me`. Model metadata is `GET /v2/models`.
+- **There is no Suno "v6".** The owner's suggestion was Suno v6; it does not exist here.
+  `GET /v2/models` lists exactly six values for `model_version` — `V4`, `V4_5`,
+  `V4_5ALL`, `V4_5PLUS`, `V5`, `V5_5` — with `V4_5PLUS` as the default. `V5_5` is the
+  newest and is what every request below used. APIFRAME exposes Suno as a single model
+  id, `"suno"`, with the version as a parameter, not as separate models.
+- **The request shape**: top-level `model`, `prompt`, optional `webhookUrl` and
+  `webhookEvents`; everything Suno-specific goes in a `sunoParams` object —
+  `custom_mode`, `instrumental`, `model_version`, `title` (80 chars), `style`
+  (1,000 chars), `negative_tags` (500 chars), `vocal_gender`, `style_weight` (0–1),
+  `weirdness_constraint` (0–1) and `auto_lyrics`. Unknown top-level keys are rejected
+  with `400`.
+- **`custom_mode: true` is the right mode for an instrumental**, and it is what made this
+  attempt different. In non-custom mode the prompt is a description capped at 500
+  characters — tighter than Mureka's 1,024. In custom mode the prompt is treated as
+  lyrics, so the musical description moves into `style` (1,000 characters) and the
+  prompt can be the inert placeholder `[Instrumental]`. That buys a **dedicated
+  `negative_tags` field**, the first service in four attempts to offer one: the ban list
+  no longer has to sit inside the positive prompt, which is what attempt 2 suspected of
+  summoning the very things it named.
+- **Two numeric knobs no earlier service had**: `style_weight` (how hard the written
+  style is held) and `weirdness_constraint` (how far off the safe centre). These are the
+  only levers in four attempts that are not prose, and they are what round 2 tested.
+- **Each request returns 2 tracks** and costs a flat **11 credits**, about **$0.11**.
+  Delivery is 48 kHz stereo MP3 at 194–206 kbps, 172–269 s long; no WAV or FLAC is
+  offered, so any loop editing would start from a lossy file — a step back from Mureka.
+  Result files stay on the CDN for 90 days.
+- Generation took 45–76 s per request. No request failed or timed out.
+- **One operational trap.** The edge in front of the API answers `403` with
+  `error code: 1010` to a request whose `User-Agent` it does not recognise; Python's
+  default `urllib` agent is refused. Any ordinary client string passes, and the rejected
+  request costs no credits.
+
+### What was generated
+
+Five requests, ten instrumentals, in three rounds. No prompt names any artist, band,
+album or song, nothing imitates Llorarás or any specific recording, and no reference
+audio was uploaded. Both prompts ask for a live band in one room with human timing and
+real horn breath; the bans on synthesizers, drum machines, quantized MIDI, sampled loops,
+vinyl crackle and tape hiss moved out of the prose and into `negative_tags`. All of it is
+reproduced verbatim at the end of this section.
+
+- **Round 1** (2 requests): `V5_5`, `custom_mode: true`, `instrumental: true`, the style
+  text, the negative tags, and both numeric knobs left unset.
+- **Round 2** (2 requests): one change only — `style_weight: 0.8` and
+  `weirdness_constraint: 0.85`. Both knobs move together as a single lever ("hold the
+  written style harder, push further off the safe centre") because the one thing round 1
+  got right was the instrumentation and the clave, and lowering `style_weight` risked
+  losing it. Confirmation the lever engaged: round 1's responses came back with Suno's own
+  rewritten style tags, round 2's came back with the submitted style text verbatim.
+- **Round 3** (1 request): nothing changed at all, re-running round 2's Cuerpo spec, to
+  test whether its 6/10 was reproducible. It was not. One request of the six-request
+  budget was left unspent; after the reproducibility answer there was nothing left for it
+  to buy.
+
+Tempo is the onset-autocorrelation estimate in quarter-note BPM, read as an octave
+family. Loudness is measured on the normalized file; every source take overshot 0 dBFS by
+up to 0.5 dB on decode, which normalization fixed.
+
+| File                 | Round | Cue     | Delivered | LUFS / LRA / TP    | Tempo | 3.1       | 2.5           |
+| -------------------- | ----- | ------- | --------- | ------------------ | ----- | --------- | ------------- |
+| `suno-cuerpo-1.mp3`  | 1     | Cuerpo  | 192.81 s  | −16.3 / 3.9 / −1.6 | 195.0 | 3/10 FAIL | 4/10 FAIL     |
+| `suno-cuerpo-2.mp3`  | 1     | Cuerpo  | 176.81 s  | −16.3 / 3.4 / −2.6 | 195.0 | 1/10 FAIL | 4/10 FAIL     |
+| `suno-montuno-1.mp3` | 1     | Montuno | 172.81 s  | −16.2 / 3.9 / −1.9 | 195.0 | 2/10 FAIL | 3/10 **PASS** |
+| `suno-montuno-2.mp3` | 1     | Montuno | 183.21 s  | −16.3 / 4.2 / −1.6 | 191.4 | 1/10 FAIL | 4/10 **PASS** |
+| `suno-cuerpo-3.mp3`  | 2     | Cuerpo  | 211.69 s  | −16.3 / 3.4 / −2.9 | 191.4 | 1/10 FAIL | 6/10 **PASS** |
+| `suno-cuerpo-4.mp3`  | 2     | Cuerpo  | 207.18 s  | −16.3 / 3.7 / −2.3 | 191.4 | 1/10 FAIL | 3/10 **PASS** |
+| `suno-montuno-3.mp3` | 2     | Montuno | 217.98 s  | −16.3 / 4.5 / −4.0 | 195.0 | 1/10 FAIL | 3/10 **PASS** |
+| `suno-montuno-4.mp3` | 2     | Montuno | 268.74 s  | −16.3 / 3.7 / −3.2 | 202.7 | 1/10 FAIL | 4/10 **PASS** |
+| `suno-cuerpo-5.mp3`  | 3     | Cuerpo  | 197.53 s  | −16.3 / 4.7 / −2.8 | 184.6 | 1/10 FAIL | 4/10 **PASS** |
+| `suno-cuerpo-6.mp3`  | 3     | Cuerpo  | 221.70 s  | −16.2 / 6.5 / −2.4 | 191.4 | 1/10 FAIL | 4/10 FAIL     |
+
+Seven of ten takes drew a PASS from `gemini-2.5-pro`, against none in attempt 3 — but all
+ten drew a FAIL from `gemini-3.1-pro-preview`, and its score was 1/10 on nine of them. The
+two listeners are further apart here than in any previous round, which is the single most
+important thing this attempt has to say about its own evidence.
+
+### How each take was verified
+
+Identical to attempts 2 and 3, so all four are comparable:
+
+1. `ffprobe` for container, duration, bitrate, sample rate and channels.
+2. `ffmpeg -af ebur128=peak=true` for integrated loudness, loudness range and true peak.
+3. A per-second RMS envelope in dBFS, flagging any second below −60 dBFS or more than
+   12 dB under the take's median.
+4. Tempo from an onset-strength envelope scored by autocorrelation, read as an octave
+   family, plus each listener's own estimate.
+5. A 10 ms frame pass for level dropouts and sample-level discontinuities (frames whose
+   peak first-difference is an outlier, which is what a splice or a dropped buffer
+   leaves behind).
+6. Two independent listening passes per take, `gemini-3.1-pro-preview` and
+   `gemini-2.5-pro` (Gemini API `generateContent`, the normalized MP3 sent inline as
+   base64 `audio/mpeg`, `temperature: 0`), against the same eleven-point rubric as
+   before.
+
+The gate changed, and this is the important methodological difference. In attempts 2 and
+3 the two listeners **were** the gate, with a pass bar of 7/10. Here they only **screen**
+— voices, stray instruments, glitches, tempo, instrumentation — and every claim either of
+them makes is checked before it is believed. Attempt 3 caught one listener confabulating
+a glitch; this round added a second step, **isolating the passage and asking both models
+again**, and it changed the answer four times out of five. Jacob's ear decides, on the
+listening page.
+
+### What the verification found
+
+Mechanically these are the best takes of the four attempts, and the measurements are
+unanimous. All ten hold a steady tempo between 184.6 and 202.7 BPM. Not one second of any
+take falls below −60 dBFS, there is not a single level dropout at 10 ms resolution, and
+there are **zero sample-level discontinuities** in any of the ten files at an 8-sigma
+threshold — the largest first-difference outlier anywhere is 5.9 sigma. Loudness range of
+3.4 to 6.5 LU confirms the energy barely moves. **No take contains any voice**, which
+both listeners confirmed independently on all ten.
+
+On the musical fundamentals the two listeners agree for the first time. `gemini-2.5-pro`
+on `suno-cuerpo-3`:
+
+> Yes, there is a very strong 2-3 Son clave feel that the entire arrangement is built
+> around. The bass plays a proper, syncopated tumbao, consistently anticipating the
+> downbeat on the "and" of beat two and leading into the one from beat four. It does not
+> plod on beat one.
+
+`gemini-3.1-pro-preview`, which scored the same file 1/10, concedes the same point on
+every take it damns — "the bass _does_ play a structurally correct tumbao that anticipates
+the downbeat (hitting the 4-and), but it executes it with robotic, quantized precision
+rather than any actual human groove or pocket". That is a real advance: in attempt 3 the
+two listeners could not agree whether the bass played a tumbao at all.
+
+**The high score, and why it does not count.** `gemini-2.5-pro` gave `suno-cuerpo-3`
+6/10, two points above every previous ceiling:
+
+> 6/10. The arrangement, instrumentation, and rhythms are all correct and convincing.
+> However, the robotic perfection, the sterile quality of the horn samples, and the lack
+> of any room ambiance or microphone bleed give it away as a modern, in-the-box
+> production. It sounds like a great demo, not a vintage record.
+
+It passed that take for shipping. So round 3 re-ran the identical request — same model
+version, same style text, same negative tags, same `style_weight: 0.8` and
+`weirdness_constraint: 0.85` — and got 4/10 and 4/10 from the same listener on the two
+takes it returned. **The 6 was a draw, not a setting.** This is the one thing a
+generation budget can buy that a prompt rewrite cannot, and it is worth spending a
+request on before anyone concludes a knob works.
+
+**The realism complaint is unchanged for the fourth time**, and `gemini-3.1-pro-preview`
+puts it the same way it did about three other services:
+
+> Programmed, without a doubt. This is a blatantly sequenced MIDI track. The brass section
+> is the most obvious giveaway—it sounds like a cheap 1990s sound module or basic
+> soundfont, completely lacking human breath, natural vibrato, or realistic attack/decay.
+> Furthermore, the piano velocities are rigidly uniform, and the cowbell is the exact same
+> static sample triggered repeatedly with zero variation in strike position or dynamics.
+
+and on `suno-montuno-3`, the complaint attempt 3 also recorded: "the 'machine-gun' effect
+on the cowbell and conga slaps where the exact same sample is triggered repeatedly without
+variation". `gemini-2.5-pro` agrees on the cause while disagreeing on the consequence,
+passing seven takes on function: "PASS. Despite its synthetic feel, the track is
+rhythmically correct, high-energy, and musically functional for a dance game where a clear,
+steady beat is paramount."
+
+**Two takes leaked a synthesizer, and `negative_tags` did not stop it.** "synthesizer" was
+the first of 364 characters of negative tags on every request. `suno-cuerpo-1` has a synth
+lead from 0:48 with a portamento pitch bend at 1:08, and `suno-cuerpo-4` has one from 1:06.
+Neither first pass got this right: on `suno-cuerpo-1`, `gemini-3.1-pro-preview` called it a
+flute and `gemini-2.5-pro` reported no extra instrument at all. Isolating the passage and
+asking both again settled it — `gemini-2.5-pro`: "The lead melody that begins at 0:06 is
+played by a synthesizer, likely using a synth-brass or lead patch"; `gemini-3.1-pro-preview`:
+"a **synthesizer** (specifically a synth lead using portamento/glide), not a flute". Both
+takes are disqualified as they stand. Note that `suno-cuerpo-3` and `suno-cuerpo-4` came
+from the _same request_: the ban holds on some draws and not others.
+
+**All ten compose an ending.** Every prompt said "no ending, no fade"; every take ends
+with a composed final phrase and a decay of roughly one to two seconds, and
+`suno-cuerpo-1` adds a full stop-time break at 3:08 before its last hits. This replaces
+attempt 3's defect (a hard digital cut) with a gentler one, and like that defect it sits
+outside any loop region — trimming plus a crossfade would remove it. It is the cheapest
+problem here.
+
+**Three listener claims were checked and are false; one was checked and is true.**
+This is why the listeners now only screen.
+
+| Claim                                                | By  | Checked how                    | Result                                      |
+| ---------------------------------------------------- | --- | ------------------------------ | ------------------------------------------- |
+| Flute on `cuerpo-1` at 0:48                          | 3.1 | isolated 0:44–1:15, both asked | **false** — it is a synth lead (worse)      |
+| Processed clavinet or synth patch opening `cuerpo-2` | 2.5 | isolated 0:00–0:10             | **false** — acoustic piano, upper register  |
+| Baritone saxophone on `montuno-4` at 0:27–0:34       | 2.5 | isolated 0:24–0:40             | **false** — trombones, both agreed          |
+| Intro sound effects and synth pads on `cuerpo-6`     | 2.5 | isolated 0:00–0:16             | **false** — piano, bass, percussion only    |
+| Synth lead on `cuerpo-4` at 1:06                     | 2.5 | isolated 1:00–1:25             | **true** — both then confirmed a synth lead |
+
+**And one claim needed measurement, because isolation could not settle it.**
+`gemini-3.1-pro-preview` reported a voice on `suno-cuerpo-5`:
+
+> Immediately as the final musical chord strikes, a distinct and unmistakable sound effect
+> of a live audience begins. It consists of loud cheering, clapping, and prominent
+> whistling that continues until the audio cuts out. It is clearly not cymbal decay or
+> instrumental reverb.
+
+`gemini-2.5-pro`, on the same isolated eleven seconds, said the opposite:
+
+> The sustained, high-frequency "shhh" sound is entirely instrumental and could be
+> misinterpreted as a crowd, but it is the cymbal's decay.
+
+A spectral profile of that tail decides it against the voice claim, on three independent
+grounds. Applause is a dense train of impulses: the tail has **6 onsets above 2 sigma in
+169 frames**, against 10–11 in the same file's own groove, so it is _less_ impulsive than
+the music. Whistling is a strong narrow tone: the tail's peak-to-median ratio across
+800–4000 Hz is **23.5 dB**, the _lowest_ of every window measured — the groove sections
+run 27–31 dB and the other takes' tails 30–33 dB — so it is _less_ tonal than everything
+around it. And its spectral centroid _rises_ 2,148 Hz while its level falls, the signature
+of a cymbal whose low end decays first, which two other takes' tails do identically
+without anyone calling them a crowd. There is no voice on `suno-cuerpo-5`.
+
+That is the second time in two attempts that `gemini-3.1-pro-preview` has reported
+something measurement cannot find, and this one would have been disqualifying. Its 1/10
+scores should carry very little weight. `gemini-2.5-pro`'s were the only checkable claims
+that survived unchanged — and it still got two instrument calls wrong.
+
+### For Jacob's ears
+
+All ten takes were two-pass loudness-normalized and added as the **first section** of the
+listening page, titled "Attempt 4 · Suno (V5_5) via APIFRAME", above the three earlier
+attempts and the public-domain candidates. Each entry carries both scores, what to listen
+for, and chips that jump to the moments worth hearing — including every place the two
+listeners contradict each other and every place measurement overruled one of them.
+
+Normalization is a linear gain to −16 LUFS integrated followed by a true-peak limiter at
+−1.5 dBTP, encoded to 192 kbps 44.1 kHz MP3. `loudnorm`'s own `linear=true` was tried
+first and rejected: it silently falls back to dynamic-range compression when the required
+gain would breach the ceiling, which left the ten files spread over 1.2 LU. All ten now
+measure −16.2 or −16.3 LUFS with true peak between −1.6 and −4.0 dBTP, so no take wins by
+being louder. The page was verified in headless Chromium (`@playwright/test` resolved from
+the repo): all 34 audio elements across all five sections load with real durations, the
+chips seek, the ratings export works, and there are no console errors.
+
+**The decision is Jacob's, by ear, on that page** — with one caveat that no amount of
+listening changes: even a take he likes cannot ship, for the licensing reasons below.
+
+### Licensing — this is the finding that matters
+
+Checked on 2026-10-24. **A free, open-source, public web game should not bundle and serve
+tracks generated this way.** The sound is a side issue; the rights do not work.
+
+The chain has three links and the middle one is missing.
+
+- **Suno has no public API, and APIFRAME is not an authorised partner.** APIFRAME's own
+  Suno page states that "Suno does not offer an official public API" and that it provides
+  access through its own unified API instead
+  (<https://apiframe.ai/models/suno>). Its "Official partner of" logos name BytePlus,
+  Alibaba Cloud and MiniMax — not Suno. Suno announced an invite-only developer API
+  partner programme in July 2026 and has published no partner terms
+  (<https://www.digitalmusicnews.com/2026/07/03/suno-is-opening-an-api-partner-program/>,
+  <https://musicbusinessworldwide.com/suno-explores-developer-api-seeking-apps-that-unlock-experiences-generative-music-makes-possible-for-the-first-time>).
+  So the Suno account behind these ten takes belongs to APIFRAME or to someone it buys
+  from, and nothing identifies whose it is or what tier it is on.
+- **Suno assigns output rights only to its own paying subscribers.** Suno's Terms of
+  Service (<https://suno.com/terms>, last revised 10 August 2026, effective
+  3 September 2026) assign output ownership under "Pro and Premier Accounts": "Suno hereby
+  assigns to you all of its right, title and interest in and to any Output owned by Suno."
+  The free or basic tier is the opposite — "you covenant and agree that you will only use
+  such Outputs for your lawful, personal and non-commercial purposes". The assignment runs
+  to the Suno account holder, which is not Jacob. Suno also warns it "makes no
+  representation or warranty to you that any copyright will vest in any Output."
+- **Suno's terms appear to prohibit the arrangement itself.** Commercial exploitation is
+  permitted "solely to the extent it adheres to Suno's Conditions of Access and Use", and
+  only for Output "downloaded by you through an approved channel"; "obtaining a copy of an
+  Output by any means other than a download channel made available by Suno is prohibited."
+  The same terms bar users from "sell[ing], resell[ing], grant[ing] access to, transfer[ring]"
+  the Service or Output for commercial purposes, and from "data mining, robots, scraping,
+  or similar data gathering" (User Conduct, item 12). A paid reseller of unofficial API
+  access sits against all of those.
+- **APIFRAME's own terms promise less than its marketing does.** The marketing page says
+  "Music generated through Apiframe comes with commercial usage rights". The Terms of
+  Service (<https://apiframe.ai/terms>, last updated 8 August 2026) are narrower: §5
+  ("Content and Intellectual Property") gives you the outputs only "Subject to these Terms
+  and payment of applicable fees" and disclaims exclusivity — "similar outputs may be
+  generated for other users, and we make no claims of exclusivity". §8 ("Third-Party
+  Services") then routes you straight back to Suno: your use of integrated third-party
+  services "is also subject to the terms and policies of those providers", and APIFRAME
+  "is not responsible for third-party services or their content". §11 makes _you_ indemnify
+  APIFRAME for content you generate. So APIFRAME grants what it can and points at Suno for
+  the rest; Suno grants nothing to Jacob, because Jacob is not Suno's customer.
+- **The account used here is on APIFRAME's free plan.** `GET /v2/me` reports
+  `"plan": "free"` with 100 credits. That is APIFRAME's own tier, not Suno's, but it is one
+  more reason not to lean on §5's "payment of applicable fees" condition.
+
+Net: APIFRAME cannot pass through rights it does not hold, Suno's assignment never reaches
+Jacob, and the route by which the audio was obtained is one Suno's terms appear to forbid.
+Publishing these files in a public repository and serving them from clave.dance would put
+the project on the wrong side of that, with Clave carrying the indemnity. Unlike attempt 3,
+where Mureka's paid API terms granted commercial rights cleanly, there is no reading of
+these documents that makes attempt 4 shippable.
+
+**Legal standing, briefly.** Warner Music Group settled its copyright suit against Suno
+(case 1:24-cv-11611) and signed a licensing deal announced 25 November 2025, under which
+Suno is to replace its current models with licensed ones during 2026 and apply download
+restrictions to free-tier users
+(<https://www.musicbusinessworldwide.com/warner-music-group-settles-with-suno-strikes-first-of-its-kind-deal-with-ai-song-generator/>,
+<https://www.musicweek.com/labels/read/warner-music-group-settles-lawsuit-and-signs-ai-licensing-deal-with-suno/093129>,
+<https://digitalpolicyalert.org/event/35757-warner-music-group-reached-settlement-of-litigation-and-formed-licensed-ai-partnership-agreement-with-suno-case-no-124-cv-11611>).
+Warner and Universal both settled separately with Udio. Sony Music and Universal are
+reported to be in talks with Suno but have settled nothing, and European collecting
+societies including Denmark's Koda and Germany's GEMA are still pursuing claims. Two
+caveats on this paragraph: it rests on trade press rather than a primary filing or an
+official release, and the free-tier download restriction Warner's deal introduces is one
+more reason the tier a reseller's Suno account sits on matters. This is unsettled law,
+which is a further reason not to build a shipped feature on a reseller's access to it.
+
+### Credits used
+
+Started at 100 credits on the free plan, ended at 45: **five requests at 11 credits each,
+55 credits, about $0.55**. Ten tracks, two per request. One request of the six-request
+budget was deliberately left unspent. The `403` from the edge cost nothing.
+
+### Next time
+
+Four services, four ceilings, one defect — plus, now, a licensing wall.
+
+- **The defect is confirmed, not suspected.** Twenty-five takes across four services and
+  seven prompt strategies, and every listening pass in all four attempts names the same
+  three things: quantized timing, static velocities, no room. Attempt 4 added the two
+  non-prose levers that existed anywhere (`style_weight`, `weirdness_constraint`) and they
+  did not move it; the one high score they produced did not reproduce.
+- **Do not use APIFRAME for anything Clave ships.** Not on quality grounds — on the
+  licensing chain above. It is fine for a private experiment and this was one.
+- **If Suno is still wanted, the only clean route is Suno's own developer API** once it is
+  generally available and its partner terms are published, on a Pro or Premier account
+  held by Jacob. Until then there is no version of this that produces files the project can
+  serve.
+- **The remaining untried lever is still the one attempts 2 and 3 both named**: specify
+  timbre and feel by example rather than in prose, via an audio reference — which needs a
+  reference recording whose licence permits it, so it is a licensing problem, not a
+  prompting one.
+- **The cheapest honest fix has not changed either**: a human session player or a licensed
+  salsa-dura library. Two 30-second loops is a small commission, and the public-domain
+  section of the listening page is now the other live option.
+- **Keep the screen, and keep checking it.** It has now caught a truncated response, a
+  spoken vocal, a confabulated glitch, a confabulated _crowd_, two real synthesizer leaks
+  and four false instrument calls. The rule that earned its place this round: isolate the
+  passage and ask both models again, and when they still disagree, measure. Isolation
+  changed the answer four times out of five.
+
+### The exact prompts
+
+Reproduced verbatim, as sent. Every request used `model: "suno"`, `prompt: "[Instrumental]"`
+(inert, because `custom_mode: true` would otherwise treat the prompt as lyrics),
+`sunoParams.custom_mode: true`, `sunoParams.instrumental: true`,
+`sunoParams.model_version: "V5_5"`, and the `negative_tags` below. Rounds 2 and 3 added
+`style_weight: 0.8` and `weirdness_constraint: 0.85` and changed nothing else. No artist,
+band, album or song name appears anywhere.
+
+**`negative_tags` — all five requests, 364 characters**
+
+```
+synthesizer, synth brass, synth strings, drum machine, electronic drums, quantized MIDI, sequenced MIDI, sample library, sampled loops, vinyl crackle, record crackle, tape hiss, surface noise, lo-fi, vocals, singing, coro, choir, chanting, shouts, spoken word, rap, saxophone, flute, electric guitar, reggaeton, timba, cumbia, pop, EDM, gridlocked, static velocity
+```
+
+**Cuerpo — `sunoParams.style`, 928 characters, `title: "Cuerpo"`**
+
+```
+Original instrumental salsa dura, 1970s New York style, 190 BPM, 4/4, son clave. One nine-piece band playing live together in one room, close-miked: you hear the room, the players breathing, palms on conga skin, the wooden action of the piano. Human timing - they push and pull, nobody sits exactly on the grid, every stroke a different weight. Acoustic piano hammers a two-bar montuno guajeo. Upright bass plays a tumbao that leaves beat one open. Congas on tumbao with ringing open tones, bongo on martillo, timbales riding cascara on the shells, maracas and guiro. Two trumpets and a trombone take an audible breath, answer the piano with short punchy stabs, then leave space. One unbroken verse groove, one tempo, one key, full energy from the first beat to the last: no intro, no count-in, no build, no breakdown, no solo, no ending, no fade. Instrumental only: no singing, no coro, no chanting, no shouts, no spoken words.
+```
+
+**Montuno — `sunoParams.style`, 917 characters, `title: "Montuno"`**
+
+```
+Original instrumental salsa dura mambo, 1970s New York style, 190 BPM, 4/4, son clave, hot and loud. One nine-piece band live in one room, close-miked: you hear the room, the players breathing, palms cracking on conga skin, sticks on metal. Human timing - they push and pull, nobody sits exactly on the grid, every stroke a different weight. The timbalero is off the shells and onto a loud hand-struck campana bell riding every bar. Congas open up loud, bongo player on the bongo bell, piano driving a hard montuno guajeo, upright bass pushing a strong tumbao. Two trumpets and a trombone blow loud interlocking mambo riffs in tight harmony, breathing between phrases. One unbroken driving groove, one tempo, one key, full tilt from the first beat to the last: no intro, no count-in, no build, no breakdown, no solo, no ending, no fade. Instrumental only: no singing, no coro, no chanting, no shouts, no spoken words.
 ```

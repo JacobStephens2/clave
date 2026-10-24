@@ -86,8 +86,8 @@ npm run build
 - [`docs/cards/v1-card-list.md`](docs/cards/v1-card-list.md) — the complete v1 card set and the Llorarás song deck
 - [`docs/plans/`](docs/plans/) — the v1 build plan, its adversarial review and adjudication, and the admin console plan
 - [`docs/art/`](docs/art/) — card art direction and the generation prompts
-- [`docs/audio/soundtrack.md`](docs/audio/soundtrack.md) — the three 2026-10-23/24
-  attempts at an original instrumental soundtrack, the verification all three failed,
+- [`docs/audio/soundtrack.md`](docs/audio/soundtrack.md) — the four 2026-10-23/24
+  attempts at an original instrumental soundtrack, the verification all four failed,
   and the licensing homework they leave for the next one
 - [`docs/unity-vs-web-implementation-report.md`](docs/unity-vs-web-implementation-report.md) — comparison of Unity/Hearthstone-style and browser/BGA-style Clave development
 - [`docs/living-documents/1-concept-brief.md`](docs/living-documents/1-concept-brief.md) — pitch, pillars, non-goals
