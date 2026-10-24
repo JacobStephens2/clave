@@ -43,7 +43,11 @@ export interface DanceComboView {
   callOutcome: GameState["danceHistory"][number]["callOutcome"];
   /** What the song card paid this 8-count, or null when it turned the other face or went unmet. */
   songBonus: BonusEffect | null;
-  /** The Position card this 8-count played before dancing, which gave up the song card. */
+  /**
+   * Whether this 8-count took the hold or adjusted it: a Position played before any other
+   * card, which gave up the song card's bonus. A Move may still follow it. Null when the
+   * 8-count did neither.
+   */
   hold: GameState["danceHistory"][number]["hold"];
 }
 
@@ -80,6 +84,8 @@ export interface PlayerSnapshot {
     number: number;
     count: number;
     stumbled: boolean;
+    /** Whether a call has already gone unanswered in this phrase: the clean bonus is gone. */
+    droppedCall: boolean;
     positionsDancedFrom: GameState["phrase"]["positionsDancedFrom"];
     flourishedBy: GameState["phrase"]["flourishedBy"];
     learnedBy: GameState["phrase"]["learnedBy"];
@@ -427,6 +433,7 @@ export function snapshotFor(
       number: state.phrase.number,
       count: state.songIndex < 0 ? 0 : (state.songIndex % (contentSet.song.cards.length / 2)) + 1,
       stumbled: state.phrase.stumbled,
+      droppedCall: state.phrase.droppedCall,
       positionsDancedFrom: [...state.phrase.positionsDancedFrom],
       flourishedBy: { ...state.phrase.flourishedBy },
       learnedBy: { ...state.phrase.learnedBy },

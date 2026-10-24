@@ -1015,6 +1015,30 @@ describe("ending the dance step", () => {
     expect(pickerOf(readDanceStep(view, NO_INTENT)).givesUp).toBeNull();
   });
 
+  it("names the standing call's price too, since the open sheet covers the banner", () => {
+    const view = snapshotFor(withCall(establishedState(), "call_005"), "lead", content);
+    const step = readDanceStep(view, NO_INTENT);
+    // Both ways out of this 8-count — the sheet and the gold control — name one price.
+    expect(pickerOf(step).price).toBe(
+      "Unanswered: −1 Connection, and the phrase loses its clean +3",
+    );
+    expect(pickerOf(step).price).toBe(step.call?.price);
+  });
+
+  it("names no price in the sheet when nothing stands over the player holding it", () => {
+    const quiet = snapshotFor(establishedState(), "lead", content);
+    expect(pickerOf(readDanceStep(quiet, NO_INTENT)).price).toBeNull();
+
+    const met = applyOk(withCall(establishedState(), "call_002"), {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: id("mov_002"),
+    });
+    const answered = snapshotFor(met, "lead", content);
+    expect(answered.call?.met).toBe(true);
+    expect(pickerOf(readDanceStep(answered, NO_INTENT)).price).toBeNull();
+  });
+
   it("closes the picker on a phrase's last 8-count and says why", () => {
     const state = establishedState();
     state.songIndex = 7;
@@ -1035,7 +1059,7 @@ describe("ending the dance step", () => {
     const picker = pickerOf(readDanceStep(view, NO_INTENT));
     expect(picker.options).toEqual([]);
     expect(picker.closed).toBe("Leave a Position on the floor to make a call.");
-    expect(picker.label).toBe("No call · leave a Position first");
+    expect(picker.label).toBe("No call · open the floor first");
   });
 
   it("grows no picker while a Position is staged", () => {
@@ -1093,6 +1117,19 @@ describe("the call standing over an 8-count", () => {
     state.phrase.stumbled = true;
     const view = snapshotFor(state, "lead", content);
     expect(readDanceStep(view, NO_INTENT).call?.price).toBe("Unanswered: −1 Connection");
+  });
+
+  it("drops it too once an earlier call in this phrase already went unanswered", () => {
+    // The engine takes the clean bonus away on the first drop (scorePhrase), so the second
+    // call of a phrase can no longer cost it: only the Connection is still in play.
+    const state = withCall(establishedState(), "call_005");
+    state.phrase.droppedCall = true;
+    const view = snapshotFor(state, "lead", content);
+    expect(view.phrase.stumbled).toBe(false);
+    expect(readDanceStep(view, NO_INTENT).call?.price).toBe("Unanswered: −1 Connection");
+    expect(callHandoff(snapshotFor(state, "follow", content), "lead")?.price).toBe(
+      "Unanswered: −1 Connection",
+    );
   });
 
   it("turns to answered the moment the dance meets the call", () => {
@@ -1252,12 +1289,22 @@ describe("the hot-seat handoff", () => {
     expect(callHandoff(view, "lead")).toEqual({
       caller: "Follow",
       name: "Stay close",
-      ask: "dance your Move from Closed or Half-Closed",
+      ask: "Follow asks: dance your Move from Closed or Half-Closed.",
       reward: "4 Style · ★ +1 in the pocket",
       price: "Unanswered: −1 Connection, and the phrase loses its clean +3",
       sentence:
         "Follow called Stay close: dance your Move from Closed or Half-Closed. Your answer.",
     });
+  });
+
+  it("attributes an ask written in the caller's voice, exactly as the banner does", () => {
+    // "Echo me" asks for "a Move I have already danced": the I is the caller's, on every
+    // screen the answering player reads it from.
+    const state = withCall(establishedState(), "call_004");
+    const handoff = callHandoff(snapshotFor(state, "follow", content), "lead");
+    const banner = readDanceStep(snapshotFor(state, "lead", content), NO_INTENT).call;
+    expect(handoff?.ask).toBe("Follow asks: dance a Move I have already danced this phrase.");
+    expect(handoff?.ask).toBe(banner?.ask);
   });
 
   it("reads the same reward and price as the banner the next screen shows", () => {

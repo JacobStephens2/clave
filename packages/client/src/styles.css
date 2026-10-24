@@ -4615,6 +4615,19 @@ body {
   font-size: 11px;
   line-height: 1.35;
 }
+/*
+ * The other half of the trade: the call already standing over this player is still unmet, and
+ * the open sheet covers the banner that was naming its price. Coral, like the banner's line.
+ */
+.call-sheet-price {
+  margin: 0;
+  padding: 7px 9px;
+  border-left: 3px solid var(--coral);
+  background: rgba(227, 95, 79, 0.14);
+  color: var(--cream);
+  font-size: 11px;
+  line-height: 1.35;
+}
 .call-option-list {
   margin: 0;
   padding: 0;
@@ -4702,6 +4715,18 @@ body {
   transform: translateX(-50%);
   width: min(94vw, 420px);
   pointer-events: none;
+}
+/*
+ * The same layer, over the end screen. The commit that ends the song is cued after the swap,
+ * so the toast has to clear the recap's own blocks instead of the table's: the headline and
+ * the final-score circle sit inside `.song-recap-top`, which ends at 429px wherever the recap
+ * keeps its two columns (741px wide and up). Below it the toast covers only the panels.
+ * On a short screen (a landscape phone) the layer is fixed and cannot be scrolled to, so the
+ * offset never sits lower than 170px above the bottom edge: two stacked cues and a browser's
+ * toolbar.
+ */
+.snapshot-cues[data-screen="terminal"] {
+  --cue-top: min(440px, calc(100vh - 170px));
 }
 .snapshot-cues ul {
   list-style: none;
@@ -4946,16 +4971,23 @@ body {
 }
 
 @media (min-width: 741px) and (min-height: 700px) {
+  /*
+   * The dance row's band is `minmax(min-content, auto)`, not `auto`: a track whose minimum is
+   * `auto` takes the row's own `min-height` (96px, one line of controls) as its floor, so a
+   * row that wraps — five controls, a cover, a long disabled trigger — was painted a few
+   * pixels proud of its band at every size. `min-content` floors the band at the height the
+   * row actually wraps to at this width.
+   */
   .main-table {
     min-height: 0;
     grid-template-rows:
-      clamp(82px, 11vh, 112px) clamp(96px, 11vh, 122px) minmax(110px, 1fr) auto
-      clamp(160px, 24vh, 272px);
+      clamp(82px, 11vh, 112px) clamp(96px, 11vh, 122px) minmax(110px, 1fr)
+      minmax(min-content, auto) clamp(160px, 24vh, 272px);
   }
   .main-table.with-call {
     grid-template-rows:
-      clamp(82px, 11vh, 112px) clamp(96px, 11vh, 122px) minmax(110px, 1fr) auto auto
-      clamp(160px, 24vh, 272px);
+      clamp(82px, 11vh, 112px) clamp(96px, 11vh, 122px) minmax(110px, 1fr) auto
+      minmax(min-content, auto) clamp(160px, 24vh, 272px);
   }
   /*
    * One band, one line. Stacked, the call costs the floor the height of its own cards — and
@@ -5120,15 +5152,15 @@ body {
 @media (min-width: 741px) and (min-height: 700px) and (max-height: 850px) {
   .main-table {
     gap: 10px;
-    grid-template-rows: 82px 84px minmax(94px, 1fr) auto 176px;
+    grid-template-rows: 82px 84px minmax(94px, 1fr) minmax(min-content, auto) 176px;
   }
   /*
    * The cover control wraps the dance row onto a second line here, and a squeezed `auto`
-   * track would let the buttons sit proud of their band. The row is given that second line
-   * outright, and the hand rail — already taller than this screen — lends it the 8px.
+   * track would let the buttons sit proud of their band. The row is floored at the height it
+   * wraps to, and the hand rail — already taller than this screen — lends it the 8px.
    */
   .main-table.with-call {
-    grid-template-rows: 82px 84px minmax(94px, 1fr) auto minmax(104px, auto) 168px;
+    grid-template-rows: 82px 84px minmax(94px, 1fr) auto minmax(min-content, auto) 168px;
   }
   /* Smaller type in the same one line: on a short screen every pixel is the floor's. */
   .call-banner {
@@ -5172,6 +5204,28 @@ body {
    */
   .dance-step-note {
     display: none;
+  }
+}
+
+/*
+ * The opening step — 8-count 1 of every game, and every 8-count after a stumble — is the one
+ * moment the guide takes 220px of the same band, and its dance row also carries the longest
+ * disabled trigger ("No call · open the floor first"): together they wrapped the row onto a
+ * third line, painting the gold control over the floor and the stumble over the hand. The
+ * guide only repeats the heading above it ("Open the floor with a Position") and the hand
+ * cards' own badges, so here it keeps announcing and stops taking the row's width.
+ */
+@media (min-width: 741px) and (min-height: 700px) and (max-height: 920px) {
+  .opening-drag-guide {
+    position: absolute;
+    width: 1px;
+    min-width: 0;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 
@@ -5290,6 +5344,10 @@ body {
   }
   .snapshot-cues {
     width: min(92vw, 380px);
+  }
+  /* One column here: the art, the headline and the score stack down to 546px before the panels. */
+  .snapshot-cues[data-screen="terminal"] {
+    --cue-top: min(556px, calc(100vh - 170px));
   }
   .snapshot-cues .cue strong {
     font-size: 12px;

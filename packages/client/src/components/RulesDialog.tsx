@@ -31,6 +31,7 @@ function RulesDialog({ onClose, section }: { onClose: () => void; section: strin
   const phraseBonuses = liveRules?.phraseBonuses ?? rules.phraseBonuses;
   const ratings = liveRules?.ratings ?? rules.ratings;
   const lessonCosts = liveRules?.lessonCosts ?? rules.lessonCosts;
+  const stumble = liveRules?.stumble ?? rules.stumble;
   const songLength = liveRules?.songLength ?? content.song.cards.length;
   const phraseLength = liveRules?.phraseLength ?? songLength / 2;
   // Null in a game stored before the call existed: that dance simply has no calls in it.
@@ -182,9 +183,8 @@ function RulesDialog({ onClose, section }: { onClose: () => void; section: strin
           </aside>
           <p>
             You may instead <strong>dance the basic</strong> and play nothing. Or stumble: lose{" "}
-            {rules.stumble.defaultConnectionCost} Connection and clear the floor unless a Recovery
-            card reduces the cost. A surviving stumble still continues to lessons and mandatory
-            cleanup.
+            {stumble.defaultConnectionCost} Connection and clear the floor unless a Recovery card
+            reduces the cost. A surviving stumble still continues to lessons and mandatory cleanup.
           </p>
         </>
       ),

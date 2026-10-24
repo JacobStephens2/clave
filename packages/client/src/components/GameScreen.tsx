@@ -1671,6 +1671,19 @@ export function GameScreen() {
     if (document.activeElement !== document.body) return;
     document.querySelector<HTMLElement>(".turn-actions .button-row button")?.focus();
   }, [view?.sequence, view?.phase, view?.viewerRole]);
+  // The pass screen and the opening hand sit over a table that scrolls at short desktop
+  // heights, and the page keeps whatever scroll they leave behind — on a 1280×720 screen the
+  // HUD's labels started tucked under the sticky header. A dance step begins at the top.
+  const handedOver = useRef(false);
+  useEffect(() => {
+    if (passTo !== null || view?.status === "setup") {
+      handedOver.current = true;
+      return;
+    }
+    if (!handedOver.current) return;
+    handedOver.current = false;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [passTo, view?.status]);
   useEffect(() => {
     setDraggingCardId(null);
     setFloorDragOver(false);

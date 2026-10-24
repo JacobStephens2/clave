@@ -80,6 +80,32 @@ describe("the call sheet", () => {
     expect(element.querySelector(".call-option.favoured")?.textContent).toContain("Stay with me");
   });
 
+  it("prints the standing call's price, which the open sheet has covered up", async () => {
+    // The sheet is the other way out of an 8-count with a call standing: it has to name the
+    // same price the banner behind it does, because the banner is hidden and made inert.
+    const view = danceView("call_005");
+    const step = readDanceStep(view, NO_INTENT);
+    const element = await render(
+      createElement(CallSheet, {
+        picker: step.telling!.picker!,
+        onChoose: () => undefined,
+        onClose: () => undefined,
+      }),
+    );
+    expect(element.querySelector(".call-sheet-price")?.textContent).toBe(step.call?.price);
+    expect(element.querySelector(".call-sheet-price")?.textContent).toBe(
+      "Unanswered: −1 Connection, and the phrase loses its clean +3",
+    );
+  });
+
+  it("prints no price in the sheet when no call stands over the player holding it", async () => {
+    const picker = readDanceStep(danceView(), NO_INTENT).telling!.picker!;
+    const element = await render(
+      createElement(CallSheet, { picker, onChoose: () => undefined, onClose: () => undefined }),
+    );
+    expect(element.querySelector(".call-sheet-price")).toBeNull();
+  });
+
   it("dispatches the END_DANCE the snapshot made legal for the chosen call", async () => {
     const view = danceView();
     const picker = readDanceStep(view, NO_INTENT).telling!.picker!;
@@ -193,7 +219,7 @@ describe("the call picker trigger", () => {
     const button = element.querySelector<HTMLButtonElement>(".call-picker-trigger")!;
     expect(button.disabled).toBe(true);
     // The button itself carries the reason: the line beside it is printed only on a phone.
-    expect(button.textContent).toBe("No call · leave a Position first");
+    expect(button.textContent).toBe("No call · open the floor first");
     expect(element.querySelector(`#${button.getAttribute("aria-describedby")}`)?.textContent).toBe(
       "Leave a Position on the floor to make a call.",
     );

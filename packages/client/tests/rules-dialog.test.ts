@@ -78,6 +78,34 @@ describe("rulebook", () => {
     expect(text).not.toContain("not directly to your hand");
   });
 
+  it("prints the stumble cost the game on screen is being played with", async () => {
+    // A dance retuned away from the bundled numbers: the rulebook reads this game's rules,
+    // exactly as the dance control beside it does.
+    const retuned: ContentSet = {
+      ...content,
+      rules: { ...content.rules, stumble: { ...content.rules.stumble, defaultConnectionCost: 3 } },
+    };
+    expect(content.rules.stumble.defaultConnectionCost).not.toBe(3);
+    const state = createGame({ seed: 7, content: retuned });
+    const view = snapshotFor(state, "lead", retuned);
+    expect(view.rules.stumble.defaultConnectionCost).toBe(3);
+    useAppStore.setState({ snapshot: view });
+
+    const host = await openRulebook();
+    const text = host.textContent ?? "";
+    expect(text).toContain("Or stumble: lose 3 Connection");
+    expect(text).not.toContain(
+      `Or stumble: lose ${content.rules.stumble.defaultConnectionCost} Connection`,
+    );
+  });
+
+  it("falls back to the bundled stumble cost on the home screen, with no game on", async () => {
+    const host = await openRulebook();
+    expect(host.textContent ?? "").toContain(
+      `Or stumble: lose ${content.rules.stumble.defaultConnectionCost} Connection`,
+    );
+  });
+
   it("sends every lesson to the discard pile in a game stored before they moved", async () => {
     // A game stored by engine 5: its content set says nothing about the draw pile, so the
     // engine puts every lesson a player buys into their discard pile.

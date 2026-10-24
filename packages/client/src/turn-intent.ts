@@ -102,6 +102,11 @@ export interface CallPicker {
   readonly options: readonly CallOffer[];
   /** What taking the song would have paid, when a call gives that up. */
   readonly givesUp: string | null;
+  /**
+   * What leaving the standing call unanswered costs, reprinted because the open sheet covers
+   * the banner. Set only while a call stands unmet over the player holding the sheet.
+   */
+  readonly price: string | null;
   /** Why no call can be made right now. Set only when there are no options. */
   readonly closed: string | null;
 }
@@ -678,7 +683,7 @@ function callsClosed(view: PlayerSnapshot): { label: string; reason: string } | 
     };
   if (!view.table.position)
     return {
-      label: "No call · leave a Position first",
+      label: "No call · open the floor first",
       reason: "Leave a Position on the floor to make a call.",
     };
   return null;
@@ -714,6 +719,9 @@ function callPicker(view: PlayerSnapshot): CallPicker | null {
     label: closed ? closed.label : "Make a call",
     options,
     givesUp: given ? `A call gives up the song’s ${given}.` : null,
+    // The sheet covers the banner, so the standing call's price is reprinted inside it: both
+    // ways out of an 8-count with a call unmet name the same cost.
+    price: standingPrice(view),
     closed: closed?.reason ?? null,
   };
 }
@@ -748,16 +756,33 @@ function answerReward(view: PlayerSnapshot, call: NonNullable<PlayerSnapshot["ca
 
 /**
  * What dropping the call costs the player who has to answer it: the Connection the rules take
- * for a miss, and the phrase's clean bonus with it while that bonus is still in play.
+ * for a miss, and the phrase's clean bonus with it while that bonus is still in play. A
+ * stumble or an earlier dropped call has already taken that bonus (`scorePhrase`), so from
+ * then on the drop costs the Connection alone.
  */
 function missPrice(view: PlayerSnapshot): string | null {
   const connection = view.rules.call?.missConnectionCost ?? 0;
   if (connection === 0) return null;
-  const clean = view.phrase.stumbled
-    ? ""
-    : `, and the phrase loses its clean +${view.rules.phraseBonuses.clean}`;
+  const clean =
+    view.phrase.stumbled || view.phrase.droppedCall
+      ? ""
+      : `, and the phrase loses its clean +${view.rules.phraseBonuses.clean}`;
   return `Unanswered: −${connection} Connection${clean}`;
 }
+
+/** The price of the 8-count ending unanswered, on the device that has to answer it. */
+function standingPrice(view: PlayerSnapshot): string | null {
+  const call = view.call;
+  if (!call || call.byRole === view.viewerRole || call.met) return null;
+  return missPrice(view);
+}
+
+/**
+ * An ask is printed in the caller's own voice ("a Move I have already danced"), so every
+ * surface that puts one in front of the answering player quotes it with the caller named:
+ * the "I" in it is always theirs.
+ */
+const askedBy = (caller: string, ask: string) => `${caller} asks: ${ask}.`;
 
 /** The standing call, worded for the player answering it or the partner watching. */
 function callStanding(view: PlayerSnapshot): CallStanding | null {
@@ -769,9 +794,9 @@ function callStanding(view: PlayerSnapshot): CallStanding | null {
     answering,
     headline: answering ? `${roleName(call.byRole)} calls ${call.name}` : `You called ${call.name}`,
     // The ask is printed in the caller's own voice, so it is quoted, never addressed.
-    ask: answering ? `${roleName(call.byRole)} asks: ${call.ask}.` : `You asked: ${call.ask}.`,
+    ask: answering ? askedBy(roleName(call.byRole), call.ask) : `You asked: ${call.ask}.`,
     reward: answerReward(view, call),
-    price: answering && !call.met ? missPrice(view) : null,
+    price: standingPrice(view),
     met: call.met,
     state: answering
       ? call.met
@@ -805,7 +830,8 @@ export function callHandoff(
   return {
     caller,
     name: call.name,
-    ask: call.ask,
+    // Quoted and attributed, exactly as the banner the next screen shows words it.
+    ask: askedBy(caller, call.ask),
     reward: answerReward(view, call),
     price: call.met ? null : missPrice(view),
     sentence: `${caller} called ${call.name}: ${call.ask}. Your answer.`,

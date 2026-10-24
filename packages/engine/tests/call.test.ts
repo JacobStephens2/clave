@@ -93,6 +93,20 @@ describe("the call and the answer · rulebook §7.1", () => {
     expect(state.call).toBeNull();
   });
 
+  it("publishes the phrase's dropped call to both players, so a reading can price the next one", () => {
+    let state = callStands("call_005");
+    state = danceMove(state, ["mov_002"]);
+    state = applyOk(state, { type: "END_DANCE", role: "follow", callId: null });
+    expect(state.phrase.stumbled).toBe(false);
+    expect(state.phrase.droppedCall).toBe(true);
+    // The clean bonus is already gone: a client reading the price of the next drop needs it.
+    const lead = snapshotFor(state, "lead", content);
+    const follow = snapshotFor(state, "follow", content);
+    expect(lead.phrase.droppedCall).toBe(true);
+    expect(follow.phrase.droppedCall).toBe(true);
+    expect(lead.phrase).toEqual(follow.phrase);
+  });
+
   it("drops the call when the answerer danced no Move at all", () => {
     let state = callStands("call_001");
     state = applyOk(state, { type: "END_DANCE", role: "follow", callId: null });

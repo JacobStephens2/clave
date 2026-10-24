@@ -104,6 +104,8 @@ export function CallSheet({
           </button>
         </header>
         {picker.givesUp && <p className="call-sheet-trade">{picker.givesUp}</p>}
+        {/* The sheet covers the banner: the standing call's price is named here too. */}
+        {picker.price && <p className="call-sheet-price">{picker.price}</p>}
         <ul className="call-option-list">
           {picker.options.map((option, index) => (
             <li key={option.callId}>

@@ -254,6 +254,40 @@ test("drops a call nobody answered, and prices the drop before the click", async
   await expect(scored).not.toContainText("clean");
 });
 
+test("stops promising the clean bonus once this phrase has already dropped a call", async ({
+  page,
+}) => {
+  // The second unmet call of the same phrase: the clean bonus went with the first drop, so
+  // this one costs the Connection alone. The sheet behind the banner says the same thing.
+  const again = gameAt(
+    (view) =>
+      view.phase === "dance" &&
+      view.turn.cardsPlayed === 0 &&
+      view.call !== null &&
+      !view.call.met &&
+      view.phrase.droppedCall &&
+      !view.phrase.stumbled &&
+      view.turn.ifEndedNow !== null &&
+      !view.turn.ifEndedNow.lost &&
+      // The sheet is the other exit this test reads the price from, so it has to open.
+      view.legalActions.some((action) => action.type === "END_DANCE" && action.callId !== null),
+    { ignoresCalls: true },
+  );
+  const view = await resumeSeeded(page, again);
+
+  const price = `Unanswered: −${calls.missConnectionCost} Connection`;
+  await expect(callBanner(page).locator(".call-price")).toHaveText(price);
+  await page.getByRole("button", { name: "Make a call" }).click();
+  await expect(page.locator(".call-sheet-price")).toHaveText(price);
+  await page.keyboard.press("Escape");
+
+  // And the phrase really does score without it, so the shorter sentence is the true one.
+  await endDance(page).click();
+  await expect(page.locator(".hud-stat.connection > strong")).toHaveText(
+    String(view.shared.connection + view.turn.ifEndedNow!.connection),
+  );
+});
+
 test("ends the song on a pose and cues the cierre over the end screen", async ({ page }) => {
   // The song's last 8-count with a pose still in hand. The cue has to survive the swap to
   // the end screen: it is the one moment the dance is announced and finished at once.

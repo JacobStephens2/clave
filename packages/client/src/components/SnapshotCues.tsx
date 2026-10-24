@@ -210,8 +210,15 @@ export function SnapshotCues({ view }: { view: PlayerSnapshot | null }) {
     }
   }, [play, view]);
 
+  // The layer outlives the swap to the end screen, which has its own blocks to keep clear:
+  // the stylesheet reads this to drop the toast below the headline and the final score.
+  const screen =
+    view && (view.status === "completed" || view.status === "lost" || view.status === "unresumable")
+      ? "terminal"
+      : "table";
+
   return (
-    <div className="snapshot-cues">
+    <div className="snapshot-cues" data-screen={screen}>
       <ul aria-hidden="true">
         {cues.map((cue) => (
           <li key={cue.id} className={`cue ${cue.tone}`}>
