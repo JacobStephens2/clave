@@ -27,13 +27,12 @@ export interface PhraseTally {
   readonly bonuses: string | null;
 }
 
-/** The song's calls, counted from the rungs they ended on. */
+/** The song's calls, counted from the 8-count each one was made on and resolved over. */
 export interface CallTally {
-  /** Null when the log window no longer reaches the start of the song. */
-  readonly made: number | null;
+  readonly made: number;
   readonly answered: number;
   readonly covered: number;
-  readonly dropped: number | null;
+  readonly dropped: number;
   /** The longest run of answered calls — the afinque the couple built up. */
   readonly longestRun: number;
   readonly runCap: number;
@@ -73,26 +72,17 @@ export interface SongRecap {
   readonly phrases: readonly PhraseTally[];
   /** Null when this game's content prints no calls. */
   readonly calls: CallTally | null;
-  /** Song-card bonuses that landed, or null when the log no longer reaches the start. */
-  readonly songMoments: number | null;
+  /** How many 8-counts the song card paid a bonus to. */
+  readonly songMoments: number;
   /** The 8-count that paid the most Style, with its place in the song. */
   readonly highlight: { readonly entry: DanceComboView; readonly songCount: number } | null;
 }
-
-/** The engine's own words for a dropped call, which is the only way to count drops. */
-const DROPPED_CALL = "The call drops";
 
 const phraseName = (phrase: number) => (phrase === 1 ? "Cuerpo" : "Montuno");
 
 /** The 8-count's place in the whole song, counting from the first count of the cuerpo. */
 const songCountOf = (entry: DanceComboView, phraseLength: number) =>
   (entry.phrase - 1) * phraseLength + entry.count;
-
-/**
- * Whether the published log still reaches the start of the song. The snapshot carries a
- * window of the log, and a long game can push its first 8-counts out of it.
- */
-const logReachesStart = (view: PlayerSnapshot) => view.log.some((entry) => entry.sequence === 0);
 
 function ladderTally(history: readonly DanceComboView[]): RungTally[] {
   const counts: Record<LadderRung, number> = {
@@ -142,41 +132,20 @@ function phraseTallies(view: PlayerSnapshot): PhraseTally[] {
 }
 
 /**
- * Log lines belonging to 8-counts that are still in the history: a turn the couple reset
- * leaves its lines in the log, but its 8-count is gone, and both carry the same sequence.
+ * The calls, counted from the 8-counts themselves: each one carries the call it made and how
+ * the call standing over it resolved. That is exact whatever the song did — a drop a stumble
+ * caused is a drop here, though the log never says so, and a turn the couple reset left no
+ * 8-count behind to count twice.
  */
-function countLogLines(
-  view: PlayerSnapshot,
-  danced: ReadonlySet<number>,
-  matches: (entry: PlayerSnapshot["log"][number]) => boolean,
-): number {
-  return view.log.filter((entry) => danced.has(entry.sequence) && matches(entry)).length;
-}
-
-function callTally(view: PlayerSnapshot, complete: boolean): CallTally | null {
+function callTally(view: PlayerSnapshot): CallTally | null {
   if (!view.rules.call) return null;
-  // Every answered call ends on Perfect and every covered one on Recovered, so the ladder
-  // counts them exactly. Only a drop shares its rung (Awkward) with dancing no Move at all.
-  const answered = view.danceHistory.filter((entry) => entry.rung === "perfect").length;
-  const covered = view.danceHistory.filter((entry) => entry.rung === "recovered").length;
-  const unanswered = new Set(
-    view.danceHistory
-      .filter((entry) => entry.rung === "awkward" || entry.rung === "break")
-      .map((entry) => entry.sequence),
-  );
-  const dropped = complete
-    ? countLogLines(
-        view,
-        unanswered,
-        (entry) => entry.kind === "call" && entry.message.startsWith(DROPPED_CALL),
-      )
-    : null;
+  const resolved = (outcome: DanceComboView["callOutcome"]) =>
+    view.danceHistory.filter((entry) => entry.callOutcome === outcome).length;
   return {
-    // Every call made stands over the next 8-count and resolves there, so the three add up.
-    made: dropped === null ? null : answered + covered + dropped,
-    answered,
-    covered,
-    dropped,
+    made: view.danceHistory.filter((entry) => entry.callMade !== null).length,
+    answered: resolved("answered"),
+    covered: resolved("covered"),
+    dropped: resolved("dropped"),
     longestRun: view.danceHistory.reduce(
       (longest, entry) => Math.max(longest, entry.afinqueAfter),
       0,
@@ -211,7 +180,6 @@ function ratingPlace(view: PlayerSnapshot): SongRecap["rating"] {
 export function readSongRecap(view: PlayerSnapshot): SongRecap | null {
   if (view.status !== "completed" && view.status !== "lost") return null;
   const completed = view.status === "completed";
-  const complete = logReachesStart(view);
   const phraseLength = Math.max(1, view.rules.phraseLength);
   const score = view.finalScore ?? view.shared.style + view.shared.connection;
   const last = view.danceHistory.at(-1);
@@ -220,10 +188,6 @@ export function readSongRecap(view: PlayerSnapshot): SongRecap | null {
   // What the 8-counts never paid: the phrase bonuses, which land after an 8-count is recorded.
   const phraseStyle = Math.max(0, view.shared.style - countStyle);
   const rating = ratingPlace(view);
-  const danced = new Set(view.danceHistory.map((entry) => entry.sequence));
-  const songMoments = complete
-    ? countLogLines(view, danced, (entry) => entry.kind === "score" && entry.role !== null)
-    : null;
   const headline = completed ? (rating?.name ?? "The whole song") : "The dance ends here";
 
   return {
@@ -268,8 +232,8 @@ export function readSongRecap(view: PlayerSnapshot): SongRecap | null {
       },
     ],
     phrases: phraseTallies(view),
-    calls: callTally(view, complete),
-    songMoments,
+    calls: callTally(view),
+    songMoments: view.danceHistory.filter((entry) => entry.songBonus !== null).length,
     highlight: highlightOf(view, phraseLength),
   };
 }

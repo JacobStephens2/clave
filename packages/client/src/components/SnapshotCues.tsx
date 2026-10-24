@@ -103,12 +103,14 @@ function cueCopy(view: PlayerSnapshot, event: SnapshotEvent): Omit<Cue, "id"> | 
     case "call-covered":
       return {
         glyph: "↺",
-        title: "Nice save",
-        // The engine's own sentence names the Recovery card; the line stays short.
-        detail: "the call is clear",
-        tone: "soft",
-        announcement:
-          event.sentence ?? `${doer(view, event.byRole)} covered ${event.name ?? "the call"}.`,
+        // A cover over an 8-count that already answers the call throws the answer away: the
+        // rung drops from Perfect to Recovered and the afinque breaks. That is no save.
+        title: event.alreadyAnswered ? "That call was already answered" : "Nice save",
+        detail: event.alreadyAnswered ? "the Style and the run go with it" : "the call is clear",
+        tone: event.alreadyAnswered ? "dim" : "soft",
+        // The viewer's own words, as every other moment here: the engine's sentence names the
+        // Recovery card, but it names the dancer in the third person on their own device.
+        announcement: `${doer(view, event.byRole)} covered ${event.name ?? "the call"}.`,
       };
     case "afinque-link":
       if (event.links < 2) return null;

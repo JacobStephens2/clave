@@ -128,6 +128,26 @@ function advanceTo(state: GameState, songIndex: number): GameState {
   return state;
 }
 
+/** The song's last 8-count, danced to a pose: the step either side of the cierre. */
+function finishedOnAPose(): { before: GameState; after: GameState } {
+  let state = advanceTo(readyGame(), 15);
+  const role = state.activeRole;
+  setHand(state, role, ["pos_001", "mov_002", "flo_005"]);
+  state = applyOk(state, {
+    type: "PLAY_OPEN",
+    role,
+    positionInstanceId: held(state, role, "pos_001"),
+    moveInstanceId: held(state, role, "mov_002"),
+  });
+  state = applyOk(state, {
+    type: "PLAY_FLOURISH",
+    role,
+    flourishInstanceId: held(state, role, "flo_005"),
+  });
+  const before = applyOk(state, { type: "END_DANCE", role, callId: null });
+  return { before, after: applyOk(before, { type: "END_LESSON", role }) };
+}
+
 describe("snapshot events · the moments both devices cue", () => {
   it("says nothing about the first snapshot a device sees, on load or on a resume", () => {
     const state = readyGame();
@@ -144,6 +164,23 @@ describe("snapshot events · the moments both devices cue", () => {
     const mine = readyGame(42, "hot-1");
     const theirs = advanceTo(readyGame(7, "hot-2"), 3);
     expect(eventsBetween(snapshotFor(mine, "lead"), snapshotFor(theirs, "lead"))).toEqual([]);
+  });
+
+  it("says nothing about a snapshot several steps on, which is what a reconnect sends", () => {
+    const stood = callStands("call_001");
+    const away = danceMove(stood.state);
+    const dropped = snapshotFor(away, "lead");
+    // The socket is down while the Follow answers, calls back, and takes a lesson.
+    let state = applyOk(away, { type: "END_DANCE", role: "follow", callId: "call_003" });
+    state = applyOk(state, { type: "END_LESSON", role: "follow" });
+    const resync = snapshotFor(state, "lead");
+    expect(resync.sequence).toBeGreaterThan(dropped.sequence + 1);
+    expect(eventsBetween(dropped, resync)).toEqual([]);
+
+    // The step after the resync is a moment of the dance again, read from the snapshot it has.
+    const danced = danceMove(state);
+    const { events } = step(danced, { type: "END_DANCE", role: "lead", callId: null });
+    expect(kinds(events)).toContain("rung");
   });
 
   it("reads a call made, with the name the song card favours", () => {
@@ -225,6 +262,7 @@ describe("snapshot events · the moments both devices cue", () => {
       byRole: "follow",
       callId: "call_005",
       name: nameOf("call_005"),
+      alreadyAnswered: false,
     });
     expect(only(events, "call-covered")?.sentence).toContain("Return to Basic");
     expect(kinds(events)).not.toContain("call-dropped");
@@ -236,6 +274,19 @@ describe("snapshot events · the moments both devices cue", () => {
     });
     expect(kinds(finished.events)).not.toContain("call-covered");
     expect(only(finished.events, "rung")?.rung).toBe("recovered");
+  });
+
+  it("marks a cover the dance had already made unnecessary", () => {
+    const stood = callStands("call_001");
+    // Count 1 asks for a Move: the Follow has danced one, so the call is already met.
+    const danced = danceMove(stood.state);
+    const { events } = step(danced, {
+      type: "COVER_CALL",
+      role: "follow",
+      recoveryInstanceId: held(danced, "follow", "rec_001"),
+    });
+
+    expect(only(events, "call-covered")).toMatchObject({ alreadyAnswered: true });
   });
 
   it("reads the run breaking when a call is dropped mid-phrase", () => {
@@ -277,22 +328,8 @@ describe("snapshot events · the moments both devices cue", () => {
   });
 
   it("reads the cierre when the song's last 8-count ends on a pose", () => {
-    let state = advanceTo(readyGame(), 15);
-    const role = state.activeRole;
-    setHand(state, role, ["pos_001", "mov_002", "flo_005"]);
-    state = applyOk(state, {
-      type: "PLAY_OPEN",
-      role,
-      positionInstanceId: held(state, role, "pos_001"),
-      moveInstanceId: held(state, role, "mov_002"),
-    });
-    state = applyOk(state, {
-      type: "PLAY_FLOURISH",
-      role,
-      flourishInstanceId: held(state, role, "flo_005"),
-    });
-    state = applyOk(state, { type: "END_DANCE", role, callId: null });
-    const { events } = step(state, { type: "END_LESSON", role });
+    const { before } = finishedOnAPose();
+    const { events } = step(before, { type: "END_LESSON", role: before.activeRole });
 
     expect(only(events, "cierre")).toMatchObject({ finalScore: expect.any(Number) });
     expect(only(events, "cierre")?.rating).not.toBeNull();
@@ -445,5 +482,66 @@ describe("the cue layer", () => {
     await show(snapshotFor(after, "lead"));
     expect(audio.starts()).toBe(sounds);
     expect(host.querySelectorAll(".snapshot-cues .cue")).toHaveLength(2);
+  });
+
+  /** A call stands over the Follow, who clears it with a Recovery card instead of answering. */
+  const covered = () => {
+    const stood = callStands("call_005");
+    setHand(stood.state, "follow", ["rec_001", "mov_002"]);
+    return {
+      before: stood.state,
+      after: applyOk(stood.state, {
+        type: "COVER_CALL",
+        role: "follow",
+        recoveryInstanceId: held(stood.state, "follow", "rec_001"),
+      }),
+    };
+  };
+
+  it("tells the dancer who covered the call in their own words", async () => {
+    const { before, after } = covered();
+    await show(snapshotFor(before, "follow"));
+    await show(snapshotFor(after, "follow"));
+
+    expect(host.querySelector("[role='status']")?.textContent).toBe(
+      `You covered ${nameOf("call_005")}.`,
+    );
+  });
+
+  it("tells the other dancer whose save it was", async () => {
+    const { before, after } = covered();
+    await show(snapshotFor(before, "lead"));
+    await show(snapshotFor(after, "lead"));
+
+    expect(host.querySelector("[role='status']")?.textContent).toBe(
+      `The Follow covered ${nameOf("call_005")}.`,
+    );
+  });
+
+  it("cues the last moment of the song, and cues it only once", async () => {
+    const { before, after } = finishedOnAPose();
+    await show(snapshotFor(before, "lead"));
+    expect(host.querySelectorAll(".snapshot-cues .cue")).toHaveLength(0);
+
+    await show(snapshotFor(after, "lead"));
+    expect(after.status).toBe("completed");
+    const cues = [...host.querySelectorAll(".snapshot-cues .cue")].map((node) => node.textContent);
+    expect(cues.join(" ")).toContain("¡Cierre!");
+    const sounds = audio.starts();
+    expect(sounds).toBeGreaterThan(0);
+
+    // The end screen re-renders over the top of the cue; the song does not end twice.
+    await show(snapshotFor(after, "lead"));
+    expect(audio.starts()).toBe(sounds);
+    expect(host.querySelectorAll(".snapshot-cues .cue")).toHaveLength(cues.length);
+  });
+
+  it("holds its tongue when a finished song is reloaded", async () => {
+    const { after } = finishedOnAPose();
+    await show(snapshotFor(after, "lead"));
+
+    expect(host.querySelectorAll(".snapshot-cues .cue")).toHaveLength(0);
+    expect(host.querySelector("[role='status']")?.textContent).toBe("");
+    expect(audio.starts()).toBe(0);
   });
 });

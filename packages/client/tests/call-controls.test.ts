@@ -14,7 +14,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { AfinqueMeter } from "../src/components/AfinqueMeter.js";
 import { CallBanner } from "../src/components/CallBanner.js";
 import { CallPickerTrigger, CallSheet } from "../src/components/CallPicker.js";
-import { PhraseHistory } from "../src/components/PhraseHistory.js";
+import { PhraseHistory, comboSummary } from "../src/components/PhraseHistory.js";
 import { rungLabel } from "../src/rungs.js";
 import { NO_INTENT, readDanceStep } from "../src/turn-intent.js";
 
@@ -126,6 +126,45 @@ describe("the call sheet", () => {
     });
     expect(document.activeElement).toBe(trigger);
   });
+
+  it("leaves the focus to the new step when a call is chosen, not to the gone trigger", async () => {
+    const view = danceView();
+    const picker = readDanceStep(view, NO_INTENT).telling!.picker!;
+    // The trigger unmounts with the dance step the call ends, as it does in the game.
+    const trigger = document.createElement("button");
+    document.body.append(trigger);
+    trigger.focus();
+
+    const element = await render(
+      createElement(CallSheet, {
+        picker,
+        onChoose: () => trigger.remove(),
+        onClose: () => undefined,
+      }),
+    );
+    await act(async () => element.querySelector<HTMLButtonElement>(".call-option")?.click());
+    await act(async () => {
+      root?.unmount();
+    });
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  it("keeps the focus off a trigger that has left the page on an Escape", async () => {
+    const view = danceView();
+    const picker = readDanceStep(view, NO_INTENT).telling!.picker!;
+    const trigger = document.createElement("button");
+    document.body.append(trigger);
+    trigger.focus();
+
+    await render(
+      createElement(CallSheet, { picker, onChoose: () => undefined, onClose: () => undefined }),
+    );
+    trigger.remove();
+    await act(async () => {
+      root?.unmount();
+    });
+    expect(document.activeElement).toBe(document.body);
+  });
 });
 
 describe("the call picker trigger", () => {
@@ -153,6 +192,8 @@ describe("the call picker trigger", () => {
     );
     const button = element.querySelector<HTMLButtonElement>(".call-picker-trigger")!;
     expect(button.disabled).toBe(true);
+    // The button itself carries the reason: the line beside it is printed only on a phone.
+    expect(button.textContent).toBe("No call · leave a Position first");
     expect(element.querySelector(`#${button.getAttribute("aria-describedby")}`)?.textContent).toBe(
       "Leave a Position on the floor to make a call.",
     );
@@ -162,12 +203,40 @@ describe("the call picker trigger", () => {
 describe("the standing-call banner", () => {
   it("says in words that the call is not answered yet", async () => {
     const call = readDanceStep(danceView("call_005"), NO_INTENT).call!;
-    const element = await render(createElement(CallBanner, { call, dispatch: () => undefined }));
+    const element = await render(createElement(CallBanner, { call }));
     const banner = element.querySelector(".call-banner")!;
     expect(banner.className).toContain("unmet");
     expect(banner.querySelector(".call-state")?.textContent).toContain("Not answered yet");
     expect(banner.textContent).toContain("Follow calls Stay close");
     expect(banner.querySelector(".call-reward")?.textContent).toBe("4 Style · ★ +1 in the pocket");
+    // What letting it go costs, printed beside what answering it pays.
+    expect(banner.querySelector(".call-price")?.textContent).toBe(
+      "Unanswered: −1 Connection, and the phrase loses its clean +3",
+    );
+  });
+
+  it("drops the price once the call is answered", async () => {
+    let state = createGame({ seed: 42, content });
+    state = applyOk(state, { type: "CONFIRM_HAND", role: "lead" });
+    state = applyOk(state, { type: "CONFIRM_HAND", role: "follow" });
+    state.players.lead.hand = [
+      { instanceId: "lead-hand-mov_002", cardId: "mov_002", owner: "lead" },
+    ];
+    state.table.position = { instanceId: "previous-position", cardId: "pos_001", owner: "follow" };
+    state.call = {
+      byRole: "follow",
+      callId: "call_002",
+      forSongIndex: state.songIndex,
+      inPocket: false,
+    };
+    state = applyOk(state, {
+      type: "PLAY_MOVE",
+      role: "lead",
+      moveInstanceId: "lead-hand-mov_002",
+    });
+    const call = readDanceStep(snapshotFor(state, "lead", content), NO_INTENT).call!;
+    const element = await render(createElement(CallBanner, { call }));
+    expect(element.querySelector(".call-price")).toBeNull();
   });
 
   it("says the call is answered once the dance meets it, in a live region", async () => {
@@ -208,7 +277,7 @@ describe("the standing-call banner", () => {
 describe("the afinque meter", () => {
   it("reads out the links and what the next answer adds", async () => {
     const view = danceView();
-    view.afinque = { links: 3, cap: 5, nextBonus: 1 };
+    view.afinque = { links: 3, cap: 5, nextBonus: 1, ifCalledNow: { links: 3, nextBonus: 1 } };
     const element = await render(createElement(AfinqueMeter, { view }));
     expect(element.querySelector(".visually-hidden")?.textContent).toBe(
       "Afinque: 3 of 5 links. The next answer adds 1 Style.",
@@ -220,7 +289,7 @@ describe("the afinque meter", () => {
 
   it("stays off the HUD in a game whose content prints no calls", async () => {
     const view = danceView();
-    view.afinque = { links: 0, cap: 0, nextBonus: 0 };
+    view.afinque = { links: 0, cap: 0, nextBonus: 0, ifCalledNow: { links: 0, nextBonus: 0 } };
     const element = await render(createElement(AfinqueMeter, { view }));
     expect(element.querySelector(".afinque")).toBeNull();
   });
@@ -247,6 +316,42 @@ describe("rung marks in the phrase strip", () => {
     expect(first).toContain("Perfect: the call answered. +5 Style. Afinque 2 links.");
     expect(rungLabel("clean")).toBe("Clean");
   });
+
+  it("names the hold rather than the basic, which is a different play", async () => {
+    const view = danceView();
+    view.danceHistory = [
+      { ...danceEntry(1, "lead"), outcome: "basic", rung: "awkward", endingPosition: "Closed" },
+      {
+        ...danceEntry(2, "follow"),
+        outcome: "basic",
+        rung: "awkward",
+        endingPosition: "Closed",
+        hold: "taken",
+      },
+      {
+        ...danceEntry(3, "lead"),
+        outcome: "basic",
+        rung: "awkward",
+        endingPosition: "Open",
+        hold: "adjusted",
+      },
+    ];
+    const element = await render(
+      createElement(PhraseHistory, { view, onInspect: () => undefined }),
+    );
+
+    const said = (count: number) =>
+      element.querySelector(`.phrase-combo[data-count="${count}"]`)?.getAttribute("aria-label");
+    const footer = (count: number) =>
+      element.querySelector(`.phrase-combo[data-count="${count}"] .combo-footer p`)?.textContent;
+    expect(said(1)).toContain("Lead danced the basic in Closed");
+    expect(footer(1)).toBe("Basic · Closed");
+    expect(said(2)).toContain("Follow took the hold in Closed");
+    expect(footer(2)).toBe("Hold · Closed");
+    expect(said(3)).toContain("Lead adjusted the hold to Open");
+    expect(footer(3)).toBe("Hold · Open");
+    expect(comboSummary(view.danceHistory[1]!)).toBe("Follow took the hold in Closed");
+  });
 });
 
 /** One danced 8-count in the first phrase, as the snapshot publishes it. */
@@ -268,5 +373,9 @@ function danceEntry(
     flourish: null,
     fromPosition: null,
     endingPosition: null,
+    callMade: null,
+    callOutcome: null,
+    songBonus: null,
+    hold: null,
   };
 }

@@ -86,9 +86,9 @@ npm run build
 - [`docs/cards/v1-card-list.md`](docs/cards/v1-card-list.md) — the complete v1 card set and the Llorarás song deck
 - [`docs/plans/`](docs/plans/) — the v1 build plan, its adversarial review and adjudication, and the admin console plan
 - [`docs/art/`](docs/art/) — card art direction and the generation prompts
-- [`docs/audio/soundtrack.md`](docs/audio/soundtrack.md) — the 2026-10-23 attempt
-  at an original instrumental soundtrack, the verification it failed, and the
-  licensing homework it leaves for the next one
+- [`docs/audio/soundtrack.md`](docs/audio/soundtrack.md) — the two 2026-10-23/24
+  attempts at an original instrumental soundtrack, the verification both failed,
+  and the licensing homework they leave for the next one
 - [`docs/unity-vs-web-implementation-report.md`](docs/unity-vs-web-implementation-report.md) — comparison of Unity/Hearthstone-style and browser/BGA-style Clave development
 - [`docs/living-documents/1-concept-brief.md`](docs/living-documents/1-concept-brief.md) — pitch, pillars, non-goals
 - [`docs/living-documents/0-dance.md`](docs/living-documents/0-dance.md) — the Llorarás song/dance breakdown behind the v1 song deck
@@ -98,7 +98,7 @@ npm run build
 - [`research/`](research/) — salsa music, dance, and game-design research notes
 - [`tasks/`](tasks/) — working task list (`todo.md`) and log (`done.md`)
 
-## Status (2026-10-23)
+## Status (2026-10-24)
 
 The digital v1 is deployed at [clave.dance](https://clave.dance) and passes the
 automated engine, persistence, build, bundle-size, hot-seat, reload-resume, and

@@ -65,6 +65,8 @@ export type SnapshotEvent =
       readonly byRole: Role;
       readonly callId: string | null;
       readonly name: string | null;
+      /** The 8-count already answered the call: the cover throws that answer away. */
+      readonly alreadyAnswered: boolean;
       /** The engine's own sentence, which names the Recovery card that covered. */
       readonly sentence: string | null;
     })
@@ -170,8 +172,9 @@ function isRewind(previous: PlayerSnapshot, next: PlayerSnapshot): boolean {
  * The moments between two snapshots, in the order the rules resolve them.
  *
  * Empty for the first snapshot a device sees (a reload or a resume walks into a dance
- * already in progress), for a snapshot of another game, for a reset turn, and for the
- * hot-seat handoff, which re-reads the same step for the other viewer.
+ * already in progress), for a snapshot of another game, for a reset turn, for the hot-seat
+ * handoff, which re-reads the same step for the other viewer, and for a snapshot more than
+ * one step on, which is what a reconnecting device is sent.
  */
 export function eventsBetween(
   previous: PlayerSnapshot | null,
@@ -179,6 +182,10 @@ export function eventsBetween(
 ): SnapshotEvent[] {
   if (!previous || previous.gameId !== next.gameId) return [];
   if (next.sequence <= previous.sequence) return [];
+  // One action moves the sequence on by exactly one, so anything further is a gap: the socket
+  // dropped, the partner danced, and the server sent a whole fresh snapshot. The fields here
+  // describe one step, and a window of several would be read out as the latest of them.
+  if (next.sequence > previous.sequence + 1) return [];
   if (isRewind(previous, next)) return [];
 
   const sequence = next.sequence;
@@ -202,6 +209,8 @@ export function eventsBetween(
       byRole: next.activeRole,
       callId: standing?.callId ?? null,
       name: standing?.name ?? null,
+      // `met` is the active player's dance against the call, which is whose cover this is.
+      alreadyAnswered: standing?.met ?? false,
       sentence: resolution,
     });
   }

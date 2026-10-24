@@ -92,10 +92,15 @@ export function HomeScreen() {
 
       <section className="home-intro">
         <figure className="home-hero">
+          {/*
+           * The phone clause is capped so a 3x screen asks for the 960 derivative and not the
+           * 1536 one: 449 KB against 163 KB, at fetchPriority high, on the screen every session
+           * starts from — and the small file still paints this painting sharply at that size.
+           */}
           <img
             src="/art/home-hero.webp"
             srcSet="/art/home-hero-960.webp 960w, /art/home-hero.webp 1536w"
-            sizes="(max-width: 740px) calc(100vw - 32px), (max-width: 1240px) 44vw, 520px"
+            sizes="(max-width: 740px) min(calc(100vw - 32px), 320px), (max-width: 1240px) 44vw, 520px"
             width={1536}
             height={1024}
             alt="A couple dancing salsa on a painted floor while a six-piece band plays behind them: piano, congas, double bass, timbales, trumpet, and trombone."

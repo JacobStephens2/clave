@@ -41,7 +41,7 @@ export const RUNGS: Record<Rung, RungCopy> = {
   awkward: {
     glyph: "∼",
     word: "Awkward",
-    meaning: "the basic, or a dropped call",
+    meaning: "the basic or a hold alone, or a dropped call",
     said: "Awkward: no Move, or the call dropped",
   },
   recovered: {

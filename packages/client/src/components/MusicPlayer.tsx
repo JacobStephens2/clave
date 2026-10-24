@@ -29,7 +29,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
             ×
           </button>
         </header>
-        <p role="status">The embedded player could not load. Open the recording in Spotify.</p>
+        {/* Clave bundles no music and embeds no player: the drawer is a link to the record. */}
+        <p>Clave doesn’t play the music. Open the recording and start it yourself.</p>
         <footer>
           <span>Ambient only · play on one speaker</span>
           <a href={LLORARAS_SPOTIFY_URL} target="_blank" rel="noreferrer">

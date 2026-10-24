@@ -50,6 +50,8 @@ export type DanceRowControl =
       readonly kind: "stumble";
       readonly action: Extract<GameAction, { type: "STUMBLE" }>;
       readonly label: string;
+      /** What a Recovery card saves, when the label names the card rather than the cost. */
+      readonly note: string | null;
     }
   | {
       readonly kind: "undo";
@@ -85,7 +87,10 @@ export interface CallOffer {
   /** The call this 8-count's song card asks for: answered, it pays `inPocket` more. */
   readonly favoured: boolean;
   readonly inPocket: number;
-  /** What the next link of the afinque chain would add on top of the call's Style. */
+  /**
+   * What the next link of the afinque chain would add on top of the call's Style. The answer
+   * lands after this 8-count ends, so it is read from the run this 8-count will leave behind.
+   */
   readonly afinque: number;
   /** The whole option in one sentence, for the screen reader. */
   readonly sentence: string;
@@ -129,6 +134,8 @@ export interface CallStanding {
   readonly headline: string;
   readonly ask: string;
   readonly reward: string;
+  /** What leaving it unanswered costs. Set only on the device that has to answer it. */
+  readonly price: string | null;
   /** Whether the dance so far answers the call. Public: the floor is public. */
   readonly met: boolean;
   readonly state: string;
@@ -410,7 +417,7 @@ function playNote(view: PlayerSnapshot, drop: DropResolution): string | null {
     return view.table.position
       ? "Adjusts the hold before you dance — gives up the song bonus this 8-count."
       : "Opens the floor with this Position alone — gives up the song bonus this 8-count.";
-  if (drop.action.type === "COVER_CALL") return COVER_NOTE;
+  if (drop.action.type === "COVER_CALL") return coverNote(view);
   return null;
 }
 
@@ -502,6 +509,21 @@ function floorPosition(view: PlayerSnapshot): string | null {
   return card?.type === "position" ? card.position : null;
 }
 
+/**
+ * The ways out of the 8-count the snapshot still offers, named as their buttons name them.
+ * Taking the hold spends the basic and the Stumble with it, so the sentence has to read the
+ * actions rather than assume the two are always there.
+ */
+function outsFor(view: PlayerSnapshot): string[] {
+  const basic =
+    view.turn.cardsPlayed === 0 &&
+    view.legalActions.some((action) => action.type === "END_DANCE" && action.callId === null);
+  const stumble = view.legalActions.some((action) => action.type === "STUMBLE");
+  return [basic ? "Dance the basic" : null, stumble ? "Stumble" : null].filter(
+    (out): out is string => out !== null,
+  );
+}
+
 function instructionFor(view: PlayerSnapshot, moment: StepMoment): string | null {
   if (moment === "hold") {
     const floor = floorPosition(view);
@@ -514,9 +536,16 @@ function instructionFor(view: PlayerSnapshot, moment: StepMoment): string | null
     const hold = view.legalActions.some((action) => action.type === "ADJUST")
       ? " A Position alone adjusts the hold instead, giving up the song bonus."
       : "";
+    const outs = outsFor(view);
     return view.legalActions.some((action) => action.type === "PLAY_MOVE")
-      ? `Current Position: ${floor}. Play a Move whose top edge includes ${floor}.${hold} Or choose Dance the basic or Stumble below.`
-      : `No Move in your hand includes ${floor}. Dance the basic or Stumble below.`;
+      ? `Current Position: ${floor}. Play a Move whose top edge includes ${floor}.${hold}${
+          outs.length > 0
+            ? ` Or choose ${alternatives(outs)} below.`
+            : " Or finish the 8-count below."
+        }`
+      : `No Move in your hand includes ${floor}.${
+          outs.length > 0 ? ` ${alternatives(outs)} below.` : " Finish the 8-count below."
+        }`;
   }
   if (view.turn.moveCardId === null) return null;
   switch (afterMove(view)) {
@@ -551,6 +580,29 @@ function openingGuide(view: PlayerSnapshot, stagedCard: CardView | null): string
 
 const COVER_NOTE = "Keeps your Connection and the clean phrase. The afinque chain starts over.";
 
+/** The extra Style the song card pays for the call it asked for, when it asked for this one. */
+function pocketStyle(view: PlayerSnapshot, call: NonNullable<PlayerSnapshot["call"]>): number {
+  return call.inPocket ? (view.rules.call?.inPocketStyle ?? 0) : 0;
+}
+
+/** What answering the call standing over this 8-count pays, from its printed Style upwards. */
+function answerStyle(view: PlayerSnapshot, call: NonNullable<PlayerSnapshot["call"]>): number {
+  return call.style + pocketStyle(view, call) + view.afinque.nextBonus;
+}
+
+/**
+ * What the cover is for, or — once the 8-count already answers the call, which the rulebook
+ * still allows a cover over (§7.1) — what spending the Recovery there would throw away.
+ */
+function coverNote(view: PlayerSnapshot): string {
+  const call = view.call;
+  if (!call?.met) return COVER_NOTE;
+  const style = answerStyle(view, call);
+  return style > 0
+    ? `Your 8-count already answers this call — covering gives up its ${style} Style and breaks the chain.`
+    : "Your 8-count already answers this call — covering gives up the answer and breaks the chain.";
+}
+
 /** What a bonus pays, in the rulebook's words: "+4 Style", "+1 Style and +1 Connection". */
 function bonusWords(effect: PlayerSnapshot["turn"]["songBonus"]): string | null {
   if (!effect) return null;
@@ -561,11 +613,44 @@ function bonusWords(effect: PlayerSnapshot["turn"]["songBonus"]): string | null 
   return parts.length > 0 ? parts.join(" and ") : null;
 }
 
-/** Taking the song: what it pays now, or the plain finish when it pays nothing. */
+/** A score change with its sign, the way the HUD shows one: "+1 Style", "−1 Connection". */
+function netWords(net: NonNullable<PlayerSnapshot["turn"]["ifEndedNow"]>): string | null {
+  const signed = (value: number) => (value > 0 ? `+${value}` : `−${Math.abs(value)}`);
+  const parts = [
+    net.style !== 0 ? `${signed(net.style)} Style` : null,
+    net.connection !== 0 ? `${signed(net.connection)} Connection` : null,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join(", ") : null;
+}
+
+/** Whether ending the 8-count here drops the call standing over it, unanswered. */
+function dropsCall(view: PlayerSnapshot): boolean {
+  const call = view.call;
+  return call !== null && call.byRole !== view.viewerRole && !call.met;
+}
+
+/**
+ * Taking the song: what ending the 8-count here really pays, netted by the engine — the song
+ * card and the call standing over it together — plus what it costs beside the score, so the
+ * gold control can never promise a Connection it hands straight back to a dropped call.
+ */
 function endLabel(view: PlayerSnapshot): string {
+  const net = view.turn.ifEndedNow;
   const bonus = bonusWords(view.turn.songBonus);
-  if (view.turn.cardsPlayed === 0) return bonus ? `Dance the basic · ${bonus}` : "Dance the basic";
-  return bonus ? `Take the song · ${bonus}` : "Finish the 8-count";
+  const verb =
+    view.turn.cardsPlayed === 0
+      ? "Dance the basic"
+      : bonus
+        ? "Take the song"
+        : "Finish the 8-count";
+  const tail = [
+    net ? netWords(net) : bonus,
+    dropsCall(view) ? "drops the call" : null,
+    net?.lost ? "ends the dance" : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return tail ? `${verb} · ${tail}` : verb;
 }
 
 /** One call option read aloud whole, so a screen reader needs no visual scan. */
@@ -580,11 +665,22 @@ function callSentence(option: Omit<CallOffer, "sentence">): string {
   return `${option.name}. Ask your partner to ${option.ask}. ${pays}${pocket}${chain}`;
 }
 
-/** Why no call can be made as this 8-count ends, read from the state the engine guards. */
-function callsClosed(view: PlayerSnapshot): string | null {
+/**
+ * Why no call can be made as this 8-count ends, read from the state the engine guards: the
+ * sentence, and the words the greyed trigger carries itself, since on the table there is no
+ * room for a printed line beside it.
+ */
+function callsClosed(view: PlayerSnapshot): { label: string; reason: string } | null {
   if (view.phrase.count >= view.rules.phraseLength)
-    return "The phrase ends here — there is nothing to call into.";
-  if (!view.table.position) return "Leave a Position on the floor to make a call.";
+    return {
+      label: "No call · the phrase ends here",
+      reason: "The phrase ends here — there is nothing to call into.",
+    };
+  if (!view.table.position)
+    return {
+      label: "No call · leave a Position first",
+      reason: "Leave a Position on the floor to make a call.",
+    };
   return null;
 }
 
@@ -606,7 +702,8 @@ function callPicker(view: PlayerSnapshot): CallPicker | null {
       style: call.style,
       favoured: call.favoured,
       inPocket: call.favoured ? inPocketStyle : 0,
-      afinque: view.afinque.nextBonus,
+      // The chain this 8-count will leave behind: the answer to this call lands after it.
+      afinque: view.afinque.ifCalledNow.nextBonus,
     };
     return [{ ...option, sentence: callSentence(option) }];
   });
@@ -614,10 +711,10 @@ function callPicker(view: PlayerSnapshot): CallPicker | null {
   if (options.length === 0 && closed === null) return null;
   const given = bonusWords(view.turn.songBonus);
   return {
-    label: "Make a call",
+    label: closed ? closed.label : "Make a call",
     options,
     givesUp: given ? `A call gives up the song’s ${given}.` : null,
-    closed,
+    closed: closed?.reason ?? null,
   };
 }
 
@@ -629,8 +726,37 @@ function coverOffers(view: PlayerSnapshot): CoverOffer[] {
       (entry) => entry.instanceId === action.recoveryInstanceId,
     )?.card;
     if (!card) return [];
-    return [{ action, label: `Cover with ${card.name}`, note: COVER_NOTE }];
+    return [{ action, label: `Cover with ${card.name}`, note: coverNote(view) }];
   });
+}
+
+/**
+ * What answering the standing call pays, in the order the rules add it up: the call's own
+ * Style, the pocket when the song card asked for it, and the afinque link on top. One reading,
+ * so the banner and the hot-seat pass screen can never name different numbers for one call.
+ */
+function answerReward(view: PlayerSnapshot, call: NonNullable<PlayerSnapshot["call"]>): string {
+  const inPocket = pocketStyle(view, call);
+  return [
+    call.style > 0 ? `${call.style} Style` : "No Style of its own",
+    inPocket > 0 ? `★ +${inPocket} in the pocket` : null,
+    view.afinque.nextBonus > 0 ? `+${view.afinque.nextBonus} afinque` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/**
+ * What dropping the call costs the player who has to answer it: the Connection the rules take
+ * for a miss, and the phrase's clean bonus with it while that bonus is still in play.
+ */
+function missPrice(view: PlayerSnapshot): string | null {
+  const connection = view.rules.call?.missConnectionCost ?? 0;
+  if (connection === 0) return null;
+  const clean = view.phrase.stumbled
+    ? ""
+    : `, and the phrase loses its clean +${view.rules.phraseBonuses.clean}`;
+  return `Unanswered: −${connection} Connection${clean}`;
 }
 
 /** The standing call, worded for the player answering it or the partner watching. */
@@ -639,19 +765,13 @@ function callStanding(view: PlayerSnapshot): CallStanding | null {
   if (!call) return null;
   const answering = call.byRole !== view.viewerRole;
   const answerer = roleName(other(call.byRole));
-  const inPocket = call.inPocket ? (view.rules.call?.inPocketStyle ?? 0) : 0;
-  const reward = [
-    call.style > 0 ? `${call.style} Style` : "No Style of its own",
-    inPocket > 0 ? `★ +${inPocket} in the pocket` : null,
-    view.afinque.nextBonus > 0 ? `+${view.afinque.nextBonus} afinque` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
   return {
     answering,
     headline: answering ? `${roleName(call.byRole)} calls ${call.name}` : `You called ${call.name}`,
-    ask: answering ? `Your answer: ${call.ask}.` : `You asked: ${call.ask}.`,
-    reward,
+    // The ask is printed in the caller's own voice, so it is quoted, never addressed.
+    ask: answering ? `${roleName(call.byRole)} asks: ${call.ask}.` : `You asked: ${call.ask}.`,
+    reward: answerReward(view, call),
+    price: answering && !call.met ? missPrice(view) : null,
     met: call.met,
     state: answering
       ? call.met
@@ -671,22 +791,23 @@ function callStanding(view: PlayerSnapshot): CallStanding | null {
 export function callHandoff(
   view: PlayerSnapshot,
   role: Role,
-): { caller: string; name: string; ask: string; reward: string; sentence: string } | null {
+): {
+  caller: string;
+  name: string;
+  ask: string;
+  reward: string;
+  price: string | null;
+  sentence: string;
+} | null {
   const call = view.call;
   if (!call || call.byRole === role) return null;
   const caller = roleName(call.byRole);
-  const inPocket = call.inPocket ? (view.rules.call?.inPocketStyle ?? 0) : 0;
-  const reward = [
-    call.style > 0 ? `${call.style} Style` : "No Style of its own",
-    inPocket > 0 ? `★ +${inPocket} in the pocket` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
   return {
     caller,
     name: call.name,
     ask: call.ask,
-    reward,
+    reward: answerReward(view, call),
+    price: call.met ? null : missPrice(view),
     sentence: `${caller} called ${call.name}: ${call.ask}. Your answer.`,
   };
 }
@@ -719,17 +840,24 @@ function danceControls(view: PlayerSnapshot, staged: string | null): DanceContro
     if (action.type === "END_DANCE" && action.callId === null)
       controls.push({ kind: "end", action, label: endLabel(view) });
   }
+  const stumbleCost = view.rules.stumble.defaultConnectionCost;
   for (const action of view.legalActions) {
     if (action.type !== "STUMBLE") continue;
     const recovery = action.recoveryInstanceId
       ? view.self.hand.find((entry) => entry.instanceId === action.recoveryInstanceId)
       : null;
+    const saves = recovery?.card.type === "recovery" ? recovery.card.connectionCost : null;
     controls.push({
       kind: "stumble",
       action,
+      // The cost is this game's own, never a number spelled out here.
       label: recovery
         ? `Stumble \u00b7 ${recovery.card.name}`
-        : "Stumble \u00b7 \u22122 Connection",
+        : `Stumble \u00b7 \u2212${stumbleCost} Connection`,
+      note:
+        recovery && saves !== null
+          ? `${recovery.card.name}: \u2212${saves} Connection instead of \u2212${stumbleCost}.`
+          : null,
     });
   }
   for (const action of view.legalActions) {

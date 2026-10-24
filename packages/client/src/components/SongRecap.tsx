@@ -24,14 +24,14 @@ function RungRow({ tally, of }: { tally: RungTally; of: number }) {
   );
 }
 
-/** The call tally as chips; the two the log cannot always see are simply left out. */
+/** The call tally as chips, in the order a call goes: made, then however it ended. */
 function callChips(calls: CallTally) {
   return [
-    calls.made === null ? null : { label: "called", value: calls.made },
+    { label: "called", value: calls.made },
     { label: "answered", value: calls.answered },
     { label: "covered", value: calls.covered },
-    calls.dropped === null ? null : { label: "dropped", value: calls.dropped },
-  ].filter((chip) => chip !== null);
+    { label: "dropped", value: calls.dropped },
+  ];
 }
 
 /** The end of the song: what the couple danced, what it paid, and a painting of the moment. */
@@ -123,7 +123,7 @@ export function SongRecap({ view }: { view: PlayerSnapshot }) {
             {louder && (
               <p className="song-recap-note">The montuno got louder, just as it should.</p>
             )}
-            {recap.songMoments !== null && recap.songMoments > 0 && (
+            {recap.songMoments > 0 && (
               <p className="song-recap-note">
                 Song-card bonuses landed · <b>{recap.songMoments}</b>
               </p>

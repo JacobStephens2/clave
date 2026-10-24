@@ -125,9 +125,11 @@ describe("a song danced all the way through", () => {
     expect(calls?.answered).toBe(logLines(view, (message) => / answers /.test(message)));
     expect(calls?.covered).toBe(logLines(view, (message) => / covers /.test(message)));
     expect(calls?.dropped).toBe(logLines(view, (message) => message.startsWith("The call drops")));
-    expect(calls?.made).toBe(
+    // Every call made stands over one 8-count, so no more can resolve than were made; a call
+    // made as the song's last 8-count ends never stands over anything and resolves nowhere.
+    expect(
       (calls?.answered ?? 0) + (calls?.covered ?? 0) + (calls?.dropped ?? 0),
-    );
+    ).toBeLessThanOrEqual(calls?.made ?? 0);
     expect(calls?.answered).toBe(tallyFor(recap, "perfect"));
     expect(calls?.covered).toBe(tallyFor(recap, "recovered"));
     expect(calls?.longestRun).toBe(
@@ -238,21 +240,57 @@ describe("a game stored before the call", () => {
   });
 });
 
-describe("a log window that no longer reaches the first 8-count", () => {
-  it("counts what the ladder knows and admits what it cannot see", () => {
+describe("a published log the call tally no longer reads", () => {
+  it("counts every call from the 8-counts themselves, log or no log", () => {
     const view = viewOf(replayed("call-and-answer-606"));
-    const trimmed: PlayerSnapshot = {
-      ...view,
-      log: view.log.filter((entry) => entry.sequence > 0),
-    };
-    const recap = recapOf(trimmed);
     const full = recapOf(view);
-    expect(recap.calls?.answered).toBe(full.calls?.answered);
-    expect(recap.calls?.covered).toBe(full.calls?.covered);
-    expect(recap.calls?.made).toBeNull();
-    expect(recap.calls?.dropped).toBeNull();
-    expect(recap.songMoments).toBeNull();
-    expect(recap.phrases[0]?.bonuses).toBe(full.phrases[0]?.bonuses);
+    // The worst a window can do: a long song, a reconnect, a release that trims the log.
+    const recap = recapOf({ ...view, log: [] } satisfies PlayerSnapshot);
+    expect(recap.calls).toEqual(full.calls);
+    expect(full.calls?.made).toBeGreaterThan(0);
+    // The phrase sentence is the game's own words, and only those are the log's to lose.
+    expect(recap.phrases[0]?.bonuses).toBeNull();
+    expect(full.phrases[0]?.bonuses).toMatch(/\+\d/);
+  });
+
+  it("counts the song-card bonuses from the 8-counts they paid", () => {
+    const view = viewOf(replayed("basic-101"));
+    const landed = view.log.filter((entry) => entry.kind === "score" && entry.role !== null).length;
+    expect(landed).toBeGreaterThan(0);
+    expect(recapOf(view).songMoments).toBe(landed);
+    expect(recapOf({ ...view, log: [] } satisfies PlayerSnapshot).songMoments).toBe(landed);
+  });
+});
+
+describe("a call a stumble dropped", () => {
+  it("counts the call and the drop the log never names", () => {
+    let state = createGame({ seed: 606, content });
+    state = applyOk(state, { type: "CONFIRM_HAND", role: "lead" });
+    state = applyOk(state, { type: "CONFIRM_HAND", role: "follow" });
+    const opening = legalActions(state, "lead", content).find(
+      (action) => action.type === "PLAY_OPEN",
+    );
+    state = applyOk(state, opening!);
+    state = applyOk(state, { type: "END_DANCE", role: "lead", callId: "call_007" });
+    state = applyOk(state, { type: "END_LESSON", role: "lead" });
+    // The Follow stumbles with the call standing: it drops with the stumble, for free, and
+    // the engine logs the stumble alone — there is no "The call drops" line to count.
+    state = applyOk(state, { type: "STUMBLE", role: "follow", recoveryInstanceId: null });
+    while (state.status === "playing") {
+      const role = state.activeRole;
+      state = applyOk(state, { type: "END_LESSON", role });
+      if (state.status !== "playing") break;
+      state = applyOk(state, { type: "END_DANCE", role: state.activeRole, callId: null });
+    }
+    const view = viewOf(state);
+    expect(logLines(view, (message) => message.startsWith("The call drops"))).toBe(0);
+    expect(view.danceHistory[1]).toMatchObject({ rung: "break", callOutcome: "dropped" });
+
+    const recap = recapOf(view);
+    expect(recap.calls?.made).toBe(1);
+    expect(recap.calls?.dropped).toBe(1);
+    expect(recap.calls?.answered).toBe(0);
+    expect(recap.calls?.covered).toBe(0);
   });
 });
 

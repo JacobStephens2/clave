@@ -503,6 +503,12 @@ function Market({
         <strong>{title}</strong>
         <span>${cost}</span>
       </div>
+      {/* Where the money sends the card, against this game's own rule for the row. */}
+      {view.rules.lessonToDrawTop?.[source] && (
+        <small className="market-destination">
+          Private lesson · goes on top of your draw pile, so you dance it next turn
+        </small>
+      )}
       <div className="market-row">
         {cards.map((card, index) => {
           const buy = findBuy(source, card.id);
@@ -776,6 +782,7 @@ function TurnActions({
                             type="button"
                             className="button outline call-cover"
                             aria-describedby={noteId}
+                            title={cover.note}
                             onClick={() => dispatch(cover.action)}
                           >
                             {cover.label}
@@ -794,6 +801,7 @@ function TurnActions({
                     type="button"
                     className="button danger-outline"
                     key={control.action.recoveryInstanceId ?? "plain"}
+                    title={control.note ?? undefined}
                     onClick={() => dispatch(control.action)}
                   >
                     {control.label}
@@ -876,6 +884,8 @@ function Hand({
   onCardDragEnd,
   discardTargetRef,
   discardReceiving,
+  deckTargetRef,
+  deckReceiving,
   acceptsLessonDrop,
   lessonDropOver,
   onLessonDragOverChange,
@@ -894,6 +904,9 @@ function Hand({
   onCardDragEnd: () => void;
   discardTargetRef: React.RefObject<HTMLButtonElement | null>;
   discardReceiving: boolean;
+  /** The draw-pile count: where a private lesson lands, so the flight can fly to it. */
+  deckTargetRef: React.RefObject<HTMLSpanElement | null>;
+  deckReceiving: boolean;
   acceptsLessonDrop: boolean;
   lessonDropOver: boolean;
   onLessonDragOverChange: (over: boolean) => void;
@@ -917,7 +930,9 @@ function Hand({
           )}
         </div>
         <div>
-          <span>Deck {view.self.drawCount}</span>
+          <span ref={deckTargetRef} className={`deck-count ${deckReceiving ? "receiving" : ""}`}>
+            Deck {view.self.drawCount}
+          </span>
           <button
             type="button"
             ref={discardTargetRef}
@@ -1162,6 +1177,19 @@ function DiscardPileInspector({
   );
 }
 
+const clamp = (value: number, low: number, high: number) =>
+  Math.min(Math.max(value, low), Math.max(low, high));
+
+/** Whether a card could be flown to this box, or whether it sits past the fold. */
+function inViewport(rect: DOMRect): boolean {
+  return (
+    rect.bottom > 0 &&
+    rect.right > 0 &&
+    rect.top < window.innerHeight &&
+    rect.left < window.innerWidth
+  );
+}
+
 function cardZoomTransform(
   source: { left: number; top: number; width: number; height: number },
   target: DOMRect,
@@ -1385,6 +1413,7 @@ function PassScreen({
           <strong>{handoff.name}</strong>
           <p>{handoff.ask}</p>
           <span>Your answer · {handoff.reward}</span>
+          {handoff.price && <b className="pass-call-price">{handoff.price}</b>}
         </section>
       ) : (
         <p>When your partner has the screen, tap below.</p>
@@ -1551,6 +1580,10 @@ export function GameScreen() {
   const lastScoredSnapshot = useRef<PlayerSnapshot | null>(null);
   const signalReturnFocus = useRef<Element | null>(null);
   const discardTargetRef = useRef<HTMLButtonElement>(null);
+  const deckTargetRef = useRef<HTMLSpanElement>(null);
+  // A control that commits its own step unmounts with it, and the browser drops focus to the
+  // body: the step that replaces it takes the focus back, so the keyboard stays in the turn.
+  const resumeFocus = useRef(false);
   const lessonDragRef = useRef<{
     key: string;
     card: DanceCardDefinition;
@@ -1588,6 +1621,9 @@ export function GameScreen() {
     // The enlarged card closes as the reveal opens; return to its surviving hand card.
     if (action.type === "SIGNAL_CARD")
       signalReturnFocus.current = inspection?.origin?.element ?? document.activeElement;
+    resumeFocus.current =
+      document.activeElement instanceof HTMLElement &&
+      document.activeElement.closest(".turn-actions, .call-sheet") !== null;
     const sound = soundForAction(action);
     if (sound) playSoundEffect(sound);
     dispatchAction(action);
@@ -1596,11 +1632,6 @@ export function GameScreen() {
     playSoundEffect("turn");
     acceptPassAction();
   };
-  useEffect(() => {
-    if (previousStatus.current !== "completed" && view?.status === "completed")
-      playSoundEffect("success");
-    previousStatus.current = view?.status;
-  }, [playSoundEffect, view?.status]);
   const myTurn = viewersTurn(view);
   const wasMyTurn = useRef(myTurn);
   useEffect(() => {
@@ -1620,9 +1651,26 @@ export function GameScreen() {
     lastScoredSnapshot.current = view;
     // A hot-seat handoff re-reads the same step for the other player: clear the stale delta.
     if (previous?.viewerRole !== view.viewerRole) setLatestScoreChange(null);
-    const change = previous ? scoreChange(eventsBetween(previous, view)) : null;
+    const events = previous ? eventsBetween(previous, view) : [];
+    const change = scoreChange(events);
     if (change) setLatestScoreChange(change);
-  }, [view]);
+    // The song ending has a sound of its own when it ends on a pose — the cierre, played by
+    // the cue layer. This is the chime for every other ending.
+    if (
+      previousStatus.current !== "completed" &&
+      view.status === "completed" &&
+      !momentOf(events, "cierre")
+    )
+      playSoundEffect("success");
+    previousStatus.current = view.status;
+  }, [playSoundEffect, view]);
+  useEffect(() => {
+    if (!resumeFocus.current) return;
+    resumeFocus.current = false;
+    // Only when nothing else claimed it: a pass screen or a dialog focuses its own control.
+    if (document.activeElement !== document.body) return;
+    document.querySelector<HTMLElement>(".turn-actions .button-row button")?.focus();
+  }, [view?.sequence, view?.phase, view?.viewerRole]);
   useEffect(() => {
     setDraggingCardId(null);
     setFloorDragOver(false);
@@ -1713,18 +1761,28 @@ export function GameScreen() {
   ) => {
     if (!view || lessonFlight) return;
     const sourceCard = sourceElement.closest<HTMLElement>(".dance-card");
-    const discardTarget = discardTargetRef.current;
-    if (!sourceCard || !discardTarget) {
+    // A private lesson goes on top of the draw pile, so it flies to the deck, not the discard.
+    const pile = view.rules.lessonToDrawTop?.[action.source]
+      ? deckTargetRef.current
+      : discardTargetRef.current;
+    // On a phone scrolled to the market the pile can be off-screen: land on the rail instead.
+    const target = [pile, document.querySelector<HTMLElement>(".hand-scroll")].find(
+      (element) => element !== null && inViewport(element.getBoundingClientRect()),
+    );
+    if (!sourceCard || !target) {
       dispatch(action);
       return;
     }
 
     const sourceRect = sourceCard.getBoundingClientRect();
-    const targetRect = discardTarget.getBoundingClientRect();
-    const deltaX =
-      targetRect.left + targetRect.width / 2 - (sourceRect.left + sourceRect.width / 2);
-    const deltaY =
-      targetRect.top + targetRect.height / 2 - (sourceRect.top + sourceRect.height / 2);
+    const targetRect = target.getBoundingClientRect();
+    // A rail that only half shows has its middle past the fold: land on the screen's edge.
+    const landing = {
+      x: clamp(targetRect.left + targetRect.width / 2, 24, window.innerWidth - 24),
+      y: clamp(targetRect.top + targetRect.height / 2, 24, window.innerHeight - 24),
+    };
+    const deltaX = landing.x - (sourceRect.left + sourceRect.width / 2);
+    const deltaY = landing.y - (sourceRect.top + sourceRect.height / 2);
     const arcHeight = Math.min(90, Math.abs(deltaY) * 0.18 + 30);
     lessonFlightKey.current += 1;
     setLessonFlight({
@@ -1930,29 +1988,12 @@ export function GameScreen() {
         </button>
       </main>
     );
-  if (view.status === "completed" || view.status === "lost" || view.status === "unresumable")
-    return (
-      <>
-        <Terminal
-          view={view}
-          mode={mode}
-          inert={Boolean(inspection)}
-          onInspect={inspectCard}
-          onDanceAgain={() =>
-            mode === "online" ? void createOnline(view.viewerRole) : newHotseat()
-          }
-          leave={leaveGame}
-        />
-        {inspection && (
-          <CardInspector
-            inspection={inspection}
-            {...inspectorControls(inspection, view)}
-            onClosed={() => setInspection(null)}
-          />
-        )}
-      </>
-    );
-
+  const terminal =
+    view.status === "completed" || view.status === "lost" || view.status === "unresumable";
+  // Which pile the lesson in flight is landing in, so the one that moves is the one that flashes.
+  const lessonToDrawTop = Boolean(
+    lessonFlight && view.rules.lessonToDrawTop?.[lessonFlight.source],
+  );
   const status = connectionStatus(mode, connection, partnerPresence);
   const passScreenOpen = Boolean(passTo && mode === "hotseat" && !cleanupFlight);
   const signalPeekOpen = view.signal?.role === view.viewerRole && mode === "hotseat";
@@ -1968,189 +2009,235 @@ export function GameScreen() {
     callSheetUp;
 
   return (
-    <main className="game">
-      <header className="game-header" inert={overlayOpen}>
-        <button type="button" className="mini-brand" onClick={leaveGame} aria-label="Return home">
-          CLAVE
-        </button>
-        {mode === "online" && onlineSeat ? (
-          <>
+    <>
+      {terminal ? (
+        <Terminal
+          view={view}
+          mode={mode}
+          inert={Boolean(inspection)}
+          onInspect={inspectCard}
+          onDanceAgain={() =>
+            mode === "online" ? void createOnline(view.viewerRole) : newHotseat()
+          }
+          leave={leaveGame}
+        />
+      ) : (
+        <main className="game">
+          <header className="game-header" inert={overlayOpen}>
             <button
               type="button"
-              className={`room-code ${roomCopyStatus}`}
-              data-copy-state={roomCopyStatus}
-              onClick={() => void copyRoomCode()}
-              title="Copy room code"
-              aria-label={
-                roomCopyStatus === "copied"
-                  ? `Room ${onlineSeat.code} copied to clipboard`
-                  : roomCopyStatus === "failed"
-                    ? `Room ${onlineSeat.code} could not be copied. Tap to try again`
-                    : `Copy room code ${onlineSeat.code}`
+              className="mini-brand"
+              onClick={leaveGame}
+              aria-label="Return home"
+            >
+              CLAVE
+            </button>
+            {mode === "online" && onlineSeat ? (
+              <>
+                <button
+                  type="button"
+                  className={`room-code ${roomCopyStatus}`}
+                  data-copy-state={roomCopyStatus}
+                  onClick={() => void copyRoomCode()}
+                  title="Copy room code"
+                  aria-label={
+                    roomCopyStatus === "copied"
+                      ? `Room ${onlineSeat.code} copied to clipboard`
+                      : roomCopyStatus === "failed"
+                        ? `Room ${onlineSeat.code} could not be copied. Tap to try again`
+                        : `Copy room code ${onlineSeat.code}`
+                  }
+                >
+                  <small>
+                    {roomCopyStatus === "copied"
+                      ? "Copied!"
+                      : roomCopyStatus === "failed"
+                        ? "Copy failed · tap again"
+                        : "Room · tap to copy"}
+                  </small>
+                  <strong>{onlineSeat.code}</strong>
+                </button>
+                <span
+                  className="room-copy-announcement"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  {roomCopyStatus === "copied"
+                    ? `Room ${onlineSeat.code} copied to clipboard.`
+                    : roomCopyStatus === "failed"
+                      ? `Room ${onlineSeat.code} could not be copied. Tap to try again.`
+                      : ""}
+                </span>
+              </>
+            ) : (
+              <span className="mode-label">Pass & play</span>
+            )}
+            <RulesButton compact />
+            <span
+              className={`connection-status ${status.state}`}
+              data-connection={mode === "online" ? connection : "local"}
+              data-partner={
+                mode === "online" && connection === "connected"
+                  ? (partnerPresence ?? "unknown")
+                  : undefined
               }
             >
-              <small>
-                {roomCopyStatus === "copied"
-                  ? "Copied!"
-                  : roomCopyStatus === "failed"
-                    ? "Copy failed · tap again"
-                    : "Room · tap to copy"}
-              </small>
-              <strong>{onlineSeat.code}</strong>
-            </button>
-            <span
-              className="room-copy-announcement"
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              {roomCopyStatus === "copied"
-                ? `Room ${onlineSeat.code} copied to clipboard.`
-                : roomCopyStatus === "failed"
-                  ? `Room ${onlineSeat.code} could not be copied. Tap to try again.`
-                  : ""}
+              <span className="status-long">{status.long}</span>
+              <span className="status-short" aria-hidden="true">
+                {status.short}
+              </span>
             </span>
-          </>
-        ) : (
-          <span className="mode-label">Pass & play</span>
-        )}
-        <RulesButton compact />
-        <span
-          className={`connection-status ${status.state}`}
-          data-connection={mode === "online" ? connection : "local"}
-          data-partner={
-            mode === "online" && connection === "connected"
-              ? (partnerPresence ?? "unknown")
-              : undefined
-          }
-        >
-          <span className="status-long">{status.long}</span>
-          <span className="status-short" aria-hidden="true">
-            {status.short}
-          </span>
-        </span>
-      </header>
-      {mode === "online" && connection !== "connected" && (
-        <p className="reconnect-banner" role="status">
-          {connection === "offline"
-            ? "This seat is offline. Head home to reconnect or start a new room."
-            : connection === "connecting"
-              ? "Connecting to your room…"
-              : "Reconnecting to your room… your moves will wait."}
-        </p>
+          </header>
+          {mode === "online" && connection !== "connected" && (
+            <p className="reconnect-banner" role="status">
+              {connection === "offline"
+                ? "This seat is offline. Head home to reconnect or start a new room."
+                : connection === "connecting"
+                  ? "Connecting to your room…"
+                  : "Reconnecting to your room… your moves will wait."}
+            </p>
+          )}
+          <p className="visually-hidden" role="status" aria-live="polite">
+            {turnAnnouncement(view)}
+          </p>
+          <Hud view={view} change={latestScoreChange} inert={overlayOpen} />
+          <div className="game-grid" inert={overlayOpen}>
+            <div className={`main-table ${step.call ? "with-call" : ""}`}>
+              <SongMoment view={view} />
+              <PhraseHistory view={view} onInspect={inspectCard} />
+              <DanceTable
+                view={view}
+                onInspect={inspectCard}
+                stagedPosition={step.stagedPosition}
+                floorHint={step.floorHint}
+                acceptsDrop={step.acceptsDrop}
+                dragOver={floorDragOver}
+                onDragOverChange={setFloorDragOver}
+                onCardDrop={playToFloor}
+                onOpenDancerDemo={() => setDancerDemoOpen(true)}
+              />
+              {step.call && <CallBanner call={step.call} />}
+              <TurnActions
+                view={view}
+                dispatch={dispatch}
+                onCleanup={cleanupTurn}
+                cleanupPending={Boolean(cleanupFlight)}
+                telling={step.telling}
+                call={step.call}
+                callSheetOpen={callSheetUp}
+                onOpenCallSheet={() => setCallSheetOpen(true)}
+                returnStagedPosition={returnStagedPosition}
+                invite={
+                  mode === "online" && partnerPresence === "absent"
+                    ? (onlineSeat?.code ?? null)
+                    : null
+                }
+                partnerAway={mode === "online" && partnerPresence === "away"}
+              />
+              <Hand
+                view={view}
+                offers={step.offers}
+                staged={step.stagedPosition !== null}
+                acceptsDrop={step.acceptsDrop}
+                dispatch={dispatch}
+                onPlayCard={playToFloor}
+                onInspect={inspectCard}
+                draggingCardId={draggingCardId}
+                onCardDragStart={(instanceId, event) => {
+                  event.dataTransfer.effectAllowed = "move";
+                  event.dataTransfer.setData("application/x-clave-card", instanceId);
+                  event.dataTransfer.setData("text/plain", instanceId);
+                  setDraggingCardId(instanceId);
+                  setInspection(null);
+                }}
+                onCardDragEnd={() => {
+                  setDraggingCardId(null);
+                  setFloorDragOver(false);
+                }}
+                discardTargetRef={discardTargetRef}
+                discardReceiving={Boolean(
+                  (lessonFlight?.flying && !lessonToDrawTop) || cleanupFlight?.flying,
+                )}
+                deckTargetRef={deckTargetRef}
+                deckReceiving={Boolean(lessonFlight?.flying && lessonToDrawTop)}
+                acceptsLessonDrop={Boolean(draggingLessonKey)}
+                lessonDropOver={lessonDropOver}
+                onLessonDragOverChange={setLessonDropOver}
+                onLessonDrop={dropLesson}
+                onOpenDiscard={() => {
+                  playSoundEffect("card-select");
+                  setDiscardOpen(true);
+                }}
+              />
+            </div>
+            <aside className="game-sidebar">
+              <Market
+                view={view}
+                onInspect={inspectCard}
+                onBuyLesson={buyLesson}
+                onLessonDragStart={beginLessonDrag}
+                onLessonDragEnd={endLessonDrag}
+                draggingLessonKey={draggingLessonKey}
+                pendingLesson={
+                  lessonFlight
+                    ? { source: lessonFlight.source, cardId: lessonFlight.card.id }
+                    : null
+                }
+              />
+              <GameLog view={view} />
+            </aside>
+          </div>
+          {lessonFlight && (
+            <LessonCardFlight flight={lessonFlight} onComplete={() => setLessonFlight(null)} />
+          )}
+          {cleanupFlight && (
+            <CleanupCardFlights flight={cleanupFlight} onComplete={() => setCleanupFlight(null)} />
+          )}
+          {callSheetUp && callPicker && (
+            <CallSheet
+              picker={callPicker}
+              onChoose={(action) => {
+                setCallSheetOpen(false);
+                dispatch(action);
+              }}
+              onClose={() => setCallSheetOpen(false)}
+            />
+          )}
+          {passScreenOpen && passTo && (
+            <PassScreen role={passTo} view={view} onReady={acceptPass} />
+          )}
+          {signalPeekOpen && view.signal && (
+            <SignalPeek
+              card={view.signal.card}
+              opener={signalReturnFocus.current}
+              onHide={() => clearSignal && dispatch(clearSignal)}
+            />
+          )}
+          {view.signal?.role === view.viewerRole && mode === "online" && clearSignal && (
+            <button type="button" className="signal-live" onClick={() => dispatch(clearSignal)}>
+              Signal visible to partner · tap to hide
+            </button>
+          )}
+          {discardOpen && (
+            <DiscardPileInspector
+              cards={view.self.discard}
+              role={view.viewerRole}
+              covered={Boolean(inspection)}
+              onInspect={inspectCard}
+              onClose={() => setDiscardOpen(false)}
+            />
+          )}
+          {dancerDemoOpen && <DancerDemo view={view} onClose={() => setDancerDemoOpen(false)} />}
+        </main>
       )}
-      <p className="visually-hidden" role="status" aria-live="polite">
-        {turnAnnouncement(view)}
-      </p>
-      <Hud view={view} change={latestScoreChange} inert={overlayOpen} />
-      <div className="game-grid" inert={overlayOpen}>
-        <div className={`main-table ${step.call ? "with-call" : ""}`}>
-          <SongMoment view={view} />
-          <PhraseHistory view={view} onInspect={inspectCard} />
-          <DanceTable
-            view={view}
-            onInspect={inspectCard}
-            stagedPosition={step.stagedPosition}
-            floorHint={step.floorHint}
-            acceptsDrop={step.acceptsDrop}
-            dragOver={floorDragOver}
-            onDragOverChange={setFloorDragOver}
-            onCardDrop={playToFloor}
-            onOpenDancerDemo={() => setDancerDemoOpen(true)}
-          />
-          {step.call && <CallBanner call={step.call} />}
-          <TurnActions
-            view={view}
-            dispatch={dispatch}
-            onCleanup={cleanupTurn}
-            cleanupPending={Boolean(cleanupFlight)}
-            telling={step.telling}
-            call={step.call}
-            callSheetOpen={callSheetUp}
-            onOpenCallSheet={() => setCallSheetOpen(true)}
-            returnStagedPosition={returnStagedPosition}
-            invite={
-              mode === "online" && partnerPresence === "absent" ? (onlineSeat?.code ?? null) : null
-            }
-            partnerAway={mode === "online" && partnerPresence === "away"}
-          />
-          <Hand
-            view={view}
-            offers={step.offers}
-            staged={step.stagedPosition !== null}
-            acceptsDrop={step.acceptsDrop}
-            dispatch={dispatch}
-            onPlayCard={playToFloor}
-            onInspect={inspectCard}
-            draggingCardId={draggingCardId}
-            onCardDragStart={(instanceId, event) => {
-              event.dataTransfer.effectAllowed = "move";
-              event.dataTransfer.setData("application/x-clave-card", instanceId);
-              event.dataTransfer.setData("text/plain", instanceId);
-              setDraggingCardId(instanceId);
-              setInspection(null);
-            }}
-            onCardDragEnd={() => {
-              setDraggingCardId(null);
-              setFloorDragOver(false);
-            }}
-            discardTargetRef={discardTargetRef}
-            discardReceiving={Boolean(lessonFlight?.flying || cleanupFlight?.flying)}
-            acceptsLessonDrop={Boolean(draggingLessonKey)}
-            lessonDropOver={lessonDropOver}
-            onLessonDragOverChange={setLessonDropOver}
-            onLessonDrop={dropLesson}
-            onOpenDiscard={() => {
-              playSoundEffect("card-select");
-              setDiscardOpen(true);
-            }}
-          />
-        </div>
-        <aside className="game-sidebar">
-          <Market
-            view={view}
-            onInspect={inspectCard}
-            onBuyLesson={buyLesson}
-            onLessonDragStart={beginLessonDrag}
-            onLessonDragEnd={endLessonDrag}
-            draggingLessonKey={draggingLessonKey}
-            pendingLesson={
-              lessonFlight ? { source: lessonFlight.source, cardId: lessonFlight.card.id } : null
-            }
-          />
-          <GameLog view={view} />
-        </aside>
-      </div>
-      {lessonFlight && (
-        <LessonCardFlight flight={lessonFlight} onComplete={() => setLessonFlight(null)} />
-      )}
-      {cleanupFlight && (
-        <CleanupCardFlights flight={cleanupFlight} onComplete={() => setCleanupFlight(null)} />
-      )}
-      {callSheetUp && callPicker && (
-        <CallSheet
-          picker={callPicker}
-          onChoose={(action) => {
-            setCallSheetOpen(false);
-            dispatch(action);
-          }}
-          onClose={() => setCallSheetOpen(false)}
-        />
-      )}
+      {/*
+       * One instance across the swap to the end screen, and in the same place in the tree
+       * either way: the cue layer keeps the snapshot it last read, so the commit that ends the
+       * song is still cued — the cierre, a call the last 8-count dropped — instead of being
+       * unmounted with the table before its effect runs.
+       */}
       <SnapshotCues view={view} />
-      {passScreenOpen && passTo && <PassScreen role={passTo} view={view} onReady={acceptPass} />}
-      {signalPeekOpen && view.signal && (
-        <SignalPeek
-          card={view.signal.card}
-          opener={signalReturnFocus.current}
-          onHide={() => clearSignal && dispatch(clearSignal)}
-        />
-      )}
-      {view.signal?.role === view.viewerRole && mode === "online" && clearSignal && (
-        <button type="button" className="signal-live" onClick={() => dispatch(clearSignal)}>
-          Signal visible to partner · tap to hide
-        </button>
-      )}
       {inspection && (
         <CardInspector
           inspection={inspection}
@@ -2158,16 +2245,6 @@ export function GameScreen() {
           onClosed={() => setInspection(null)}
         />
       )}
-      {discardOpen && (
-        <DiscardPileInspector
-          cards={view.self.discard}
-          role={view.viewerRole}
-          covered={Boolean(inspection)}
-          onInspect={inspectCard}
-          onClose={() => setDiscardOpen(false)}
-        />
-      )}
-      {dancerDemoOpen && <DancerDemo view={view} onClose={() => setDancerDemoOpen(false)} />}
-    </main>
+    </>
   );
 }

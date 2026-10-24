@@ -1,9 +1,25 @@
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { extname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Hono } from "hono";
 import { afterEach, describe, expect, it } from "vitest";
 import { serveClientAssets } from "../src/client-assets.js";
+
+/**
+ * Every extension `vite build` puts in `packages/client/dist`, read without needing the
+ * client built: the files Vite copies verbatim out of `public/` (the card art, the mark, the
+ * manifest), plus the four its own output has. `npm test` runs before `npm run build` in CI,
+ * so a test that read `dist` would skip in the one place it has to hold.
+ */
+const publicDirectory = fileURLToPath(new URL("../../client/public", import.meta.url));
+const VITE_OUTPUT = [".html", ".js", ".css", ".map"];
+
+async function shippedExtensions(): Promise<string[]> {
+  const entries = await readdir(publicDirectory, { recursive: true, withFileTypes: true });
+  const copied = entries.filter((entry) => entry.isFile()).map((entry) => extname(entry.name));
+  return [...new Set([...copied, ...VITE_OUTPUT])].sort();
+}
 
 let directory: string | undefined;
 
@@ -62,7 +78,7 @@ describe("static asset media types", () => {
     expect(response.headers.get("content-type")).toBe("image/webp");
   });
 
-  it("names the media type of every kind of file the built client ships", async () => {
+  it("names the media type of every file type the server serves", async () => {
     const expected: [file: string, contentType: string][] = [
       ["pos_001.webp", "image/webp"],
       ["cuerpo.mp3", "audio/mpeg"],
@@ -84,6 +100,24 @@ describe("static asset media types", () => {
       const response = await app.request(`http://127.0.0.1/${file}`);
       expect(response.status, file).toBe(200);
       expect(response.headers.get("content-type"), file).toBe(contentType);
+    }
+  });
+
+  it("hands no file the client actually ships to the browser as a download", async () => {
+    // Seven extensions over 34 files as this is written. A new kind of asset in `public/`
+    // with no row in the table arrives as application/octet-stream, which a browser saves
+    // instead of showing, so it fails here rather than on the dance floor. The set is not
+    // pinned — shipping audio one day should not fail a test the audio rows already cover.
+    const extensions = await shippedExtensions();
+    expect(extensions).toContain(".webp");
+    const { app, root } = await appWithDocument("<!doctype html><title>Clave</title>");
+    const probes = extensions.map((extension) => `shipped${extension}`);
+    await Promise.all(probes.map((file) => writeFile(join(root, file), "clave")));
+
+    for (const file of probes) {
+      const response = await app.request(`http://127.0.0.1/${file}`);
+      expect(response.status, file).toBe(200);
+      expect(response.headers.get("content-type"), file).not.toBe("application/octet-stream");
     }
   });
 

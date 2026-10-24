@@ -69,8 +69,13 @@ function ComboThumbnail({
 /** One 8-count in a sentence, e.g. "Lead danced Follow Right Turn, Open Position". */
 export function comboSummary(entry: DanceComboView): string {
   if (entry.outcome === "stumble") return `${roleName(entry.role)} stumbled`;
-  if (entry.outcome === "basic")
-    return `${roleName(entry.role)} danced the basic in ${entry.endingPosition ?? "position"}`;
+  if (entry.outcome === "basic") {
+    const where = entry.endingPosition ?? "position";
+    // A Position alone is the hold, not the basic: it is the play that gave up the song bonus.
+    if (entry.hold === "taken") return `${roleName(entry.role)} took the hold in ${where}`;
+    if (entry.hold === "adjusted") return `${roleName(entry.role)} adjusted the hold to ${where}`;
+    return `${roleName(entry.role)} danced the basic in ${where}`;
+  }
   const cards = [entry.move?.name, entry.position?.name, entry.flourish?.name].filter(Boolean);
   return `${roleName(entry.role)} danced ${cards.join(", ")}`;
 }
@@ -98,7 +103,7 @@ function ComboSlot({
     ? entry.outcome === "stumble"
       ? null
       : entry.outcome === "basic"
-        ? `Basic · ${entry.endingPosition ?? "Position"}`
+        ? `${entry.hold ? "Hold" : "Basic"} · ${entry.endingPosition ?? "Position"}`
         : (entry.move?.name ?? "Dance")
     : current
       ? "On the floor"

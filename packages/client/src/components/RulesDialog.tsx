@@ -97,7 +97,9 @@ function RulesDialog({ onClose, section }: { onClose: () => void; section: strin
     },
   ];
   const precedence = [...ladder].sort((left, right) => left.checkedAt - right.checkedAt);
-  const toTop = rules.lessonToDrawTop;
+  // Null on a live snapshot means that game sends every lesson to the discard pile, which is
+  // how every game stored before the call plays — so the live value wins even when it is null.
+  const toTop = liveRules ? liveRules.lessonToDrawTop : (rules.lessonToDrawTop ?? null);
   const privateLessonsToTop = Boolean(toTop?.intermediate || toTop?.advanced);
 
   const sections: { id: string; label: string; heading: string; body: ReactNode }[] = [
@@ -160,8 +162,10 @@ function RulesDialog({ onClose, section }: { onClose: () => void; section: strin
               </li>
             ) : null}
             <li>
-              <strong>Take a lesson.</strong> Optionally buy one card; it goes to your discard pile,
-              not directly to your hand.
+              <strong>Take a lesson.</strong>{" "}
+              {privateLessonsToTop
+                ? "Optionally buy one card. A group class goes to your discard pile; a private lesson goes on top of your draw pile."
+                : "Optionally buy one card; it goes to your discard pile, not directly to your hand."}
             </li>
             <li>
               <strong>Clean up.</strong> Discard every card remaining in your hand, then draw a new

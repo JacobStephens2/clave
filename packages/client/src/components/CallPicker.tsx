@@ -55,6 +55,9 @@ export function CallSheet({
 }) {
   const firstOption = useRef<HTMLButtonElement>(null);
   const onCloseRef = useRef(onClose);
+  // Choosing a call ends the dance step this sheet was opened from, so the trigger it would
+  // hand focus back to unmounts with it: the new step takes the focus instead (GameScreen).
+  const chose = useRef(false);
   // Read during the first render: once this sheet commits, the table behind it turns inert
   // and the browser moves focus to the body.
   const [returnFocus] = useState(() => document.activeElement);
@@ -74,7 +77,9 @@ export function CallSheet({
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
-      if (returnFocus instanceof HTMLElement) returnFocus.focus();
+      if (chose.current) return;
+      // The step can also unmount under a sheet closed by Escape: focus only what is still here.
+      if (returnFocus instanceof HTMLElement && returnFocus.isConnected) returnFocus.focus();
     };
   }, [returnFocus]);
 
@@ -107,7 +112,10 @@ export function CallSheet({
                 type="button"
                 className={`call-option ${option.favoured ? "favoured" : ""}`}
                 aria-label={option.sentence}
-                onClick={() => onChoose(option.action)}
+                onClick={() => {
+                  chose.current = true;
+                  onChoose(option.action);
+                }}
               >
                 <span className="call-option-name">
                   {option.name}

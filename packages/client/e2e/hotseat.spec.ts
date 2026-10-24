@@ -1,8 +1,16 @@
+import { content } from "@clave/content";
 import { expect, test, type Page } from "@playwright/test";
+import { keepCompletionLocal } from "./game-states.js";
 
 async function acceptPass(page: Page, role: "Lead" | "Follow") {
   await page.getByRole("button", { name: `I’m the ${role}` }).click();
 }
+
+/** The stumble control, which names the game's own cost so no spec prints a balance number. */
+const stumble = (page: Page) =>
+  page.getByRole("button", {
+    name: `Stumble · −${content.rules.stumble.defaultConnectionCost} Connection`,
+  });
 
 /**
  * The button that ends the dance step. It names what taking the song pays whenever this
@@ -55,7 +63,7 @@ async function reachEmptyFloor(page: Page) {
   await finishSetup(page);
   await finishBasicTurn(page);
   await acceptPass(page, "Follow");
-  await page.getByRole("button", { name: "Stumble · −2 Connection" }).click();
+  await stumble(page).click();
   await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
   await acceptPass(page, "Lead");
 }
@@ -138,9 +146,8 @@ test("offers Llorarás in Spotify when the embedded player is not loaded", async
   await open.click();
 
   await expect(drawer).toBeVisible();
-  await expect(drawer.getByRole("status")).toHaveText(
-    "The embedded player could not load. Open the recording in Spotify.",
-  );
+  await expect(drawer).toContainText("Clave doesn’t play the music.");
+  await expect(drawer.getByRole("status")).toHaveCount(0);
   await expect(drawer.getByRole("link", { name: /Open in Spotify/ })).toHaveAttribute(
     "href",
     "https://open.spotify.com/track/5SsgnRkcr4ogLB9rcW61tf",
@@ -284,7 +291,7 @@ test("plays procedural game cues and remembers the sound-effects preference", as
   await endDance(page).click();
   await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
   await acceptPass(page, "Follow");
-  await page.getByRole("button", { name: "Stumble · −2 Connection" }).click();
+  await stumble(page).click();
   await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
   await acceptPass(page, "Lead");
 
@@ -339,6 +346,7 @@ test("plays a complete sixteen-count hot-seat game", async ({ page }) => {
   // Sixteen 8-counts, each with a handoff and a hand flying into the discard: about 35s of
   // animation on a phone profile, where the default budget is 30.
   test.slow();
+  await keepCompletionLocal(page);
   await page.goto("/");
   await page.getByRole("button", { name: /Pass & play/ }).click();
   await finishSetup(page);
@@ -361,6 +369,7 @@ test("plays a complete sixteen-count hot-seat game", async ({ page }) => {
 test("keeps result-screen card details modal and returns focus to the choreography", async ({
   page,
 }) => {
+  await keepCompletionLocal(page);
   await seedDeal(page);
   await page.goto("/");
   await page.getByRole("button", { name: /Pass & play/ }).click();
@@ -376,7 +385,7 @@ test("keeps result-screen card details modal and returns focus to the choreograp
 
   for (const [index, role] of (["Follow", "Lead", "Follow"] as const).entries()) {
     await acceptPass(page, role);
-    await page.getByRole("button", { name: "Stumble · −2 Connection" }).click();
+    await stumble(page).click();
     if (index < 2) await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
   }
 
@@ -581,7 +590,7 @@ test("stages Position then matching Move when a stumble empties the floor", asyn
   await finishSetup(page);
   await finishBasicTurn(page);
   await acceptPass(page, "Follow");
-  await page.getByRole("button", { name: "Stumble · −2 Connection" }).click();
+  await stumble(page).click();
   await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
   await acceptPass(page, "Lead");
 

@@ -1,6 +1,15 @@
 import { content } from "@clave/content";
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { completedGame, gameAt, lostGame, nextOf, resumeSeeded, viewOf } from "./game-states.js";
+import {
+  answeringPlay,
+  completedGame,
+  gameAt,
+  keepCompletionLocal,
+  lostGame,
+  nextOf,
+  resumeSeeded,
+  viewOf,
+} from "./game-states.js";
 
 /**
  * The call: asking your partner for something, answering it, covering it, and the hold a
@@ -126,7 +135,7 @@ test("calls, hands over, answers, and pays the call out", async ({ page }, testI
 
   const banner = callBanner(page);
   await expect(banner).toContainText(`Lead calls ${favoured!.name}`);
-  await expect(banner).toContainText(`Your answer: ${favoured!.ask}.`);
+  await expect(banner).toContainText(`Lead asks: ${favoured!.ask}.`);
   await expect(banner.getByRole("status")).toHaveText("○ Not answered yet");
 
   await playCard(
@@ -186,6 +195,157 @@ test("covers a standing call with a Recovery card", async ({ page }) => {
   await expect(
     page.getByRole("article", { name: new RegExp(`^8-count ${count}\\.`) }),
   ).toHaveAccessibleName(/Recovered: the call covered/);
+});
+
+test("drops a call nobody answered, and prices the drop before the click", async ({ page }) => {
+  // The last 8-count of a clean phrase, with a call standing over it and an afinque run
+  // going: one unanswered 8-count gives up the Connection, the run and the phrase's clean
+  // bonus together, and the dance survives to show it.
+  const dropping = gameAt(
+    (view) =>
+      view.phase === "dance" &&
+      view.turn.cardsPlayed === 0 &&
+      view.call !== null &&
+      !view.call.met &&
+      !view.phrase.stumbled &&
+      view.phrase.count === view.rules.phraseLength &&
+      view.turn.ifEndedNow !== null &&
+      !view.turn.ifEndedNow.lost,
+  );
+  const view = await resumeSeeded(page, dropping);
+  const links = view.afinque.links;
+  expect(links).toBeGreaterThan(0);
+
+  // Everything the click costs is printed before it: on the button, and beside the call.
+  const banner = callBanner(page);
+  await expect(endDance(page)).toHaveText(
+    `Dance the basic · −${calls.missConnectionCost} Connection · drops the call`,
+  );
+  await expect(banner.locator(".call-price")).toHaveText(
+    `Unanswered: −${calls.missConnectionCost} Connection, and the phrase loses its clean +${content.rules.phraseBonuses.clean}`,
+  );
+  await expect(afinqueMeter(page)).toContainText(
+    `Afinque: ${links} of ${calls.afinqueBonus.length} links`,
+  );
+
+  await endDance(page).click();
+  await expect(cue(page, "The call dropped")).toContainText(
+    `−${calls.missConnectionCost} Connection`,
+  );
+  await expect(page.locator(".hud-stat.connection .hud-delta.down")).toHaveText(
+    `−${calls.missConnectionCost}`,
+  );
+  await expect(page.locator(".hud-stat.connection > strong")).toHaveText(
+    String(view.shared.connection + view.turn.ifEndedNow!.connection),
+  );
+  // The run goes with it, the banner clears, and the 8-count lands on the rung for a drop.
+  await expect(afinqueMeter(page)).toContainText(
+    `Afinque: 0 of ${calls.afinqueBonus.length} links`,
+  );
+  await expect(banner).toHaveCount(0);
+  await expect(
+    page.getByRole("article", { name: new RegExp(`^8-count ${view.phrase.count}\\.`) }),
+  ).toHaveAccessibleName(/Awkward: no Move, or the call dropped/);
+
+  // And the phrase it ended scores without its clean bonus, exactly as the price promised.
+  await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
+  const scored = page.locator(".pass-phrase");
+  await expect(scored).toContainText(`Phrase ${view.phrase.number}:`);
+  await expect(scored).not.toContainText("clean");
+});
+
+test("ends the song on a pose and cues the cierre over the end screen", async ({ page }) => {
+  // The song's last 8-count with a pose still in hand. The cue has to survive the swap to
+  // the end screen: it is the one moment the dance is announced and finished at once.
+  const finale = gameAt(
+    (view) =>
+      view.phase === "dance" &&
+      view.phrase.number === 2 &&
+      view.phrase.count === view.rules.phraseLength &&
+      view.self.hand.some((entry) => entry.card.type === "flourish" && entry.card.pose) &&
+      view.legalActions.some((action) => action.type === "PLAY_FLOURISH"),
+    { savesPose: true },
+  );
+  await keepCompletionLocal(page);
+  const view = await resumeSeeded(page, finale);
+  const pose = view.self.hand.find((entry) => entry.card.type === "flourish" && entry.card.pose)!;
+
+  await playCard(
+    page,
+    page.locator(".hand-scroll .dance-card.flourish.playable").filter({ hasText: pose.card.name }),
+    "Flourish",
+  );
+  await endDance(page).click();
+  await page.getByRole("button", { name: "Finish turn · discard hand" }).click();
+
+  await expect(page.locator(".song-recap")).toHaveAttribute("data-outcome", "completed");
+  await expect(cue(page, "¡Cierre!")).toContainText("the band stops with you");
+});
+
+test("loses the dance on the call that dropped, and says so on the end screen", async ({
+  page,
+}) => {
+  // The last Connection, with a call standing over it: the button says the 8-count ends the
+  // dance before it does, and the drop that ended it is cued over the end screen.
+  const fatal = gameAt(
+    (view) =>
+      view.phase === "dance" &&
+      view.call !== null &&
+      !view.call.met &&
+      view.turn.ifEndedNow?.lost === true,
+    { ignoresCalls: true },
+  );
+  await keepCompletionLocal(page);
+  const view = await resumeSeeded(page, fatal);
+
+  await expect(endDance(page)).toHaveText(
+    `Dance the basic · −${calls.missConnectionCost} Connection · drops the call · ends the dance`,
+  );
+  await endDance(page).click();
+
+  const recap = page.locator(".song-recap");
+  await expect(recap).toHaveAttribute("data-outcome", "lost");
+  await expect(recap).toContainText(
+    `The connection slipped on 8-count ${view.danceHistory.length + 1} of ${view.rules.songLength}`,
+  );
+  await expect(cue(page, "The call dropped")).toContainText(
+    `−${calls.missConnectionCost} Connection`,
+  );
+});
+
+test("reaches the hand to answer a call on a 1366×768 laptop", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chrome", "The phone profile scrolls either way.");
+  // The band a standing call adds used to push the hand rail under the fold on this laptop,
+  // where the table could not scroll — the answer was on screen and unclickable.
+  await page.setViewportSize({ width: 1366, height: 768 });
+  const standing = gameAt((view, envelope) => {
+    if (view.phase !== "dance" || view.turn.cardsPlayed !== 0) return false;
+    if (view.call === null || view.call.met) return false;
+    return answeringPlay(envelope)?.type === "PLAY_MOVE";
+  });
+  const view = await resumeSeeded(page, standing);
+  const answer = answeringPlay(standing);
+  if (answer?.type !== "PLAY_MOVE") throw new Error("The seeded game's answer is not a Move.");
+  const moveName = view.self.hand.find((entry) => entry.instanceId === answer.moveInstanceId)!.card
+    .name;
+
+  const banner = callBanner(page);
+  await expect(banner.getByRole("status")).toHaveText("○ Not answered yet");
+  const card = page.locator(".hand-scroll .dance-card.move.playable").filter({ hasText: moveName });
+  await card.scrollIntoViewIfNeeded();
+  expect(
+    await card.locator("h4").evaluate((name) => {
+      const bounds = name.getBoundingClientRect();
+      return bounds.top >= 0 && bounds.bottom <= window.innerHeight;
+    }),
+  ).toBe(true);
+
+  await playCard(page, card, "Dance move");
+  await expect(page.locator('[data-slot="move"]')).toContainText(moveName);
+  await expect(banner.getByRole("status")).toHaveText("✓ Answered · finish to collect");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+    await page.evaluate(() => document.documentElement.clientWidth),
+  );
 });
 
 test("adjusts the hold before the Move and gives up the song bonus", async ({ page }) => {
@@ -365,4 +525,9 @@ test("makes a call with the keyboard alone and gives the focus back", async ({ p
   await expect(
     page.getByText(`You called ${chosen}. Your partner answers next 8-count.`),
   ).toBeVisible();
+
+  // The trigger the sheet was opened from has gone with the dance step, so the focus lands on
+  // the new step's own first control — one key from the next thing to do, not back at <body>.
+  await expect(page.getByRole("button", { name: "Finish turn · discard hand" })).toBeFocused();
+  await expect(page.locator(".turn-actions .button-row button").first()).toBeFocused();
 });
