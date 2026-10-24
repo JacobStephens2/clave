@@ -748,11 +748,17 @@ this way can ship in Clave at any quality.
   `jobId`; `GET https://api.apiframe.ai/v2/jobs/{jobId}` polls it to `COMPLETED`. Auth is
   an `X-API-Key` header. Account and credit balance are
   `GET https://api.apiframe.ai/v2/me`. Model metadata is `GET /v2/models`.
-- **There is no Suno "v6".** The owner's suggestion was Suno v6; it does not exist here.
-  `GET /v2/models` lists exactly six values for `model_version` — `V4`, `V4_5`,
-  `V4_5ALL`, `V4_5PLUS`, `V5`, `V5_5` — with `V4_5PLUS` as the default. `V5_5` is the
-  newest and is what every request below used. APIFRAME exposes Suno as a single model
-  id, `"suno"`, with the version as a parameter, not as separate models.
+- **APIFRAME does not offer Suno v6.** Suno itself released v6 on 2026-09-09: v6 and
+  v6-wild for Pro and Premier subscribers, v6-mini for everyone, with the earlier models
+  retired from new generation the same day
+  ([Suno](https://about.suno.com/blog/introducing-v6),
+  [TechCrunch](https://techcrunch.com/2026/09/09/suno-replaces-its-ai-models-with-a-new-one-trained-on-licensed-music-as-copyright-suits-pile-up/)).
+  APIFRAME's `GET /v2/models`, re-checked on 2026-10-24, still lists exactly six values
+  for `model_version` — `V4`, `V4_5`, `V4_5ALL`, `V4_5PLUS`, `V5`, `V5_5` — with
+  `V4_5PLUS` as the default, and every request below asked for `V5_5`. Since Suno says it
+  retired V5.5, which model actually produced these takes cannot be confirmed from the
+  outside: one more thing a reseller leaves opaque. APIFRAME exposes Suno as a single
+  model id, `"suno"`, with the version as a parameter, not as separate models.
 - **The request shape**: top-level `model`, `prompt`, optional `webhookUrl` and
   `webhookEvents`; everything Suno-specific goes in a `sunoParams` object —
   `custom_mode`, `instrumental`, `model_version`, `title` (80 chars), `style`
