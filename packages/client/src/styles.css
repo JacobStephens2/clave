@@ -188,11 +188,16 @@ button {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--gold);
-  color: var(--ink);
+  background: rgba(217, 164, 65, 0.22);
+  color: var(--gold);
   font-family: Georgia, serif;
   font-size: 16px;
   line-height: 1;
+}
+/* The band is playing somewhere behind this button: the note fills in. */
+.music-button-icon.on {
+  background: var(--gold);
+  color: var(--ink);
 }
 .sound-effects-button {
   min-height: 46px;
@@ -350,9 +355,72 @@ button {
 }
 .music-player-drawer > p {
   margin: 0;
-  color: #f49a8f;
+  color: var(--paper);
   font-size: 11px;
   line-height: 1.4;
+}
+.music-player-drawer > p.music-failed {
+  color: #f49a8f;
+}
+.music-toggle {
+  min-height: 44px;
+  border: 1px solid rgba(217, 164, 65, 0.45);
+  background: rgba(217, 164, 65, 0.07);
+  color: var(--cream);
+  padding: 0 14px 0 11px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-size: 10px;
+  font-weight: 850;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+.music-toggle:hover {
+  border-color: var(--gold);
+  background: rgba(217, 164, 65, 0.15);
+}
+.music-toggle.on {
+  border-color: var(--gold);
+}
+.music-toggle-light {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  border: 1px solid rgba(217, 164, 65, 0.6);
+  border-radius: 50%;
+  background: transparent;
+}
+.music-toggle-light.loading {
+  background: rgba(217, 164, 65, 0.4);
+}
+.music-toggle-light.playing {
+  background: var(--gold);
+  box-shadow: 0 0 0 3px rgba(217, 164, 65, 0.16);
+  animation: music-band-pulse 2.4s ease-in-out infinite;
+}
+.music-toggle-light.failed {
+  border-color: #f49a8f;
+  background: #f49a8f;
+}
+@keyframes music-band-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px rgba(217, 164, 65, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(217, 164, 65, 0.24);
+  }
+}
+.music-credit {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 8px;
 }
 .music-player-drawer > footer {
   justify-content: space-between;
@@ -5865,6 +5933,9 @@ body {
     animation: none;
   }
   .song-landed {
+    animation: none;
+  }
+  .music-toggle-light.playing {
     animation: none;
   }
   *,

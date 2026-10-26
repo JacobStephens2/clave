@@ -131,7 +131,7 @@ test("makes the rulebook accessible from home and live play", async ({ page }) =
   await expect(gameRules).toBeFocused();
 });
 
-test("offers Llorarás in Spotify when the embedded player is not loaded", async ({ page }) => {
+test("points at the real Llorarás without ever loading an embed", async ({ page }) => {
   const spotifyScripts: string[] = [];
   page.on("request", (request) => {
     if (request.url().startsWith("https://open.spotify.com/embed/iframe-api/"))
@@ -139,16 +139,17 @@ test("offers Llorarás in Spotify when the embedded player is not loaded", async
   });
   await page.goto("/");
 
-  const drawer = page.getByRole("complementary", { name: "Llorarás music player" });
-  const open = page.getByRole("button", { name: "Open Llorarás" });
+  const drawer = page.getByRole("complementary", { name: "Music" });
+  const open = page.getByRole("button", { name: /^Open music/ });
   await expect(open).toBeEnabled();
   await expect(drawer).toBeHidden();
   await open.click();
 
   await expect(drawer).toBeVisible();
-  await expect(drawer).toContainText("Clave doesn’t play the music.");
+  await expect(drawer).toContainText("Clave’s house band");
+  // Nothing in here reports a problem: the band is a file the game ships, not an embed.
   await expect(drawer.getByRole("status")).toHaveCount(0);
-  await expect(drawer.getByRole("link", { name: /Open in Spotify/ })).toHaveAttribute(
+  await expect(drawer.getByRole("link", { name: /Llorarás in Spotify/ })).toHaveAttribute(
     "href",
     "https://open.spotify.com/track/5SsgnRkcr4ogLB9rcW61tf",
   );
@@ -158,7 +159,7 @@ test("offers Llorarás in Spotify when the embedded player is not loaded", async
 
   await page.getByRole("button", { name: /Pass & play/ }).click();
   await acceptPass(page, "Lead");
-  await expect(page.getByRole("button", { name: "Open Llorarás" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Open music/ })).toBeVisible();
   expect(spotifyScripts).toEqual([]);
 });
 

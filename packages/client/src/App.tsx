@@ -11,13 +11,15 @@ export function App() {
   const screen = useAppStore((state) => state.screen);
   const error = useAppStore((state) => state.error);
   const clearError = useAppStore((state) => state.clearError);
+  // The band's only instruction: the snapshot, which says which phrase of the song this is.
+  const snapshot = useAppStore((state) => state.snapshot);
 
   useEffect(() => hydrate(), [hydrate]);
 
   return (
     <RulesProvider>
       <SoundEffectsProvider>
-        <MusicProvider>
+        <MusicProvider view={snapshot}>
           <div className="app-shell">
             {screen === "home" ? <HomeScreen /> : <GameScreen />}
             {error && (
