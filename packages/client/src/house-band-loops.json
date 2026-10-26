@@ -1,0 +1,16 @@
+{
+  "cuerpo": {
+    "file": "/audio/cuerpo.mp3",
+    "loopStart": 0.75,
+    "loopEnd": 52.31,
+    "bpm": 186.19,
+    "bars": 40
+  },
+  "montuno": {
+    "file": "/audio/montuno.mp3",
+    "loopStart": 0.75,
+    "loopEnd": 73.79,
+    "bpm": 184.01,
+    "bars": 56
+  }
+}
