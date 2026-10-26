@@ -18,7 +18,7 @@ describe("setup · rulebook §4", () => {
         Number(left.table.position?.owner === "lead"),
     ).toBe(8);
     expect(left.table.position).toBeNull();
-    expect(left.shared).toEqual({ connection: 4, style: 0 });
+    expect(left.shared).toEqual({ connection: 4, style: 0, afinque: 0 });
     expect(left.market.intermediateDisplay).toHaveLength(3);
     expect(left.market.advancedDisplay).toHaveLength(0);
     expect(left.songIndex).toBe(-1);

@@ -4,6 +4,9 @@ import {
   contentHash as defaultContentHash,
   hashCanonical,
   type BonusCondition,
+  type BonusEffect,
+  type Call,
+  type CallRules,
   type ContentSet,
   type DanceCard,
   type FlourishCard,
@@ -15,12 +18,15 @@ import {
   ENGINE_VERSION,
   GameActionSchema,
   type ApplyResult,
+  type CallOutcome,
   type CardInstance,
   type GameAction,
   type GameState,
   type Market,
+  type PhraseStats,
   type PlayerState,
   type Role,
+  type StandingCall,
   type TurnCheckpoint,
   type TurnDance,
   otherRole,
@@ -57,6 +63,24 @@ const emptyTurnDance = (): TurnDance => ({
   learnedFromPartner: false,
   bonusStyle: 0,
   bonusConnection: 0,
+  callMade: null,
+  callAnswered: false,
+  callDropped: false,
+  callCovered: false,
+  callStyle: 0,
+  hold: null,
+  rung: "pending",
+});
+
+const emptyPhrase = (number: PhraseStats["number"]): PhraseStats => ({
+  number,
+  stumbled: false,
+  positionsDancedFrom: [],
+  flourishedBy: { lead: false, follow: false },
+  poseOnFinalCount: false,
+  learnedBy: { lead: false, follow: false },
+  privateLessonTakenThisRound: false,
+  droppedCall: false,
 });
 
 function clone<T>(value: T): T {
@@ -135,22 +159,16 @@ export function createGame(options: CreateGameOptions): GameState {
     shared: {
       connection: contentSet.rules.initialConnection,
       style: contentSet.rules.initialStyle,
+      afinque: 0,
     },
     market,
     table: { position: null, move: null, flourish: null },
-    phrase: {
-      number: 1,
-      stumbled: false,
-      positionsDancedFrom: [],
-      flourishedBy: { lead: false, follow: false },
-      poseOnFinalCount: false,
-      learnedBy: { lead: false, follow: false },
-      privateLessonTakenThisRound: false,
-    },
+    phrase: emptyPhrase(1),
     moveHistory: [],
     danceHistory: [],
     turnDance: emptyTurnDance(),
     signal: null,
+    call: null,
     log: [
       {
         sequence: 0,
@@ -246,6 +264,71 @@ function addConnection(state: GameState, amount: number, contentSet: ContentSet)
   );
 }
 
+/**
+ * The single writer for Style. `SharedScoreSchema.style` is nonnegative, so one unclamped
+ * subtraction would leave a state that no longer reads back under its own schema.
+ */
+function addStyle(state: GameState, amount: number): void {
+  state.shared.style = Math.max(0, state.shared.style + amount);
+}
+
+function callRules(contentSet: ContentSet): CallRules | null {
+  return contentSet.rules.call ?? null;
+}
+
+/** The call `callId` names, or null when this content prints no such call. */
+export function callDefinition(contentSet: ContentSet, callId: string): Call | null {
+  return callRules(contentSet)?.options.find((option) => option.id === callId) ?? null;
+}
+
+/** How long a run of answered calls can grow: as long as the bonus table. */
+export function afinqueCap(contentSet: ContentSet): number {
+  return callRules(contentSet)?.afinqueBonus.length ?? 0;
+}
+
+/** The extra Style an answer earns for being the `links`th answer in a row. */
+export function afinqueBonus(links: number, contentSet: ContentSet): number {
+  return callRules(contentSet)?.afinqueBonus[links - 1] ?? 0;
+}
+
+function breakAfinque(state: GameState): void {
+  state.shared.afinque = 0;
+}
+
+/** The number of 8-counts in one phrase. */
+function phraseLength(contentSet: ContentSet): number {
+  return contentSet.song.cards.length / 2;
+}
+
+/** True when `songIndex` is the last 8-count of its phrase, which no call may cross. */
+function endsPhrase(songIndex: number, contentSet: ContentSet): boolean {
+  return (songIndex + 1) % phraseLength(contentSet) === 0;
+}
+
+/**
+ * The call standing over the 8-count being danced. A call is made for the 8-count after the one
+ * that made it, so one that outlived its own 8-count is a bug: it is cleared, never resolved.
+ */
+export function standingCall(state: GameState): StandingCall {
+  if (!state.call) return null;
+  return state.call.forSongIndex === state.songIndex ? state.call : null;
+}
+
+/** Would `role`'s 8-count so far answer `standing`? Every call also asks for a Move. */
+export function callMet(
+  state: GameState,
+  role: Role,
+  contentSet: ContentSet,
+  standing: NonNullable<StandingCall>,
+): boolean {
+  const definition = callDefinition(contentSet, standing.callId);
+  if (!definition) return false;
+  return (
+    state.turnDance.moveCardId !== null &&
+    bonusConditionMet(definition.condition, { state, role, contentSet })
+  );
+}
+
 function snapshotCheckpoint(state: GameState): TurnCheckpoint {
   return clone({
     players: state.players,
@@ -259,6 +342,7 @@ function snapshotCheckpoint(state: GameState): TurnCheckpoint {
     nextInstance: state.nextInstance,
     turnDance: state.turnDance,
     signal: state.signal,
+    call: state.call,
   });
 }
 
@@ -310,7 +394,7 @@ function recordMove(
 ): void {
   discardMoveLayer(state);
   state.table.move = { card: moveInstance, dancedFrom: fromPosition };
-  state.shared.style += definition.style;
+  addStyle(state, definition.style);
   state.turnDance.moveCardId = definition.id;
   state.turnDance.moveStyle = definition.style;
   state.turnDance.fromPosition = fromPosition;
@@ -393,29 +477,80 @@ export function bonusConditionMet(condition: BonusCondition, context: BonusConte
       );
     case "cardsPlayedAtLeast":
       return turn.cardsPlayed >= condition.value;
+    case "answeredCall":
+      return turn.callAnswered;
   }
-  return false;
+  const exhaustive: never = condition;
+  throw new Error(`Unknown bonus condition ${(exhaustive as BonusCondition).op}.`);
 }
 
-function applySongBonus(state: GameState, role: Role, contentSet: ContentSet): void {
+/** What taking the song would pay `role` right now, or null when it would pay nothing. */
+export function songBonusFor(
+  state: GameState,
+  role: Role,
+  contentSet: ContentSet,
+): BonusEffect | null {
+  // The hold trades the song card's bonus for the frame, and a stumble turns neither face
+  // (the 2026-10-23 ruling, "The song card has two faces"), so neither has one on offer.
+  if (state.turnDance.hold !== null || state.turnDance.stumbled || state.songIndex < 0) return null;
+  // `answeredCall` reads a field only END_DANCE writes, so answer the standing call here to
+  // ask the same question it will. Inert on END_DANCE's own path: the call is cleared by then.
+  const standing = standingCall(state);
+  const asked = standing
+    ? {
+        ...state,
+        turnDance: { ...state.turnDance, callAnswered: callMet(state, role, contentSet, standing) },
+      }
+    : state;
+  const branch = contentSet.song.cards[state.songIndex]?.bonuses.find(({ condition }) =>
+    bonusConditionMet(condition, { state: asked, role, contentSet }),
+  );
+  return branch ? { ...branch.effect } : null;
+}
+
+/** Turns the song card's bonus face, and reports what it paid, or null when it paid nothing. */
+function applySongBonus(state: GameState, role: Role, contentSet: ContentSet): BonusEffect | null {
   const song = contentSet.song.cards[state.songIndex];
   fail(song, "NO_SONG_CARD", "No current song card.");
-  const branch = song.bonuses.find(({ condition }) =>
-    bonusConditionMet(condition, { state, role, contentSet }),
-  );
-  if (!branch) return;
-  state.shared.style += branch.effect.style;
-  addConnection(state, branch.effect.connection, contentSet);
-  state.turnDance.bonusStyle = branch.effect.style;
-  state.turnDance.bonusConnection = branch.effect.connection;
+  const effect = songBonusFor(state, role, contentSet);
+  if (!effect) return null;
+  addStyle(state, effect.style);
+  addConnection(state, effect.connection, contentSet);
+  state.turnDance.bonusStyle = effect.style;
+  state.turnDance.bonusConnection = effect.connection;
   const rewards = [
-    branch.effect.style > 0 ? `+${branch.effect.style} Style` : null,
-    branch.effect.connection > 0 ? `+${branch.effect.connection} Connection` : null,
+    effect.style > 0 ? `+${effect.style} Style` : null,
+    effect.connection > 0 ? `+${effect.connection} Connection` : null,
   ].filter(Boolean);
   log(state, "score", `${song.title} lands: ${rewards.join(" and ")}.`, role);
+  return effect;
 }
 
-function recordDanceCombo(state: GameState, role: Role, contentSet: ContentSet): void {
+/** Which rung of the ladder this 8-count ended on: break beats recovered beats the rest. */
+export function rungFor(turn: TurnDance): TurnDance["rung"] {
+  if (turn.stumbled) return "break";
+  if (turn.callCovered) return "recovered";
+  if (turn.callAnswered) return "perfect";
+  if (turn.moveCardId === null || turn.callDropped) return "awkward";
+  return "clean";
+}
+
+/** How the call standing over this 8-count resolved, or null when none stood over it. */
+function callOutcomeFor(turn: TurnDance): CallOutcome | null {
+  if (turn.callCovered) return "covered";
+  if (turn.callAnswered) return "answered";
+  // A stumble drops the call standing over it, which is what `callDropped` records there.
+  if (turn.callDropped) return "dropped";
+  return null;
+}
+
+function recordDanceCombo(
+  state: GameState,
+  role: Role,
+  contentSet: ContentSet,
+  songBonus: BonusEffect | null,
+): void {
+  state.turnDance.rung = rungFor(state.turnDance);
   const positionCardId = state.table.position?.cardId ?? null;
   const endingPosition = state.table.position
     ? positionFor(contentSet, state.table.position)
@@ -431,12 +566,123 @@ function recordDanceCombo(state: GameState, role: Role, contentSet: ContentSet):
     flourishCardId: state.table.flourish?.cardId ?? null,
     fromPosition: state.turnDance.fromPosition ?? endingPosition,
     endingPosition,
+    rung: state.turnDance.rung,
+    // The turn's checkpoint is taken before the player plays anything this 8-count.
+    styleGained: state.shared.style - (state.checkpoint?.shared.style ?? state.shared.style),
+    afinqueAfter: state.shared.afinque,
+    callMade: state.turnDance.callMade,
+    callOutcome: callOutcomeFor(state.turnDance),
+    songBonus,
+    hold: state.turnDance.hold,
   });
 }
 
-function finishDance(state: GameState, role: Role, contentSet: ContentSet): void {
-  applySongBonus(state, role, contentSet);
-  recordDanceCombo(state, role, contentSet);
+/** The only way the dance ends early: the Connection the couple shares has run out. */
+function endInConnectionLoss(
+  state: GameState,
+  role: Role,
+  contentSet: ContentSet,
+  songBonus: BonusEffect | null,
+): void {
+  recordDanceCombo(state, role, contentSet, songBonus);
+  state.status = "lost";
+  state.phase = "terminal";
+  state.terminalReason = "Connection reached 0.";
+  state.finalScore = state.shared.style;
+  state.rating = null;
+  state.checkpoint = null;
+  state.call = null;
+  log(state, "system", "The connection breaks. The dance is over.");
+}
+
+/**
+ * Reads the call standing over `role`'s 8-count and marks how it went, before anything is
+ * scored: the song card's `answeredCall` bonus asks this question too.
+ */
+function resolveStandingCall(state: GameState, role: Role, contentSet: ContentSet): StandingCall {
+  const standing = standingCall(state);
+  // Either way the call does not outlive the 8-count it stood over.
+  state.call = null;
+  if (!standing) return null;
+  if (callMet(state, role, contentSet, standing)) state.turnDance.callAnswered = true;
+  else state.turnDance.callDropped = true;
+  return standing;
+}
+
+/** The Style an answered call earns the couple, or the Connection a dropped one costs them. */
+function applyCallOutcome(
+  state: GameState,
+  role: Role,
+  contentSet: ContentSet,
+  standing: NonNullable<StandingCall>,
+): void {
+  const rules = callRules(contentSet);
+  const definition = callDefinition(contentSet, standing.callId);
+  if (!rules || !definition) return;
+  if (state.turnDance.callAnswered) {
+    state.shared.afinque = Math.min(afinqueCap(contentSet), state.shared.afinque + 1);
+    const earned =
+      definition.style +
+      afinqueBonus(state.shared.afinque, contentSet) +
+      (standing.inPocket ? rules.inPocketStyle : 0);
+    state.turnDance.callStyle = earned;
+    addStyle(state, earned);
+    log(
+      state,
+      "call",
+      earned > 0
+        ? `${roleName(role)} answers ${definition.name}: +${earned} Style.`
+        : `${roleName(role)} answers ${definition.name}.`,
+      role,
+    );
+    return;
+  }
+  addConnection(state, -rules.missConnectionCost, contentSet);
+  state.phrase.droppedCall = true;
+  breakAfinque(state);
+  log(state, "call", `The call drops: −${rules.missConnectionCost} Connection.`, role);
+}
+
+/** The call `role` makes over their partner's next 8-count instead of taking the song. */
+function makeCall(state: GameState, role: Role, contentSet: ContentSet, callId: string): void {
+  const definition = callDefinition(contentSet, callId);
+  if (!definition) return;
+  const inPocket = contentSet.song.cards[state.songIndex]?.favouredCall === callId;
+  state.turnDance.callMade = callId;
+  state.call = { byRole: role, callId, forSongIndex: state.songIndex + 1, inPocket };
+  log(
+    state,
+    "call",
+    `${roleName(role)} calls ${definition.name}${inPocket ? " — in the pocket" : ""}.`,
+    role,
+  );
+}
+
+/**
+ * The end of an 8-count, in the order the rules resolve it (rulebook §7.1): the call standing
+ * over it is judged first, because the song card's `answeredCall` bonus asks that question;
+ * then the 8-count's own song card pays, or a new call takes its place; then the call standing
+ * over it is settled — the Style an answer earns, or the Connection a drop costs, which the
+ * song card's own Connection is therefore already in hand to cover; then the rung it ended on.
+ */
+function finishDance(
+  state: GameState,
+  role: Role,
+  contentSet: ContentSet,
+  callId: string | null,
+): void {
+  const standing = resolveStandingCall(state, role, contentSet);
+  // `songBonusFor` holds the rest of the rule: neither the hold nor a stumble turns a face.
+  const songBonus = callId === null ? applySongBonus(state, role, contentSet) : null;
+  if (standing) applyCallOutcome(state, role, contentSet, standing);
+  if (state.shared.connection === 0) {
+    endInConnectionLoss(state, role, contentSet, songBonus);
+    return;
+  }
+  if (callId !== null) makeCall(state, role, contentSet, callId);
+  // The basic, or a hold alone: nothing was danced, so the run of answered calls ends here.
+  if (state.turnDance.moveCardId === null) breakAfinque(state);
+  recordDanceCombo(state, role, contentSet, songBonus);
   state.turnDance.canTransition = false;
   state.phase = "lesson";
 }
@@ -463,22 +709,22 @@ function drawToHand(state: GameState, role: Role, contentSet: ContentSet): void 
 
 function scorePhrase(state: GameState, contentSet: ContentSet): void {
   const rewards: string[] = [];
-  if (!state.phrase.stumbled) {
-    state.shared.style += contentSet.rules.phraseBonuses.clean;
+  if (!state.phrase.stumbled && !state.phrase.droppedCall) {
+    addStyle(state, contentSet.rules.phraseBonuses.clean);
     rewards.push(`clean +${contentSet.rules.phraseBonuses.clean}`);
   }
   const extraPositions = Math.max(0, state.phrase.positionsDancedFrom.length - 1);
   if (extraPositions > 0) {
     const value = extraPositions * contentSet.rules.phraseBonuses.varietyPerExtraPosition;
-    state.shared.style += value;
+    addStyle(state, value);
     rewards.push(`variety +${value}`);
   }
   if (state.phrase.flourishedBy.lead && state.phrase.flourishedBy.follow) {
-    state.shared.style += contentSet.rules.phraseBonuses.sharedFlair;
+    addStyle(state, contentSet.rules.phraseBonuses.sharedFlair);
     rewards.push(`shared flair +${contentSet.rules.phraseBonuses.sharedFlair}`);
   }
   if (state.phrase.poseOnFinalCount) {
-    state.shared.style += contentSet.rules.phraseBonuses.poseFinish;
+    addStyle(state, contentSet.rules.phraseBonuses.poseFinish);
     rewards.push(`pose finish +${contentSet.rules.phraseBonuses.poseFinish}`);
   }
   log(
@@ -500,28 +746,20 @@ function finishGame(state: GameState, contentSet: ContentSet): void {
   state.rating = rating?.name ?? contentSet.rules.ratings[0]!.name;
   state.terminalReason = "The final 8-count is complete.";
   state.checkpoint = null;
+  state.call = null;
   log(state, "system", `The song ends at ${state.finalScore} — ${state.rating}.`);
 }
 
 function endPhraseOrTurn(state: GameState, role: Role, contentSet: ContentSet): void {
-  const phraseLength = contentSet.song.cards.length / 2;
-  const phraseEnd = (state.songIndex + 1) % phraseLength === 0;
+  const phraseEnd = endsPhrase(state.songIndex, contentSet);
   if (phraseEnd) scorePhrase(state, contentSet);
+  // Every phrase ending clears the run of answered calls, the song's last one included.
+  if (phraseEnd && callRules(contentSet)?.resetAfinqueAtPhraseEnd) breakAfinque(state);
   if (state.songIndex === contentSet.song.cards.length - 1) {
     finishGame(state, contentSet);
     return;
   }
-  if (phraseEnd) {
-    state.phrase = {
-      number: 2,
-      stumbled: false,
-      positionsDancedFrom: [],
-      flourishedBy: { lead: false, follow: false },
-      poseOnFinalCount: false,
-      learnedBy: { lead: false, follow: false },
-      privateLessonTakenThisRound: false,
-    };
-  }
+  if (phraseEnd) state.phrase = emptyPhrase(2);
   startTurn(state, otherRole(role), contentSet);
 }
 
@@ -542,6 +780,9 @@ function restoreCheckpoint(state: GameState, saved: TurnCheckpoint): void {
   state.nextInstance = checkpoint.nextInstance;
   state.turnDance = checkpoint.turnDance;
   state.signal = null;
+  // Unlike the signal: the call standing over you is your partner's and not yours to undo. The
+  // call you made this turn lives in the same field, so the checkpoint un-makes exactly that.
+  state.call = checkpoint.call;
   state.phase = "dance";
 }
 
@@ -750,6 +991,55 @@ function checkTransition(
   };
 }
 
+/**
+ * Taking the hold on an empty floor, or adjusting an established one: one Position card alone,
+ * played before you dance, in exchange for the song card's bonus this 8-count.
+ */
+function checkAdjust(
+  state: GameState,
+  { role, positionInstanceId }: ActionOf<"ADJUST">,
+  contentSet: ContentSet,
+): Effect {
+  checkTurn(state, role);
+  checkDanceCardStep(state);
+  fail(
+    state.turnDance.cardsPlayed === 0,
+    "ADJUST_AFTER_PLAY",
+    "Find the frame before you dance, not after.",
+  );
+  fail(
+    state.turnDance.positionsPlayed < contentSet.rules.danceLimits.positions,
+    "POSITION_LIMIT",
+    "The Position limit for this turn has been reached.",
+  );
+  const nextPosition = positionFor(
+    contentSet,
+    instanceFromHand(state.players[role], positionInstanceId),
+  );
+  const previousPosition = state.table.position
+    ? positionFor(contentSet, state.table.position)
+    : null;
+  fail(previousPosition !== nextPosition, "SAME_POSITION", `The floor is already ${nextPosition}.`);
+  return (state) => {
+    if (state.table.position)
+      state.players[state.table.position.owner].discardPile.push(state.table.position);
+    state.table.position = removeFromHand(state.players[role], positionInstanceId);
+    state.turnDance.cardsPlayed += 1;
+    state.turnDance.positionsPlayed += 1;
+    state.turnDance.hold = previousPosition === null ? "taken" : "adjusted";
+    // Taking the hold on an empty floor changes no room, just as opening the dance does not.
+    state.turnDance.changedPosition ||= previousPosition !== null;
+    log(
+      state,
+      "dance",
+      previousPosition === null
+        ? `${roleName(role)} takes the hold in ${nextPosition}.`
+        : `${roleName(role)} adjusts the hold to ${nextPosition}.`,
+      role,
+    );
+  };
+}
+
 function checkPlayFlourish(
   state: GameState,
   { role, flourishInstanceId }: ActionOf<"PLAY_FLOURISH">,
@@ -775,7 +1065,7 @@ function checkPlayFlourish(
   );
   return (state) => {
     state.table.flourish = removeFromHand(state.players[role], flourishInstanceId);
-    state.shared.style += flourish.style;
+    addStyle(state, flourish.style);
     state.turnDance.cardsPlayed += 1;
     state.turnDance.flourished = true;
     state.turnDance.posePlayed = flourish.pose;
@@ -795,12 +1085,56 @@ function checkPlayFlourish(
 
 function checkEndDance(
   state: GameState,
-  { role }: ActionOf<"END_DANCE">,
+  { role, callId }: ActionOf<"END_DANCE">,
   contentSet: ContentSet,
 ): Effect {
   checkTurn(state, role);
   fail(state.phase === "dance", "WRONG_PHASE", "The dance step is already complete.");
-  return (state) => finishDance(state, role, contentSet);
+  if (callId !== null) {
+    fail(callRules(contentSet), "NO_CALLS", "This dance has no calls to make.");
+    fail(callDefinition(contentSet, callId), "UNKNOWN_CALL", "That is not one of the calls.");
+    fail(
+      !endsPhrase(state.songIndex, contentSet),
+      "NO_CALL_WINDOW",
+      "The phrase ends here. There is nothing to call into.",
+    );
+    // No call crosses a phrase ending, so no call ever stands over an empty floor.
+    fail(
+      state.table.position,
+      "NO_FLOOR",
+      "You cannot ask for something from a floor you did not leave.",
+    );
+  }
+  return (state) => finishDance(state, role, contentSet, callId);
+}
+
+/**
+ * Covering the call standing over you: one Recovery card, discarded, and the call is gone. A
+ * Recovery card's printed Connection cost is a stumble's price, not a cover's.
+ */
+function checkCoverCall(
+  state: GameState,
+  { role, recoveryInstanceId }: ActionOf<"COVER_CALL">,
+  contentSet: ContentSet,
+): Effect {
+  checkTurn(state, role);
+  checkDanceCardStep(state);
+  const standing = standingCall(state);
+  fail(standing, "NO_CALL_STANDING", "There is no call standing over your 8-count.");
+  const recovery = card(
+    contentSet,
+    instanceFromHand(state.players[role], recoveryInstanceId).cardId,
+  );
+  fail(recovery.type === "recovery", "NOT_RECOVERY", "Choose a Recovery card.");
+  const name = callDefinition(contentSet, standing.callId)?.name ?? standing.callId;
+  return (state) => {
+    const player = state.players[role];
+    player.discardPile.push(removeFromHand(player, recoveryInstanceId));
+    state.call = null;
+    state.turnDance.callCovered = true;
+    breakAfinque(state);
+    log(state, "call", `${roleName(role)} covers ${name} with ${recovery.name}.`, role);
+  };
 }
 
 function checkStumble(
@@ -831,19 +1165,19 @@ function checkStumble(
     addConnection(state, -connectionCost, contentSet);
     state.turnDance.stumbled = true;
     state.phrase.stumbled = true;
+    // A stumble drops the call standing over you without the dropped call's own cost.
+    if (standingCall(state)) {
+      state.turnDance.callDropped = true;
+      state.phrase.droppedCall = true;
+    }
+    state.call = null;
+    breakAfinque(state);
     log(state, "dance", `${roleName(role)} stumbles and loses ${connectionCost} Connection.`, role);
     if (state.shared.connection === 0) {
-      recordDanceCombo(state, role, contentSet);
-      state.status = "lost";
-      state.phase = "terminal";
-      state.terminalReason = "Connection reached 0.";
-      state.finalScore = state.shared.style;
-      state.rating = null;
-      state.checkpoint = null;
-      log(state, "system", "The connection breaks. The dance is over.");
+      endInConnectionLoss(state, role, contentSet, null);
       return;
     }
-    finishDance(state, role, contentSet);
+    finishDance(state, role, contentSet, null);
   };
 }
 
@@ -900,7 +1234,10 @@ function checkBuyLesson(
       state.phrase.privateLessonTakenThisRound = true;
     }
     player.money -= cost;
-    player.discardPile.push(newOwnedInstance(state, role, cardId));
+    const learned = newOwnedInstance(state, role, cardId);
+    // You just learned it and you want to use it, so a private lesson is your next draw.
+    if (contentSet.rules.lessonToDrawTop?.[source]) player.drawPile.unshift(learned);
+    else player.discardPile.push(learned);
     state.turnDance.boughtLesson = true;
     log(state, "lesson", `${roleName(role)} learns ${lesson.name}.`, role);
   };
@@ -983,10 +1320,14 @@ function checkAction(state: GameState, action: GameAction, contentSet: ContentSe
       return checkPlayMove(state, action, contentSet);
     case "TRANSITION":
       return checkTransition(state, action, contentSet);
+    case "ADJUST":
+      return checkAdjust(state, action, contentSet);
     case "PLAY_FLOURISH":
       return checkPlayFlourish(state, action, contentSet);
     case "END_DANCE":
       return checkEndDance(state, action, contentSet);
+    case "COVER_CALL":
+      return checkCoverCall(state, action, contentSet);
     case "STUMBLE":
       return checkStumble(state, action, contentSet);
     case "BUY_LESSON":
@@ -1027,14 +1368,19 @@ export function applyAction(
   }
 }
 
-/** The reducer's failure code for `action`, or null when the check accepts it. */
+/**
+ * The reducer's failure code for `action`, or null when the check accepts it. It parses first
+ * for the same reason the reducer does: an action is only the action its defaults fill in.
+ */
 export function refusalCode(
   state: GameState,
   action: GameAction,
   contentSet: ContentSet = defaultContent,
 ): string | null {
+  const parsed = GameActionSchema.safeParse(action);
+  if (!parsed.success) return "INVALID_ACTION";
   try {
-    checkAction(state, action, contentSet);
+    checkAction(state, parsed.data, contentSet);
     return null;
   } catch (error) {
     if (error instanceof RuleViolation) return error.code;
@@ -1065,12 +1411,18 @@ function candidateActions(state: GameState, role: Role, contentSet: ContentSet):
     for (const moveInstanceId of hand) candidates.push({ type: "PLAY_MOVE", role, moveInstanceId });
     for (const positionInstanceId of hand)
       candidates.push({ type: "TRANSITION", role, positionInstanceId });
+    for (const positionInstanceId of hand)
+      candidates.push({ type: "ADJUST", role, positionInstanceId });
     for (const flourishInstanceId of hand)
       candidates.push({ type: "PLAY_FLOURISH", role, flourishInstanceId });
     candidates.push({ type: "STUMBLE", role, recoveryInstanceId: null });
     for (const recoveryInstanceId of hand)
       candidates.push({ type: "STUMBLE", role, recoveryInstanceId });
-    candidates.push({ type: "END_DANCE", role });
+    for (const recoveryInstanceId of hand)
+      candidates.push({ type: "COVER_CALL", role, recoveryInstanceId });
+    candidates.push({ type: "END_DANCE", role, callId: null });
+    for (const option of contentSet.rules.call?.options ?? [])
+      candidates.push({ type: "END_DANCE", role, callId: option.id });
   }
   if (state.phase === "lesson") {
     for (const cardId of contentSet.decks.beginnerSupply)

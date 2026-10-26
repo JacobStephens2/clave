@@ -17,8 +17,14 @@ while (envelope.state.status === "setup" || envelope.state.status === "playing")
     `\n${role.toUpperCase()} · ${view.phase} · Count ${Math.max(0, view.songIndex + 1)}/16`,
   );
   console.log(
-    `Connection ${view.shared.connection} · Style ${view.shared.style} · $${view.self.money}`,
+    `Connection ${view.shared.connection} · Style ${view.shared.style} · Afinque ${view.afinque.links}/${view.afinque.cap} · $${view.self.money}`,
   );
+  if (view.call)
+    console.log(
+      `Called: ${view.call.name} — ${view.call.ask} · ${view.call.style} Style${
+        view.call.inPocket ? " · in the pocket" : ""
+      } · ${view.call.met ? "met" : "not met yet"}`,
+    );
   console.log(
     `Hand: ${view.self.hand.map((entry, index) => `${index + 1}. ${entry.card.name}`).join(" · ")}`,
   );

@@ -18,6 +18,10 @@ export default defineConfig({
       command: "npm run dev -w @clave/server",
       url: "http://127.0.0.1:8787/healthz",
       reuseExistingServer: !process.env.CI,
+      // Rooms a run leaves unfinished hold their place for 72 hours, and only fifty may be
+      // open at once — enough runs against a stored database and every online spec fails
+      // with "The dance floor is full". The suite dances on a floor it sweeps every time.
+      env: { CLAVE_DB_PATH: ":memory:" },
     },
     {
       command: "npm run dev -w @clave/client -- --host 127.0.0.1",

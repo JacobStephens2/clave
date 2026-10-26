@@ -3,14 +3,32 @@ import { readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 import type { MiddlewareHandler } from "hono";
 
+/**
+ * Every type this server is prepared to serve: art, audio, fonts, source maps, and the
+ * documents. It is deliberately wider than what the client ships today — the audio and font
+ * rows are here so a soundtrack or a self-hosted face cannot arrive as a download — and the
+ * test beside it holds the other end: every extension the build does emit has a row.
+ */
 const mimeTypes: Record<string, string> = {
   ".css": "text/css; charset=utf-8",
   ".html": "text/html; charset=utf-8",
+  ".ico": "image/x-icon",
+  ".jpeg": "image/jpeg",
+  ".jpg": "image/jpeg",
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json",
+  ".m4a": "audio/mp4",
+  ".map": "application/json",
+  ".mp3": "audio/mpeg",
+  ".ogg": "audio/ogg",
   ".png": "image/png",
   ".svg": "image/svg+xml",
+  ".ttf": "font/ttf",
+  ".txt": "text/plain; charset=utf-8",
   ".webmanifest": "application/manifest+json",
+  ".webp": "image/webp",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
 };
 
 /** Serves the built client. HTML responses carry script-src 'self'. */

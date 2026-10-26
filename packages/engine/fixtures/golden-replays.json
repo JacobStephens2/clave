@@ -4,9 +4,9 @@
     "seed": 101,
     "strategy": "basic",
     "ending": "completed",
-    "engineVersion": 5,
-    "contentHash": "c7a2a3a9b6c7b0d24e4ec943dfbf9983cabd1acf629354400f02cf3d319c5a66",
-    "contentBytes": "{\"cards\":[{\"id\":\"pos_001\",\"name\":\"Open Position\",\"position\":\"Open\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_002\",\"name\":\"Closed Position\",\"position\":\"Closed\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_003\",\"name\":\"Half-Open Position\",\"position\":\"Half-Open\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"pos_004\",\"name\":\"Half-Closed Position\",\"position\":\"Half-Closed\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"mov_001\",\"name\":\"Follow Right Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_002\",\"name\":\"Follow Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_003\",\"name\":\"Lead Right Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_004\",\"name\":\"Lead Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_005\",\"name\":\"Cross Body Lead — Open\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_013\",\"name\":\"Cross Body Lead — Closed\",\"positions\":[\"Closed\",\"Half-Closed\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_006\",\"name\":\"Hesitation\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_007\",\"name\":\"Cross Body Lead — Inside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_008\",\"name\":\"Cross Body Lead — Outside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_009\",\"name\":\"New York Walk\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_010\",\"name\":\"Change of Place (Enchufla)\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_011\",\"name\":\"Sombrero\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"mov_012\",\"name\":\"Follow Double Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"flo_001\",\"name\":\"Arm Overhead (Lead)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_002\",\"name\":\"Arm Overhead (Follow)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_003\",\"name\":\"Hand Twist\",\"pose\":false,\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"flourish\"},{\"id\":\"flo_004\",\"name\":\"Dip\",\"pose\":true,\"positions\":[\"Closed\"],\"style\":3,\"tier\":\"A\",\"type\":\"flourish\"},{\"connectionCost\":1,\"id\":\"rec_001\",\"name\":\"Return to Basic\",\"tier\":\"B\",\"type\":\"recovery\"},{\"connectionCost\":0,\"id\":\"rec_002\",\"name\":\"Reconnect\",\"tier\":\"I\",\"type\":\"recovery\"}],\"decks\":{\"advanced\":[{\"cardId\":\"mov_011\",\"count\":2},{\"cardId\":\"mov_012\",\"count\":2},{\"cardId\":\"flo_004\",\"count\":2}],\"beginnerSupply\":[\"pos_001\",\"pos_002\",\"mov_001\",\"mov_002\",\"mov_003\",\"mov_004\",\"mov_005\",\"mov_013\",\"mov_006\",\"flo_003\",\"rec_001\"],\"full\":{\"follow\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_003\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":2},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_007\",\"count\":1},{\"cardId\":\"mov_009\",\"count\":1},{\"cardId\":\"flo_002\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1},{\"cardId\":\"flo_004\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}],\"lead\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_004\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":2},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_005\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"mov_006\",\"count\":1},{\"cardId\":\"mov_008\",\"count\":1},{\"cardId\":\"mov_010\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}]},\"intermediate\":[{\"cardId\":\"pos_003\",\"count\":3},{\"cardId\":\"pos_004\",\"count\":3},{\"cardId\":\"mov_007\",\"count\":2},{\"cardId\":\"mov_008\",\"count\":2},{\"cardId\":\"mov_009\",\"count\":2},{\"cardId\":\"mov_010\",\"count\":2},{\"cardId\":\"flo_001\",\"count\":2},{\"cardId\":\"flo_002\",\"count\":2},{\"cardId\":\"rec_002\",\"count\":2}],\"starter\":[{\"cardId\":\"pos_001\",\"count\":2},{\"cardId\":\"pos_002\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":1},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":1},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1}]},\"rules\":{\"danceLimits\":{\"flourishes\":1,\"moves\":1,\"positions\":2},\"handSize\":4,\"incomePerTurn\":1,\"initialConnection\":4,\"initialStyle\":0,\"lessonCosts\":{\"advanced\":3,\"beginner\":1,\"intermediate\":2},\"maximumConnection\":10,\"phraseBonuses\":{\"clean\":3,\"poseFinish\":3,\"sharedFlair\":2,\"varietyPerExtraPosition\":1},\"ratings\":[{\"description\":\"You survived, and that's salsa too.\",\"minimum\":0,\"name\":\"First Timers\"},{\"description\":\"The floor is starting to feel like home.\",\"minimum\":20,\"name\":\"Social Dancers\"},{\"description\":\"People know to make room when you arrive.\",\"minimum\":30,\"name\":\"Regulars of the Social\"},{\"description\":\"The room felt every break with you.\",\"minimum\":40,\"name\":\"Crowd Favorites\"},{\"description\":\"A polished, fearless partnership.\",\"minimum\":50,\"name\":\"Festival Performers\"},{\"description\":\"You didn't follow the song. You spoke with it.\",\"minimum\":60,\"name\":\"Soneros of the Floor\"}],\"startingMoney\":0,\"stumble\":{\"defaultConnectionCost\":2}},\"song\":{\"artist\":\"Oscar D'León\",\"cards\":[{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtMost\",\"value\":2},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play a Move worth 2 Style or less\",\"id\":\"song_001\",\"moment\":\"Verse 1\",\"number\":1,\"section\":\"Cuerpo\",\"title\":\"Settle in\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\"]},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from Open\",\"id\":\"song_002\",\"moment\":\"Verse 1\",\"number\":2,\"section\":\"Cuerpo\",\"title\":\"Open invitation\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Flourish\",\"id\":\"song_003\",\"moment\":\"Horns\",\"number\":3,\"section\":\"Cuerpo\",\"title\":\"Catch the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":2},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is worth 2+ Style\",\"id\":\"song_004\",\"moment\":\"Horns\",\"number\":4,\"section\":\"Cuerpo\",\"title\":\"Make it count\"},{\"bonuses\":[{\"condition\":{\"op\":\"noPositionPlayed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play no Position card\",\"id\":\"song_005\",\"moment\":\"Verse 2\",\"number\":5,\"section\":\"Cuerpo\",\"title\":\"Stay close\"},{\"bonuses\":[{\"condition\":{\"op\":\"samePositionAsPreviousMove\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from the same position as the previous Move\",\"id\":\"song_006\",\"moment\":\"Verse 2\",\"number\":6,\"section\":\"Cuerpo\",\"title\":\"Hold the thread\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Flourish\",\"id\":\"song_007\",\"moment\":\"Horns\",\"number\":7,\"section\":\"Cuerpo\",\"title\":\"Answer the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"endsInPosition\",\"position\":\"Closed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if this 8-count ends in Closed\",\"id\":\"song_008\",\"moment\":\"Verse 3\",\"number\":8,\"section\":\"Cuerpo\",\"title\":\"Verse's end\"},{\"bonuses\":[{\"condition\":{\"op\":\"positionChanged\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you change position this 8-count\",\"id\":\"song_009\",\"moment\":\"Puente\",\"number\":9,\"section\":\"Montuno\",\"title\":\"Cross the bridge\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMoveGame\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Move your partner has played this game\",\"id\":\"song_010\",\"moment\":\"Puente\",\"number\":10,\"section\":\"Montuno\",\"title\":\"Echo\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if your Move is worth 3+ Style\",\"id\":\"song_011\",\"moment\":\"Mambo\",\"number\":11,\"section\":\"Montuno\",\"title\":\"Bring the mambo\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Flourish\",\"id\":\"song_012\",\"moment\":\"Mambo\",\"number\":12,\"section\":\"Montuno\",\"title\":\"Shine\"},{\"bonuses\":[{\"condition\":{\"op\":\"cardsPlayedAtLeast\",\"value\":3},\"effect\":{\"connection\":1,\"style\":1}}],\"description\":\"+1 Style and +1 Connection if you play 3+ cards\",\"id\":\"song_013\",\"moment\":\"Mambo\",\"number\":13,\"section\":\"Montuno\",\"title\":\"In full swing\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Move your partner played earlier this phrase\",\"id\":\"song_014\",\"moment\":\"Pregón\",\"number\":14,\"section\":\"Montuno\",\"title\":\"Call\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Half-Open\",\"Half-Closed\"]},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if your Move is danced from Half-Open or Half-Closed\",\"id\":\"song_015\",\"moment\":\"Coro\",\"number\":15,\"section\":\"Montuno\",\"title\":\"Response\"},{\"bonuses\":[{\"condition\":{\"op\":\"posePlayed\"},\"effect\":{\"connection\":0,\"style\":3}},{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+3 Style if you play a Pose; otherwise +1 Style if you play a Flourish\",\"id\":\"song_016\",\"moment\":\"Coro\",\"number\":16,\"section\":\"Montuno\",\"title\":\"Big finish\"}],\"id\":\"lloraras\",\"title\":\"Llorarás\"},\"version\":1}",
+    "engineVersion": 6,
+    "contentHash": "65be07e208ebcb06b8a8f0492babfa227934fd2f4962885fb626d241c49b6ec3",
+    "contentBytes": "{\"cards\":[{\"id\":\"pos_001\",\"name\":\"Open Position\",\"position\":\"Open\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_002\",\"name\":\"Closed Position\",\"position\":\"Closed\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_003\",\"name\":\"Half-Open Position\",\"position\":\"Half-Open\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"pos_004\",\"name\":\"Half-Closed Position\",\"position\":\"Half-Closed\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"mov_001\",\"name\":\"Follow Right Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_002\",\"name\":\"Follow Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_003\",\"name\":\"Lead Right Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_004\",\"name\":\"Lead Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_005\",\"name\":\"Cross Body Lead — Open\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_013\",\"name\":\"Cross Body Lead — Closed\",\"positions\":[\"Closed\",\"Half-Closed\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_006\",\"name\":\"Hesitation\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_007\",\"name\":\"Cross Body Lead — Inside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_008\",\"name\":\"Cross Body Lead — Outside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_009\",\"name\":\"New York Walk\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_010\",\"name\":\"Change of Place (Enchufla)\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_011\",\"name\":\"Sombrero\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"mov_012\",\"name\":\"Follow Double Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"flo_001\",\"name\":\"Arm Overhead (Lead)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_002\",\"name\":\"Arm Overhead (Follow)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_003\",\"name\":\"Hand Twist\",\"pose\":false,\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"flourish\"},{\"id\":\"flo_004\",\"name\":\"Dip\",\"pose\":true,\"positions\":[\"Closed\"],\"style\":3,\"tier\":\"A\",\"type\":\"flourish\"},{\"id\":\"flo_005\",\"name\":\"Ponche\",\"pose\":true,\"positions\":\"any\",\"style\":0,\"tier\":\"B\",\"type\":\"flourish\"},{\"connectionCost\":1,\"id\":\"rec_001\",\"name\":\"Return to Basic\",\"tier\":\"B\",\"type\":\"recovery\"},{\"connectionCost\":0,\"id\":\"rec_002\",\"name\":\"Reconnect\",\"tier\":\"I\",\"type\":\"recovery\"}],\"decks\":{\"advanced\":[{\"cardId\":\"mov_011\",\"count\":2},{\"cardId\":\"mov_012\",\"count\":2},{\"cardId\":\"flo_004\",\"count\":2}],\"beginnerSupply\":[\"pos_001\",\"pos_002\",\"mov_001\",\"mov_002\",\"mov_003\",\"mov_004\",\"mov_005\",\"mov_013\",\"mov_006\",\"flo_003\",\"flo_005\",\"rec_001\"],\"full\":{\"follow\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_003\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":2},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_007\",\"count\":1},{\"cardId\":\"mov_009\",\"count\":1},{\"cardId\":\"flo_002\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1},{\"cardId\":\"flo_004\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}],\"lead\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_004\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":2},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_005\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"mov_006\",\"count\":1},{\"cardId\":\"mov_008\",\"count\":1},{\"cardId\":\"mov_010\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}]},\"intermediate\":[{\"cardId\":\"pos_003\",\"count\":3},{\"cardId\":\"pos_004\",\"count\":3},{\"cardId\":\"mov_007\",\"count\":2},{\"cardId\":\"mov_008\",\"count\":2},{\"cardId\":\"mov_009\",\"count\":2},{\"cardId\":\"mov_010\",\"count\":2},{\"cardId\":\"flo_001\",\"count\":2},{\"cardId\":\"flo_002\",\"count\":2},{\"cardId\":\"rec_002\",\"count\":2}],\"starter\":[{\"cardId\":\"pos_001\",\"count\":2},{\"cardId\":\"pos_002\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":1},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1}]},\"rules\":{\"call\":{\"afinqueBonus\":[0,0,1,1,2],\"inPocketStyle\":1,\"missConnectionCost\":1,\"options\":[{\"ask\":\"dance a Move — any Move\",\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":0},\"id\":\"call_001\",\"name\":\"Stay with me\",\"style\":0},{\"ask\":\"dance your Move from Open or Half-Open\",\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\",\"Half-Open\"]},\"id\":\"call_002\",\"name\":\"Open it up\",\"style\":1},{\"ask\":\"change the position during your 8-count\",\"condition\":{\"op\":\"positionChanged\"},\"id\":\"call_003\",\"name\":\"Change the room\",\"style\":3},{\"ask\":\"dance a Move I have already danced this phrase\",\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"id\":\"call_004\",\"name\":\"Echo me\",\"style\":2},{\"ask\":\"dance your Move from Closed or Half-Closed\",\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Closed\",\"Half-Closed\"]},\"id\":\"call_005\",\"name\":\"Stay close\",\"style\":4},{\"ask\":\"include a Flourish\",\"condition\":{\"op\":\"flourishPlayed\"},\"id\":\"call_006\",\"name\":\"Style it\",\"style\":4},{\"ask\":\"dance a Move worth 3 Style or more\",\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"id\":\"call_007\",\"name\":\"Show me something\",\"style\":8}],\"resetAfinqueAtPhraseEnd\":true},\"danceLimits\":{\"flourishes\":1,\"moves\":1,\"positions\":2},\"handSize\":4,\"incomePerTurn\":1,\"initialConnection\":4,\"initialStyle\":0,\"lessonCosts\":{\"advanced\":3,\"beginner\":1,\"intermediate\":2},\"lessonToDrawTop\":{\"advanced\":true,\"beginner\":false,\"intermediate\":true},\"maximumConnection\":10,\"phraseBonuses\":{\"clean\":3,\"poseFinish\":4,\"sharedFlair\":2,\"varietyPerExtraPosition\":1},\"ratings\":[{\"description\":\"You survived, and that's salsa too.\",\"minimum\":0,\"name\":\"First Timers\"},{\"description\":\"The floor is starting to feel like home.\",\"minimum\":36,\"name\":\"Social Dancers\"},{\"description\":\"People know to make room when you arrive.\",\"minimum\":50,\"name\":\"Regulars of the Social\"},{\"description\":\"The room felt every break with you.\",\"minimum\":60,\"name\":\"Crowd Favorites\"},{\"description\":\"A polished, fearless partnership.\",\"minimum\":70,\"name\":\"Festival Performers\"},{\"description\":\"You didn't follow the song. You spoke with it.\",\"minimum\":82,\"name\":\"Soneros of the Floor\"}],\"startingMoney\":0,\"stumble\":{\"defaultConnectionCost\":2}},\"song\":{\"artist\":\"Oscar D'León\",\"cards\":[{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtMost\",\"value\":2},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play a Move worth 2 Style or less\",\"favouredCall\":\"call_001\",\"id\":\"song_001\",\"moment\":\"Verse 1\",\"number\":1,\"section\":\"Cuerpo\",\"title\":\"Settle in\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\"]},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from Open\",\"favouredCall\":\"call_002\",\"id\":\"song_002\",\"moment\":\"Verse 1\",\"number\":2,\"section\":\"Cuerpo\",\"title\":\"Open invitation\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if you play a Flourish\",\"favouredCall\":\"call_003\",\"id\":\"song_003\",\"moment\":\"Horns\",\"number\":3,\"section\":\"Cuerpo\",\"title\":\"Catch the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":2},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is worth 2+ Style\",\"favouredCall\":\"call_002\",\"id\":\"song_004\",\"moment\":\"Horns\",\"number\":4,\"section\":\"Cuerpo\",\"title\":\"Make it count\"},{\"bonuses\":[{\"condition\":{\"op\":\"noPositionPlayed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play no Position card\",\"favouredCall\":\"call_005\",\"id\":\"song_005\",\"moment\":\"Verse 2\",\"number\":5,\"section\":\"Cuerpo\",\"title\":\"Stay close\"},{\"bonuses\":[{\"condition\":{\"op\":\"samePositionAsPreviousMove\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from the same position as the previous Move\",\"favouredCall\":\"call_004\",\"id\":\"song_006\",\"moment\":\"Verse 2\",\"number\":6,\"section\":\"Cuerpo\",\"title\":\"Hold the thread\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if you play a Flourish\",\"favouredCall\":\"call_006\",\"id\":\"song_007\",\"moment\":\"Horns\",\"number\":7,\"section\":\"Cuerpo\",\"title\":\"Answer the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"endsInPosition\",\"position\":\"Closed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if this 8-count ends in Closed\",\"id\":\"song_008\",\"moment\":\"Verse 3\",\"number\":8,\"section\":\"Cuerpo\",\"title\":\"Verse's end\"},{\"bonuses\":[{\"condition\":{\"op\":\"positionChanged\"},\"effect\":{\"connection\":1,\"style\":1}}],\"description\":\"+1 Style and +1 Connection if you change position this 8-count\",\"favouredCall\":\"call_003\",\"id\":\"song_009\",\"moment\":\"Puente\",\"number\":9,\"section\":\"Montuno\",\"title\":\"Cross the bridge\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMoveGame\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Move your partner has played this game\",\"favouredCall\":\"call_004\",\"id\":\"song_010\",\"moment\":\"Puente\",\"number\":10,\"section\":\"Montuno\",\"title\":\"Echo\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"effect\":{\"connection\":0,\"style\":6}}],\"description\":\"+6 Style if your Move is worth 3+ Style\",\"favouredCall\":\"call_007\",\"id\":\"song_011\",\"moment\":\"Mambo\",\"number\":11,\"section\":\"Montuno\",\"title\":\"Bring the mambo\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Flourish\",\"favouredCall\":\"call_006\",\"id\":\"song_012\",\"moment\":\"Mambo\",\"number\":12,\"section\":\"Montuno\",\"title\":\"Shine\"},{\"bonuses\":[{\"condition\":{\"op\":\"cardsPlayedAtLeast\",\"value\":3},\"effect\":{\"connection\":1,\"style\":3}}],\"description\":\"+3 Style and +1 Connection if you play 3+ cards\",\"favouredCall\":\"call_004\",\"id\":\"song_013\",\"moment\":\"Mambo\",\"number\":13,\"section\":\"Montuno\",\"title\":\"In full swing\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Move your partner played earlier this phrase\",\"favouredCall\":\"call_006\",\"id\":\"song_014\",\"moment\":\"Pregón\",\"number\":14,\"section\":\"Montuno\",\"title\":\"Call\"},{\"bonuses\":[{\"condition\":{\"op\":\"answeredCall\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you answer the call standing over you\",\"favouredCall\":\"call_006\",\"id\":\"song_015\",\"moment\":\"Coro\",\"number\":15,\"section\":\"Montuno\",\"title\":\"Response\"},{\"bonuses\":[{\"condition\":{\"op\":\"posePlayed\"},\"effect\":{\"connection\":0,\"style\":7}},{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":3}}],\"description\":\"+7 Style if you play a Pose; otherwise +3 Style if you play a Flourish\",\"id\":\"song_016\",\"moment\":\"Coro\",\"number\":16,\"section\":\"Montuno\",\"title\":\"Big finish\"}],\"id\":\"lloraras\",\"title\":\"Llorarás\"},\"version\":1}",
     "actions": [
       {
         "type": "CONFIRM_HAND",
@@ -18,7 +18,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -26,7 +27,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -34,7 +36,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -42,7 +45,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -50,7 +54,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -58,7 +63,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -66,7 +72,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -74,7 +81,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -82,7 +90,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -90,7 +99,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -98,7 +108,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -106,7 +117,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -114,7 +126,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -122,7 +135,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -130,7 +144,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -138,23 +153,24 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
         "role": "follow"
       }
     ],
-    "expectedStateHash": "29869f0d75cc75647e749800aadf5c7f7f525e2163bd67eb79bc0481dc947b78"
+    "expectedStateHash": "09af523f9da9544d0b6a4a16ec4f37e707037468421717bc9eb20a41f41333ec"
   },
   {
     "id": "basic-202",
     "seed": 202,
     "strategy": "basic",
     "ending": "completed",
-    "engineVersion": 5,
-    "contentHash": "c7a2a3a9b6c7b0d24e4ec943dfbf9983cabd1acf629354400f02cf3d319c5a66",
-    "contentBytes": "{\"cards\":[{\"id\":\"pos_001\",\"name\":\"Open Position\",\"position\":\"Open\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_002\",\"name\":\"Closed Position\",\"position\":\"Closed\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_003\",\"name\":\"Half-Open Position\",\"position\":\"Half-Open\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"pos_004\",\"name\":\"Half-Closed Position\",\"position\":\"Half-Closed\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"mov_001\",\"name\":\"Follow Right Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_002\",\"name\":\"Follow Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_003\",\"name\":\"Lead Right Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_004\",\"name\":\"Lead Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_005\",\"name\":\"Cross Body Lead — Open\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_013\",\"name\":\"Cross Body Lead — Closed\",\"positions\":[\"Closed\",\"Half-Closed\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_006\",\"name\":\"Hesitation\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_007\",\"name\":\"Cross Body Lead — Inside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_008\",\"name\":\"Cross Body Lead — Outside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_009\",\"name\":\"New York Walk\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_010\",\"name\":\"Change of Place (Enchufla)\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_011\",\"name\":\"Sombrero\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"mov_012\",\"name\":\"Follow Double Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"flo_001\",\"name\":\"Arm Overhead (Lead)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_002\",\"name\":\"Arm Overhead (Follow)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_003\",\"name\":\"Hand Twist\",\"pose\":false,\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"flourish\"},{\"id\":\"flo_004\",\"name\":\"Dip\",\"pose\":true,\"positions\":[\"Closed\"],\"style\":3,\"tier\":\"A\",\"type\":\"flourish\"},{\"connectionCost\":1,\"id\":\"rec_001\",\"name\":\"Return to Basic\",\"tier\":\"B\",\"type\":\"recovery\"},{\"connectionCost\":0,\"id\":\"rec_002\",\"name\":\"Reconnect\",\"tier\":\"I\",\"type\":\"recovery\"}],\"decks\":{\"advanced\":[{\"cardId\":\"mov_011\",\"count\":2},{\"cardId\":\"mov_012\",\"count\":2},{\"cardId\":\"flo_004\",\"count\":2}],\"beginnerSupply\":[\"pos_001\",\"pos_002\",\"mov_001\",\"mov_002\",\"mov_003\",\"mov_004\",\"mov_005\",\"mov_013\",\"mov_006\",\"flo_003\",\"rec_001\"],\"full\":{\"follow\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_003\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":2},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_007\",\"count\":1},{\"cardId\":\"mov_009\",\"count\":1},{\"cardId\":\"flo_002\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1},{\"cardId\":\"flo_004\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}],\"lead\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_004\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":2},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_005\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"mov_006\",\"count\":1},{\"cardId\":\"mov_008\",\"count\":1},{\"cardId\":\"mov_010\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}]},\"intermediate\":[{\"cardId\":\"pos_003\",\"count\":3},{\"cardId\":\"pos_004\",\"count\":3},{\"cardId\":\"mov_007\",\"count\":2},{\"cardId\":\"mov_008\",\"count\":2},{\"cardId\":\"mov_009\",\"count\":2},{\"cardId\":\"mov_010\",\"count\":2},{\"cardId\":\"flo_001\",\"count\":2},{\"cardId\":\"flo_002\",\"count\":2},{\"cardId\":\"rec_002\",\"count\":2}],\"starter\":[{\"cardId\":\"pos_001\",\"count\":2},{\"cardId\":\"pos_002\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":1},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":1},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1}]},\"rules\":{\"danceLimits\":{\"flourishes\":1,\"moves\":1,\"positions\":2},\"handSize\":4,\"incomePerTurn\":1,\"initialConnection\":4,\"initialStyle\":0,\"lessonCosts\":{\"advanced\":3,\"beginner\":1,\"intermediate\":2},\"maximumConnection\":10,\"phraseBonuses\":{\"clean\":3,\"poseFinish\":3,\"sharedFlair\":2,\"varietyPerExtraPosition\":1},\"ratings\":[{\"description\":\"You survived, and that's salsa too.\",\"minimum\":0,\"name\":\"First Timers\"},{\"description\":\"The floor is starting to feel like home.\",\"minimum\":20,\"name\":\"Social Dancers\"},{\"description\":\"People know to make room when you arrive.\",\"minimum\":30,\"name\":\"Regulars of the Social\"},{\"description\":\"The room felt every break with you.\",\"minimum\":40,\"name\":\"Crowd Favorites\"},{\"description\":\"A polished, fearless partnership.\",\"minimum\":50,\"name\":\"Festival Performers\"},{\"description\":\"You didn't follow the song. You spoke with it.\",\"minimum\":60,\"name\":\"Soneros of the Floor\"}],\"startingMoney\":0,\"stumble\":{\"defaultConnectionCost\":2}},\"song\":{\"artist\":\"Oscar D'León\",\"cards\":[{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtMost\",\"value\":2},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play a Move worth 2 Style or less\",\"id\":\"song_001\",\"moment\":\"Verse 1\",\"number\":1,\"section\":\"Cuerpo\",\"title\":\"Settle in\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\"]},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from Open\",\"id\":\"song_002\",\"moment\":\"Verse 1\",\"number\":2,\"section\":\"Cuerpo\",\"title\":\"Open invitation\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Flourish\",\"id\":\"song_003\",\"moment\":\"Horns\",\"number\":3,\"section\":\"Cuerpo\",\"title\":\"Catch the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":2},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is worth 2+ Style\",\"id\":\"song_004\",\"moment\":\"Horns\",\"number\":4,\"section\":\"Cuerpo\",\"title\":\"Make it count\"},{\"bonuses\":[{\"condition\":{\"op\":\"noPositionPlayed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play no Position card\",\"id\":\"song_005\",\"moment\":\"Verse 2\",\"number\":5,\"section\":\"Cuerpo\",\"title\":\"Stay close\"},{\"bonuses\":[{\"condition\":{\"op\":\"samePositionAsPreviousMove\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from the same position as the previous Move\",\"id\":\"song_006\",\"moment\":\"Verse 2\",\"number\":6,\"section\":\"Cuerpo\",\"title\":\"Hold the thread\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Flourish\",\"id\":\"song_007\",\"moment\":\"Horns\",\"number\":7,\"section\":\"Cuerpo\",\"title\":\"Answer the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"endsInPosition\",\"position\":\"Closed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if this 8-count ends in Closed\",\"id\":\"song_008\",\"moment\":\"Verse 3\",\"number\":8,\"section\":\"Cuerpo\",\"title\":\"Verse's end\"},{\"bonuses\":[{\"condition\":{\"op\":\"positionChanged\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you change position this 8-count\",\"id\":\"song_009\",\"moment\":\"Puente\",\"number\":9,\"section\":\"Montuno\",\"title\":\"Cross the bridge\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMoveGame\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Move your partner has played this game\",\"id\":\"song_010\",\"moment\":\"Puente\",\"number\":10,\"section\":\"Montuno\",\"title\":\"Echo\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if your Move is worth 3+ Style\",\"id\":\"song_011\",\"moment\":\"Mambo\",\"number\":11,\"section\":\"Montuno\",\"title\":\"Bring the mambo\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Flourish\",\"id\":\"song_012\",\"moment\":\"Mambo\",\"number\":12,\"section\":\"Montuno\",\"title\":\"Shine\"},{\"bonuses\":[{\"condition\":{\"op\":\"cardsPlayedAtLeast\",\"value\":3},\"effect\":{\"connection\":1,\"style\":1}}],\"description\":\"+1 Style and +1 Connection if you play 3+ cards\",\"id\":\"song_013\",\"moment\":\"Mambo\",\"number\":13,\"section\":\"Montuno\",\"title\":\"In full swing\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Move your partner played earlier this phrase\",\"id\":\"song_014\",\"moment\":\"Pregón\",\"number\":14,\"section\":\"Montuno\",\"title\":\"Call\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Half-Open\",\"Half-Closed\"]},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if your Move is danced from Half-Open or Half-Closed\",\"id\":\"song_015\",\"moment\":\"Coro\",\"number\":15,\"section\":\"Montuno\",\"title\":\"Response\"},{\"bonuses\":[{\"condition\":{\"op\":\"posePlayed\"},\"effect\":{\"connection\":0,\"style\":3}},{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+3 Style if you play a Pose; otherwise +1 Style if you play a Flourish\",\"id\":\"song_016\",\"moment\":\"Coro\",\"number\":16,\"section\":\"Montuno\",\"title\":\"Big finish\"}],\"id\":\"lloraras\",\"title\":\"Llorarás\"},\"version\":1}",
+    "engineVersion": 6,
+    "contentHash": "65be07e208ebcb06b8a8f0492babfa227934fd2f4962885fb626d241c49b6ec3",
+    "contentBytes": "{\"cards\":[{\"id\":\"pos_001\",\"name\":\"Open Position\",\"position\":\"Open\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_002\",\"name\":\"Closed Position\",\"position\":\"Closed\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_003\",\"name\":\"Half-Open Position\",\"position\":\"Half-Open\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"pos_004\",\"name\":\"Half-Closed Position\",\"position\":\"Half-Closed\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"mov_001\",\"name\":\"Follow Right Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_002\",\"name\":\"Follow Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_003\",\"name\":\"Lead Right Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_004\",\"name\":\"Lead Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_005\",\"name\":\"Cross Body Lead — Open\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_013\",\"name\":\"Cross Body Lead — Closed\",\"positions\":[\"Closed\",\"Half-Closed\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_006\",\"name\":\"Hesitation\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_007\",\"name\":\"Cross Body Lead — Inside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_008\",\"name\":\"Cross Body Lead — Outside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_009\",\"name\":\"New York Walk\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_010\",\"name\":\"Change of Place (Enchufla)\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_011\",\"name\":\"Sombrero\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"mov_012\",\"name\":\"Follow Double Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"flo_001\",\"name\":\"Arm Overhead (Lead)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_002\",\"name\":\"Arm Overhead (Follow)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_003\",\"name\":\"Hand Twist\",\"pose\":false,\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"flourish\"},{\"id\":\"flo_004\",\"name\":\"Dip\",\"pose\":true,\"positions\":[\"Closed\"],\"style\":3,\"tier\":\"A\",\"type\":\"flourish\"},{\"id\":\"flo_005\",\"name\":\"Ponche\",\"pose\":true,\"positions\":\"any\",\"style\":0,\"tier\":\"B\",\"type\":\"flourish\"},{\"connectionCost\":1,\"id\":\"rec_001\",\"name\":\"Return to Basic\",\"tier\":\"B\",\"type\":\"recovery\"},{\"connectionCost\":0,\"id\":\"rec_002\",\"name\":\"Reconnect\",\"tier\":\"I\",\"type\":\"recovery\"}],\"decks\":{\"advanced\":[{\"cardId\":\"mov_011\",\"count\":2},{\"cardId\":\"mov_012\",\"count\":2},{\"cardId\":\"flo_004\",\"count\":2}],\"beginnerSupply\":[\"pos_001\",\"pos_002\",\"mov_001\",\"mov_002\",\"mov_003\",\"mov_004\",\"mov_005\",\"mov_013\",\"mov_006\",\"flo_003\",\"flo_005\",\"rec_001\"],\"full\":{\"follow\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_003\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":2},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_007\",\"count\":1},{\"cardId\":\"mov_009\",\"count\":1},{\"cardId\":\"flo_002\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1},{\"cardId\":\"flo_004\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}],\"lead\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_004\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":2},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_005\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"mov_006\",\"count\":1},{\"cardId\":\"mov_008\",\"count\":1},{\"cardId\":\"mov_010\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}]},\"intermediate\":[{\"cardId\":\"pos_003\",\"count\":3},{\"cardId\":\"pos_004\",\"count\":3},{\"cardId\":\"mov_007\",\"count\":2},{\"cardId\":\"mov_008\",\"count\":2},{\"cardId\":\"mov_009\",\"count\":2},{\"cardId\":\"mov_010\",\"count\":2},{\"cardId\":\"flo_001\",\"count\":2},{\"cardId\":\"flo_002\",\"count\":2},{\"cardId\":\"rec_002\",\"count\":2}],\"starter\":[{\"cardId\":\"pos_001\",\"count\":2},{\"cardId\":\"pos_002\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":1},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1}]},\"rules\":{\"call\":{\"afinqueBonus\":[0,0,1,1,2],\"inPocketStyle\":1,\"missConnectionCost\":1,\"options\":[{\"ask\":\"dance a Move — any Move\",\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":0},\"id\":\"call_001\",\"name\":\"Stay with me\",\"style\":0},{\"ask\":\"dance your Move from Open or Half-Open\",\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\",\"Half-Open\"]},\"id\":\"call_002\",\"name\":\"Open it up\",\"style\":1},{\"ask\":\"change the position during your 8-count\",\"condition\":{\"op\":\"positionChanged\"},\"id\":\"call_003\",\"name\":\"Change the room\",\"style\":3},{\"ask\":\"dance a Move I have already danced this phrase\",\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"id\":\"call_004\",\"name\":\"Echo me\",\"style\":2},{\"ask\":\"dance your Move from Closed or Half-Closed\",\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Closed\",\"Half-Closed\"]},\"id\":\"call_005\",\"name\":\"Stay close\",\"style\":4},{\"ask\":\"include a Flourish\",\"condition\":{\"op\":\"flourishPlayed\"},\"id\":\"call_006\",\"name\":\"Style it\",\"style\":4},{\"ask\":\"dance a Move worth 3 Style or more\",\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"id\":\"call_007\",\"name\":\"Show me something\",\"style\":8}],\"resetAfinqueAtPhraseEnd\":true},\"danceLimits\":{\"flourishes\":1,\"moves\":1,\"positions\":2},\"handSize\":4,\"incomePerTurn\":1,\"initialConnection\":4,\"initialStyle\":0,\"lessonCosts\":{\"advanced\":3,\"beginner\":1,\"intermediate\":2},\"lessonToDrawTop\":{\"advanced\":true,\"beginner\":false,\"intermediate\":true},\"maximumConnection\":10,\"phraseBonuses\":{\"clean\":3,\"poseFinish\":4,\"sharedFlair\":2,\"varietyPerExtraPosition\":1},\"ratings\":[{\"description\":\"You survived, and that's salsa too.\",\"minimum\":0,\"name\":\"First Timers\"},{\"description\":\"The floor is starting to feel like home.\",\"minimum\":36,\"name\":\"Social Dancers\"},{\"description\":\"People know to make room when you arrive.\",\"minimum\":50,\"name\":\"Regulars of the Social\"},{\"description\":\"The room felt every break with you.\",\"minimum\":60,\"name\":\"Crowd Favorites\"},{\"description\":\"A polished, fearless partnership.\",\"minimum\":70,\"name\":\"Festival Performers\"},{\"description\":\"You didn't follow the song. You spoke with it.\",\"minimum\":82,\"name\":\"Soneros of the Floor\"}],\"startingMoney\":0,\"stumble\":{\"defaultConnectionCost\":2}},\"song\":{\"artist\":\"Oscar D'León\",\"cards\":[{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtMost\",\"value\":2},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play a Move worth 2 Style or less\",\"favouredCall\":\"call_001\",\"id\":\"song_001\",\"moment\":\"Verse 1\",\"number\":1,\"section\":\"Cuerpo\",\"title\":\"Settle in\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\"]},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from Open\",\"favouredCall\":\"call_002\",\"id\":\"song_002\",\"moment\":\"Verse 1\",\"number\":2,\"section\":\"Cuerpo\",\"title\":\"Open invitation\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if you play a Flourish\",\"favouredCall\":\"call_003\",\"id\":\"song_003\",\"moment\":\"Horns\",\"number\":3,\"section\":\"Cuerpo\",\"title\":\"Catch the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":2},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is worth 2+ Style\",\"favouredCall\":\"call_002\",\"id\":\"song_004\",\"moment\":\"Horns\",\"number\":4,\"section\":\"Cuerpo\",\"title\":\"Make it count\"},{\"bonuses\":[{\"condition\":{\"op\":\"noPositionPlayed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play no Position card\",\"favouredCall\":\"call_005\",\"id\":\"song_005\",\"moment\":\"Verse 2\",\"number\":5,\"section\":\"Cuerpo\",\"title\":\"Stay close\"},{\"bonuses\":[{\"condition\":{\"op\":\"samePositionAsPreviousMove\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from the same position as the previous Move\",\"favouredCall\":\"call_004\",\"id\":\"song_006\",\"moment\":\"Verse 2\",\"number\":6,\"section\":\"Cuerpo\",\"title\":\"Hold the thread\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if you play a Flourish\",\"favouredCall\":\"call_006\",\"id\":\"song_007\",\"moment\":\"Horns\",\"number\":7,\"section\":\"Cuerpo\",\"title\":\"Answer the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"endsInPosition\",\"position\":\"Closed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if this 8-count ends in Closed\",\"id\":\"song_008\",\"moment\":\"Verse 3\",\"number\":8,\"section\":\"Cuerpo\",\"title\":\"Verse's end\"},{\"bonuses\":[{\"condition\":{\"op\":\"positionChanged\"},\"effect\":{\"connection\":1,\"style\":1}}],\"description\":\"+1 Style and +1 Connection if you change position this 8-count\",\"favouredCall\":\"call_003\",\"id\":\"song_009\",\"moment\":\"Puente\",\"number\":9,\"section\":\"Montuno\",\"title\":\"Cross the bridge\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMoveGame\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Move your partner has played this game\",\"favouredCall\":\"call_004\",\"id\":\"song_010\",\"moment\":\"Puente\",\"number\":10,\"section\":\"Montuno\",\"title\":\"Echo\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"effect\":{\"connection\":0,\"style\":6}}],\"description\":\"+6 Style if your Move is worth 3+ Style\",\"favouredCall\":\"call_007\",\"id\":\"song_011\",\"moment\":\"Mambo\",\"number\":11,\"section\":\"Montuno\",\"title\":\"Bring the mambo\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Flourish\",\"favouredCall\":\"call_006\",\"id\":\"song_012\",\"moment\":\"Mambo\",\"number\":12,\"section\":\"Montuno\",\"title\":\"Shine\"},{\"bonuses\":[{\"condition\":{\"op\":\"cardsPlayedAtLeast\",\"value\":3},\"effect\":{\"connection\":1,\"style\":3}}],\"description\":\"+3 Style and +1 Connection if you play 3+ cards\",\"favouredCall\":\"call_004\",\"id\":\"song_013\",\"moment\":\"Mambo\",\"number\":13,\"section\":\"Montuno\",\"title\":\"In full swing\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Move your partner played earlier this phrase\",\"favouredCall\":\"call_006\",\"id\":\"song_014\",\"moment\":\"Pregón\",\"number\":14,\"section\":\"Montuno\",\"title\":\"Call\"},{\"bonuses\":[{\"condition\":{\"op\":\"answeredCall\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you answer the call standing over you\",\"favouredCall\":\"call_006\",\"id\":\"song_015\",\"moment\":\"Coro\",\"number\":15,\"section\":\"Montuno\",\"title\":\"Response\"},{\"bonuses\":[{\"condition\":{\"op\":\"posePlayed\"},\"effect\":{\"connection\":0,\"style\":7}},{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":3}}],\"description\":\"+7 Style if you play a Pose; otherwise +3 Style if you play a Flourish\",\"id\":\"song_016\",\"moment\":\"Coro\",\"number\":16,\"section\":\"Montuno\",\"title\":\"Big finish\"}],\"id\":\"lloraras\",\"title\":\"Llorarás\"},\"version\":1}",
     "actions": [
       {
         "type": "CONFIRM_HAND",
@@ -166,7 +182,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -174,7 +191,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -182,7 +200,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -190,7 +209,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -198,7 +218,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -206,7 +227,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -214,7 +236,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -222,7 +245,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -230,7 +254,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -238,7 +263,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -246,7 +272,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -254,7 +281,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -262,7 +290,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -270,7 +299,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -278,7 +308,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -286,23 +317,24 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
         "role": "follow"
       }
     ],
-    "expectedStateHash": "95c497d216fc7e92fed86cdb54477233a25d854599373d83419a2abc554ecbb5"
+    "expectedStateHash": "3ac45c773b00586bb4dfeea7da3b71b8456bb63826cb303068251b8672cc230f"
   },
   {
     "id": "stumble-heavy-303",
     "seed": 303,
     "strategy": "stumble-heavy",
     "ending": "completed",
-    "engineVersion": 5,
-    "contentHash": "c7a2a3a9b6c7b0d24e4ec943dfbf9983cabd1acf629354400f02cf3d319c5a66",
-    "contentBytes": "{\"cards\":[{\"id\":\"pos_001\",\"name\":\"Open Position\",\"position\":\"Open\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_002\",\"name\":\"Closed Position\",\"position\":\"Closed\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_003\",\"name\":\"Half-Open Position\",\"position\":\"Half-Open\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"pos_004\",\"name\":\"Half-Closed Position\",\"position\":\"Half-Closed\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"mov_001\",\"name\":\"Follow Right Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_002\",\"name\":\"Follow Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_003\",\"name\":\"Lead Right Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_004\",\"name\":\"Lead Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_005\",\"name\":\"Cross Body Lead — Open\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_013\",\"name\":\"Cross Body Lead — Closed\",\"positions\":[\"Closed\",\"Half-Closed\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_006\",\"name\":\"Hesitation\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_007\",\"name\":\"Cross Body Lead — Inside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_008\",\"name\":\"Cross Body Lead — Outside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_009\",\"name\":\"New York Walk\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_010\",\"name\":\"Change of Place (Enchufla)\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_011\",\"name\":\"Sombrero\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"mov_012\",\"name\":\"Follow Double Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"flo_001\",\"name\":\"Arm Overhead (Lead)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_002\",\"name\":\"Arm Overhead (Follow)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_003\",\"name\":\"Hand Twist\",\"pose\":false,\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"flourish\"},{\"id\":\"flo_004\",\"name\":\"Dip\",\"pose\":true,\"positions\":[\"Closed\"],\"style\":3,\"tier\":\"A\",\"type\":\"flourish\"},{\"connectionCost\":1,\"id\":\"rec_001\",\"name\":\"Return to Basic\",\"tier\":\"B\",\"type\":\"recovery\"},{\"connectionCost\":0,\"id\":\"rec_002\",\"name\":\"Reconnect\",\"tier\":\"I\",\"type\":\"recovery\"}],\"decks\":{\"advanced\":[{\"cardId\":\"mov_011\",\"count\":2},{\"cardId\":\"mov_012\",\"count\":2},{\"cardId\":\"flo_004\",\"count\":2}],\"beginnerSupply\":[\"pos_001\",\"pos_002\",\"mov_001\",\"mov_002\",\"mov_003\",\"mov_004\",\"mov_005\",\"mov_013\",\"mov_006\",\"flo_003\",\"rec_001\"],\"full\":{\"follow\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_003\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":2},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_007\",\"count\":1},{\"cardId\":\"mov_009\",\"count\":1},{\"cardId\":\"flo_002\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1},{\"cardId\":\"flo_004\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}],\"lead\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_004\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":2},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_005\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"mov_006\",\"count\":1},{\"cardId\":\"mov_008\",\"count\":1},{\"cardId\":\"mov_010\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}]},\"intermediate\":[{\"cardId\":\"pos_003\",\"count\":3},{\"cardId\":\"pos_004\",\"count\":3},{\"cardId\":\"mov_007\",\"count\":2},{\"cardId\":\"mov_008\",\"count\":2},{\"cardId\":\"mov_009\",\"count\":2},{\"cardId\":\"mov_010\",\"count\":2},{\"cardId\":\"flo_001\",\"count\":2},{\"cardId\":\"flo_002\",\"count\":2},{\"cardId\":\"rec_002\",\"count\":2}],\"starter\":[{\"cardId\":\"pos_001\",\"count\":2},{\"cardId\":\"pos_002\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":1},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":1},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1}]},\"rules\":{\"danceLimits\":{\"flourishes\":1,\"moves\":1,\"positions\":2},\"handSize\":4,\"incomePerTurn\":1,\"initialConnection\":4,\"initialStyle\":0,\"lessonCosts\":{\"advanced\":3,\"beginner\":1,\"intermediate\":2},\"maximumConnection\":10,\"phraseBonuses\":{\"clean\":3,\"poseFinish\":3,\"sharedFlair\":2,\"varietyPerExtraPosition\":1},\"ratings\":[{\"description\":\"You survived, and that's salsa too.\",\"minimum\":0,\"name\":\"First Timers\"},{\"description\":\"The floor is starting to feel like home.\",\"minimum\":20,\"name\":\"Social Dancers\"},{\"description\":\"People know to make room when you arrive.\",\"minimum\":30,\"name\":\"Regulars of the Social\"},{\"description\":\"The room felt every break with you.\",\"minimum\":40,\"name\":\"Crowd Favorites\"},{\"description\":\"A polished, fearless partnership.\",\"minimum\":50,\"name\":\"Festival Performers\"},{\"description\":\"You didn't follow the song. You spoke with it.\",\"minimum\":60,\"name\":\"Soneros of the Floor\"}],\"startingMoney\":0,\"stumble\":{\"defaultConnectionCost\":2}},\"song\":{\"artist\":\"Oscar D'León\",\"cards\":[{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtMost\",\"value\":2},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play a Move worth 2 Style or less\",\"id\":\"song_001\",\"moment\":\"Verse 1\",\"number\":1,\"section\":\"Cuerpo\",\"title\":\"Settle in\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\"]},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from Open\",\"id\":\"song_002\",\"moment\":\"Verse 1\",\"number\":2,\"section\":\"Cuerpo\",\"title\":\"Open invitation\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Flourish\",\"id\":\"song_003\",\"moment\":\"Horns\",\"number\":3,\"section\":\"Cuerpo\",\"title\":\"Catch the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":2},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is worth 2+ Style\",\"id\":\"song_004\",\"moment\":\"Horns\",\"number\":4,\"section\":\"Cuerpo\",\"title\":\"Make it count\"},{\"bonuses\":[{\"condition\":{\"op\":\"noPositionPlayed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play no Position card\",\"id\":\"song_005\",\"moment\":\"Verse 2\",\"number\":5,\"section\":\"Cuerpo\",\"title\":\"Stay close\"},{\"bonuses\":[{\"condition\":{\"op\":\"samePositionAsPreviousMove\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from the same position as the previous Move\",\"id\":\"song_006\",\"moment\":\"Verse 2\",\"number\":6,\"section\":\"Cuerpo\",\"title\":\"Hold the thread\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Flourish\",\"id\":\"song_007\",\"moment\":\"Horns\",\"number\":7,\"section\":\"Cuerpo\",\"title\":\"Answer the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"endsInPosition\",\"position\":\"Closed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if this 8-count ends in Closed\",\"id\":\"song_008\",\"moment\":\"Verse 3\",\"number\":8,\"section\":\"Cuerpo\",\"title\":\"Verse's end\"},{\"bonuses\":[{\"condition\":{\"op\":\"positionChanged\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you change position this 8-count\",\"id\":\"song_009\",\"moment\":\"Puente\",\"number\":9,\"section\":\"Montuno\",\"title\":\"Cross the bridge\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMoveGame\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Move your partner has played this game\",\"id\":\"song_010\",\"moment\":\"Puente\",\"number\":10,\"section\":\"Montuno\",\"title\":\"Echo\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if your Move is worth 3+ Style\",\"id\":\"song_011\",\"moment\":\"Mambo\",\"number\":11,\"section\":\"Montuno\",\"title\":\"Bring the mambo\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Flourish\",\"id\":\"song_012\",\"moment\":\"Mambo\",\"number\":12,\"section\":\"Montuno\",\"title\":\"Shine\"},{\"bonuses\":[{\"condition\":{\"op\":\"cardsPlayedAtLeast\",\"value\":3},\"effect\":{\"connection\":1,\"style\":1}}],\"description\":\"+1 Style and +1 Connection if you play 3+ cards\",\"id\":\"song_013\",\"moment\":\"Mambo\",\"number\":13,\"section\":\"Montuno\",\"title\":\"In full swing\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Move your partner played earlier this phrase\",\"id\":\"song_014\",\"moment\":\"Pregón\",\"number\":14,\"section\":\"Montuno\",\"title\":\"Call\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Half-Open\",\"Half-Closed\"]},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if your Move is danced from Half-Open or Half-Closed\",\"id\":\"song_015\",\"moment\":\"Coro\",\"number\":15,\"section\":\"Montuno\",\"title\":\"Response\"},{\"bonuses\":[{\"condition\":{\"op\":\"posePlayed\"},\"effect\":{\"connection\":0,\"style\":3}},{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+3 Style if you play a Pose; otherwise +1 Style if you play a Flourish\",\"id\":\"song_016\",\"moment\":\"Coro\",\"number\":16,\"section\":\"Montuno\",\"title\":\"Big finish\"}],\"id\":\"lloraras\",\"title\":\"Llorarás\"},\"version\":1}",
+    "engineVersion": 6,
+    "contentHash": "65be07e208ebcb06b8a8f0492babfa227934fd2f4962885fb626d241c49b6ec3",
+    "contentBytes": "{\"cards\":[{\"id\":\"pos_001\",\"name\":\"Open Position\",\"position\":\"Open\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_002\",\"name\":\"Closed Position\",\"position\":\"Closed\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_003\",\"name\":\"Half-Open Position\",\"position\":\"Half-Open\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"pos_004\",\"name\":\"Half-Closed Position\",\"position\":\"Half-Closed\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"mov_001\",\"name\":\"Follow Right Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_002\",\"name\":\"Follow Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_003\",\"name\":\"Lead Right Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_004\",\"name\":\"Lead Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_005\",\"name\":\"Cross Body Lead — Open\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_013\",\"name\":\"Cross Body Lead — Closed\",\"positions\":[\"Closed\",\"Half-Closed\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_006\",\"name\":\"Hesitation\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_007\",\"name\":\"Cross Body Lead — Inside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_008\",\"name\":\"Cross Body Lead — Outside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_009\",\"name\":\"New York Walk\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_010\",\"name\":\"Change of Place (Enchufla)\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_011\",\"name\":\"Sombrero\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"mov_012\",\"name\":\"Follow Double Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"flo_001\",\"name\":\"Arm Overhead (Lead)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_002\",\"name\":\"Arm Overhead (Follow)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_003\",\"name\":\"Hand Twist\",\"pose\":false,\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"flourish\"},{\"id\":\"flo_004\",\"name\":\"Dip\",\"pose\":true,\"positions\":[\"Closed\"],\"style\":3,\"tier\":\"A\",\"type\":\"flourish\"},{\"id\":\"flo_005\",\"name\":\"Ponche\",\"pose\":true,\"positions\":\"any\",\"style\":0,\"tier\":\"B\",\"type\":\"flourish\"},{\"connectionCost\":1,\"id\":\"rec_001\",\"name\":\"Return to Basic\",\"tier\":\"B\",\"type\":\"recovery\"},{\"connectionCost\":0,\"id\":\"rec_002\",\"name\":\"Reconnect\",\"tier\":\"I\",\"type\":\"recovery\"}],\"decks\":{\"advanced\":[{\"cardId\":\"mov_011\",\"count\":2},{\"cardId\":\"mov_012\",\"count\":2},{\"cardId\":\"flo_004\",\"count\":2}],\"beginnerSupply\":[\"pos_001\",\"pos_002\",\"mov_001\",\"mov_002\",\"mov_003\",\"mov_004\",\"mov_005\",\"mov_013\",\"mov_006\",\"flo_003\",\"flo_005\",\"rec_001\"],\"full\":{\"follow\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_003\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":2},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_007\",\"count\":1},{\"cardId\":\"mov_009\",\"count\":1},{\"cardId\":\"flo_002\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1},{\"cardId\":\"flo_004\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}],\"lead\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_004\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":2},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_005\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"mov_006\",\"count\":1},{\"cardId\":\"mov_008\",\"count\":1},{\"cardId\":\"mov_010\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}]},\"intermediate\":[{\"cardId\":\"pos_003\",\"count\":3},{\"cardId\":\"pos_004\",\"count\":3},{\"cardId\":\"mov_007\",\"count\":2},{\"cardId\":\"mov_008\",\"count\":2},{\"cardId\":\"mov_009\",\"count\":2},{\"cardId\":\"mov_010\",\"count\":2},{\"cardId\":\"flo_001\",\"count\":2},{\"cardId\":\"flo_002\",\"count\":2},{\"cardId\":\"rec_002\",\"count\":2}],\"starter\":[{\"cardId\":\"pos_001\",\"count\":2},{\"cardId\":\"pos_002\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":1},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1}]},\"rules\":{\"call\":{\"afinqueBonus\":[0,0,1,1,2],\"inPocketStyle\":1,\"missConnectionCost\":1,\"options\":[{\"ask\":\"dance a Move — any Move\",\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":0},\"id\":\"call_001\",\"name\":\"Stay with me\",\"style\":0},{\"ask\":\"dance your Move from Open or Half-Open\",\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\",\"Half-Open\"]},\"id\":\"call_002\",\"name\":\"Open it up\",\"style\":1},{\"ask\":\"change the position during your 8-count\",\"condition\":{\"op\":\"positionChanged\"},\"id\":\"call_003\",\"name\":\"Change the room\",\"style\":3},{\"ask\":\"dance a Move I have already danced this phrase\",\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"id\":\"call_004\",\"name\":\"Echo me\",\"style\":2},{\"ask\":\"dance your Move from Closed or Half-Closed\",\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Closed\",\"Half-Closed\"]},\"id\":\"call_005\",\"name\":\"Stay close\",\"style\":4},{\"ask\":\"include a Flourish\",\"condition\":{\"op\":\"flourishPlayed\"},\"id\":\"call_006\",\"name\":\"Style it\",\"style\":4},{\"ask\":\"dance a Move worth 3 Style or more\",\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"id\":\"call_007\",\"name\":\"Show me something\",\"style\":8}],\"resetAfinqueAtPhraseEnd\":true},\"danceLimits\":{\"flourishes\":1,\"moves\":1,\"positions\":2},\"handSize\":4,\"incomePerTurn\":1,\"initialConnection\":4,\"initialStyle\":0,\"lessonCosts\":{\"advanced\":3,\"beginner\":1,\"intermediate\":2},\"lessonToDrawTop\":{\"advanced\":true,\"beginner\":false,\"intermediate\":true},\"maximumConnection\":10,\"phraseBonuses\":{\"clean\":3,\"poseFinish\":4,\"sharedFlair\":2,\"varietyPerExtraPosition\":1},\"ratings\":[{\"description\":\"You survived, and that's salsa too.\",\"minimum\":0,\"name\":\"First Timers\"},{\"description\":\"The floor is starting to feel like home.\",\"minimum\":36,\"name\":\"Social Dancers\"},{\"description\":\"People know to make room when you arrive.\",\"minimum\":50,\"name\":\"Regulars of the Social\"},{\"description\":\"The room felt every break with you.\",\"minimum\":60,\"name\":\"Crowd Favorites\"},{\"description\":\"A polished, fearless partnership.\",\"minimum\":70,\"name\":\"Festival Performers\"},{\"description\":\"You didn't follow the song. You spoke with it.\",\"minimum\":82,\"name\":\"Soneros of the Floor\"}],\"startingMoney\":0,\"stumble\":{\"defaultConnectionCost\":2}},\"song\":{\"artist\":\"Oscar D'León\",\"cards\":[{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtMost\",\"value\":2},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play a Move worth 2 Style or less\",\"favouredCall\":\"call_001\",\"id\":\"song_001\",\"moment\":\"Verse 1\",\"number\":1,\"section\":\"Cuerpo\",\"title\":\"Settle in\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\"]},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from Open\",\"favouredCall\":\"call_002\",\"id\":\"song_002\",\"moment\":\"Verse 1\",\"number\":2,\"section\":\"Cuerpo\",\"title\":\"Open invitation\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if you play a Flourish\",\"favouredCall\":\"call_003\",\"id\":\"song_003\",\"moment\":\"Horns\",\"number\":3,\"section\":\"Cuerpo\",\"title\":\"Catch the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":2},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is worth 2+ Style\",\"favouredCall\":\"call_002\",\"id\":\"song_004\",\"moment\":\"Horns\",\"number\":4,\"section\":\"Cuerpo\",\"title\":\"Make it count\"},{\"bonuses\":[{\"condition\":{\"op\":\"noPositionPlayed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play no Position card\",\"favouredCall\":\"call_005\",\"id\":\"song_005\",\"moment\":\"Verse 2\",\"number\":5,\"section\":\"Cuerpo\",\"title\":\"Stay close\"},{\"bonuses\":[{\"condition\":{\"op\":\"samePositionAsPreviousMove\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from the same position as the previous Move\",\"favouredCall\":\"call_004\",\"id\":\"song_006\",\"moment\":\"Verse 2\",\"number\":6,\"section\":\"Cuerpo\",\"title\":\"Hold the thread\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if you play a Flourish\",\"favouredCall\":\"call_006\",\"id\":\"song_007\",\"moment\":\"Horns\",\"number\":7,\"section\":\"Cuerpo\",\"title\":\"Answer the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"endsInPosition\",\"position\":\"Closed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if this 8-count ends in Closed\",\"id\":\"song_008\",\"moment\":\"Verse 3\",\"number\":8,\"section\":\"Cuerpo\",\"title\":\"Verse's end\"},{\"bonuses\":[{\"condition\":{\"op\":\"positionChanged\"},\"effect\":{\"connection\":1,\"style\":1}}],\"description\":\"+1 Style and +1 Connection if you change position this 8-count\",\"favouredCall\":\"call_003\",\"id\":\"song_009\",\"moment\":\"Puente\",\"number\":9,\"section\":\"Montuno\",\"title\":\"Cross the bridge\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMoveGame\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Move your partner has played this game\",\"favouredCall\":\"call_004\",\"id\":\"song_010\",\"moment\":\"Puente\",\"number\":10,\"section\":\"Montuno\",\"title\":\"Echo\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"effect\":{\"connection\":0,\"style\":6}}],\"description\":\"+6 Style if your Move is worth 3+ Style\",\"favouredCall\":\"call_007\",\"id\":\"song_011\",\"moment\":\"Mambo\",\"number\":11,\"section\":\"Montuno\",\"title\":\"Bring the mambo\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Flourish\",\"favouredCall\":\"call_006\",\"id\":\"song_012\",\"moment\":\"Mambo\",\"number\":12,\"section\":\"Montuno\",\"title\":\"Shine\"},{\"bonuses\":[{\"condition\":{\"op\":\"cardsPlayedAtLeast\",\"value\":3},\"effect\":{\"connection\":1,\"style\":3}}],\"description\":\"+3 Style and +1 Connection if you play 3+ cards\",\"favouredCall\":\"call_004\",\"id\":\"song_013\",\"moment\":\"Mambo\",\"number\":13,\"section\":\"Montuno\",\"title\":\"In full swing\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Move your partner played earlier this phrase\",\"favouredCall\":\"call_006\",\"id\":\"song_014\",\"moment\":\"Pregón\",\"number\":14,\"section\":\"Montuno\",\"title\":\"Call\"},{\"bonuses\":[{\"condition\":{\"op\":\"answeredCall\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you answer the call standing over you\",\"favouredCall\":\"call_006\",\"id\":\"song_015\",\"moment\":\"Coro\",\"number\":15,\"section\":\"Montuno\",\"title\":\"Response\"},{\"bonuses\":[{\"condition\":{\"op\":\"posePlayed\"},\"effect\":{\"connection\":0,\"style\":7}},{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":3}}],\"description\":\"+7 Style if you play a Pose; otherwise +3 Style if you play a Flourish\",\"id\":\"song_016\",\"moment\":\"Coro\",\"number\":16,\"section\":\"Montuno\",\"title\":\"Big finish\"}],\"id\":\"lloraras\",\"title\":\"Llorarás\"},\"version\":1}",
     "actions": [
       {
         "type": "CONFIRM_HAND",
@@ -323,7 +355,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -331,7 +364,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -339,7 +373,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -347,7 +382,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -355,7 +391,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -363,7 +400,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -371,7 +409,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -379,7 +418,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -396,7 +436,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -404,7 +445,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -412,7 +454,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -420,7 +463,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -428,7 +472,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "END_LESSON",
@@ -436,23 +481,24 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "END_LESSON",
         "role": "follow"
       }
     ],
-    "expectedStateHash": "14e4cef157d6987d7c86a5b5c03360898ef1d33569716fa4bfd6908e4bde8152"
+    "expectedStateHash": "58003f6062e70d0c291800a2be7c378189da76fc38d15ffc43ac5ff9b1dfc625"
   },
   {
     "id": "connection-loss-404",
     "seed": 404,
     "strategy": "connection-loss",
     "ending": "lost",
-    "engineVersion": 5,
-    "contentHash": "c7a2a3a9b6c7b0d24e4ec943dfbf9983cabd1acf629354400f02cf3d319c5a66",
-    "contentBytes": "{\"cards\":[{\"id\":\"pos_001\",\"name\":\"Open Position\",\"position\":\"Open\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_002\",\"name\":\"Closed Position\",\"position\":\"Closed\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_003\",\"name\":\"Half-Open Position\",\"position\":\"Half-Open\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"pos_004\",\"name\":\"Half-Closed Position\",\"position\":\"Half-Closed\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"mov_001\",\"name\":\"Follow Right Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_002\",\"name\":\"Follow Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_003\",\"name\":\"Lead Right Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_004\",\"name\":\"Lead Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_005\",\"name\":\"Cross Body Lead — Open\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_013\",\"name\":\"Cross Body Lead — Closed\",\"positions\":[\"Closed\",\"Half-Closed\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_006\",\"name\":\"Hesitation\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_007\",\"name\":\"Cross Body Lead — Inside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_008\",\"name\":\"Cross Body Lead — Outside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_009\",\"name\":\"New York Walk\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_010\",\"name\":\"Change of Place (Enchufla)\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_011\",\"name\":\"Sombrero\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"mov_012\",\"name\":\"Follow Double Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"flo_001\",\"name\":\"Arm Overhead (Lead)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_002\",\"name\":\"Arm Overhead (Follow)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_003\",\"name\":\"Hand Twist\",\"pose\":false,\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"flourish\"},{\"id\":\"flo_004\",\"name\":\"Dip\",\"pose\":true,\"positions\":[\"Closed\"],\"style\":3,\"tier\":\"A\",\"type\":\"flourish\"},{\"connectionCost\":1,\"id\":\"rec_001\",\"name\":\"Return to Basic\",\"tier\":\"B\",\"type\":\"recovery\"},{\"connectionCost\":0,\"id\":\"rec_002\",\"name\":\"Reconnect\",\"tier\":\"I\",\"type\":\"recovery\"}],\"decks\":{\"advanced\":[{\"cardId\":\"mov_011\",\"count\":2},{\"cardId\":\"mov_012\",\"count\":2},{\"cardId\":\"flo_004\",\"count\":2}],\"beginnerSupply\":[\"pos_001\",\"pos_002\",\"mov_001\",\"mov_002\",\"mov_003\",\"mov_004\",\"mov_005\",\"mov_013\",\"mov_006\",\"flo_003\",\"rec_001\"],\"full\":{\"follow\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_003\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":2},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_007\",\"count\":1},{\"cardId\":\"mov_009\",\"count\":1},{\"cardId\":\"flo_002\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1},{\"cardId\":\"flo_004\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}],\"lead\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_004\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":2},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_005\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"mov_006\",\"count\":1},{\"cardId\":\"mov_008\",\"count\":1},{\"cardId\":\"mov_010\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}]},\"intermediate\":[{\"cardId\":\"pos_003\",\"count\":3},{\"cardId\":\"pos_004\",\"count\":3},{\"cardId\":\"mov_007\",\"count\":2},{\"cardId\":\"mov_008\",\"count\":2},{\"cardId\":\"mov_009\",\"count\":2},{\"cardId\":\"mov_010\",\"count\":2},{\"cardId\":\"flo_001\",\"count\":2},{\"cardId\":\"flo_002\",\"count\":2},{\"cardId\":\"rec_002\",\"count\":2}],\"starter\":[{\"cardId\":\"pos_001\",\"count\":2},{\"cardId\":\"pos_002\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":1},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":1},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1}]},\"rules\":{\"danceLimits\":{\"flourishes\":1,\"moves\":1,\"positions\":2},\"handSize\":4,\"incomePerTurn\":1,\"initialConnection\":4,\"initialStyle\":0,\"lessonCosts\":{\"advanced\":3,\"beginner\":1,\"intermediate\":2},\"maximumConnection\":10,\"phraseBonuses\":{\"clean\":3,\"poseFinish\":3,\"sharedFlair\":2,\"varietyPerExtraPosition\":1},\"ratings\":[{\"description\":\"You survived, and that's salsa too.\",\"minimum\":0,\"name\":\"First Timers\"},{\"description\":\"The floor is starting to feel like home.\",\"minimum\":20,\"name\":\"Social Dancers\"},{\"description\":\"People know to make room when you arrive.\",\"minimum\":30,\"name\":\"Regulars of the Social\"},{\"description\":\"The room felt every break with you.\",\"minimum\":40,\"name\":\"Crowd Favorites\"},{\"description\":\"A polished, fearless partnership.\",\"minimum\":50,\"name\":\"Festival Performers\"},{\"description\":\"You didn't follow the song. You spoke with it.\",\"minimum\":60,\"name\":\"Soneros of the Floor\"}],\"startingMoney\":0,\"stumble\":{\"defaultConnectionCost\":2}},\"song\":{\"artist\":\"Oscar D'León\",\"cards\":[{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtMost\",\"value\":2},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play a Move worth 2 Style or less\",\"id\":\"song_001\",\"moment\":\"Verse 1\",\"number\":1,\"section\":\"Cuerpo\",\"title\":\"Settle in\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\"]},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from Open\",\"id\":\"song_002\",\"moment\":\"Verse 1\",\"number\":2,\"section\":\"Cuerpo\",\"title\":\"Open invitation\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Flourish\",\"id\":\"song_003\",\"moment\":\"Horns\",\"number\":3,\"section\":\"Cuerpo\",\"title\":\"Catch the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":2},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is worth 2+ Style\",\"id\":\"song_004\",\"moment\":\"Horns\",\"number\":4,\"section\":\"Cuerpo\",\"title\":\"Make it count\"},{\"bonuses\":[{\"condition\":{\"op\":\"noPositionPlayed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play no Position card\",\"id\":\"song_005\",\"moment\":\"Verse 2\",\"number\":5,\"section\":\"Cuerpo\",\"title\":\"Stay close\"},{\"bonuses\":[{\"condition\":{\"op\":\"samePositionAsPreviousMove\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from the same position as the previous Move\",\"id\":\"song_006\",\"moment\":\"Verse 2\",\"number\":6,\"section\":\"Cuerpo\",\"title\":\"Hold the thread\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Flourish\",\"id\":\"song_007\",\"moment\":\"Horns\",\"number\":7,\"section\":\"Cuerpo\",\"title\":\"Answer the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"endsInPosition\",\"position\":\"Closed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if this 8-count ends in Closed\",\"id\":\"song_008\",\"moment\":\"Verse 3\",\"number\":8,\"section\":\"Cuerpo\",\"title\":\"Verse's end\"},{\"bonuses\":[{\"condition\":{\"op\":\"positionChanged\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you change position this 8-count\",\"id\":\"song_009\",\"moment\":\"Puente\",\"number\":9,\"section\":\"Montuno\",\"title\":\"Cross the bridge\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMoveGame\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Move your partner has played this game\",\"id\":\"song_010\",\"moment\":\"Puente\",\"number\":10,\"section\":\"Montuno\",\"title\":\"Echo\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if your Move is worth 3+ Style\",\"id\":\"song_011\",\"moment\":\"Mambo\",\"number\":11,\"section\":\"Montuno\",\"title\":\"Bring the mambo\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Flourish\",\"id\":\"song_012\",\"moment\":\"Mambo\",\"number\":12,\"section\":\"Montuno\",\"title\":\"Shine\"},{\"bonuses\":[{\"condition\":{\"op\":\"cardsPlayedAtLeast\",\"value\":3},\"effect\":{\"connection\":1,\"style\":1}}],\"description\":\"+1 Style and +1 Connection if you play 3+ cards\",\"id\":\"song_013\",\"moment\":\"Mambo\",\"number\":13,\"section\":\"Montuno\",\"title\":\"In full swing\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Move your partner played earlier this phrase\",\"id\":\"song_014\",\"moment\":\"Pregón\",\"number\":14,\"section\":\"Montuno\",\"title\":\"Call\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Half-Open\",\"Half-Closed\"]},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if your Move is danced from Half-Open or Half-Closed\",\"id\":\"song_015\",\"moment\":\"Coro\",\"number\":15,\"section\":\"Montuno\",\"title\":\"Response\"},{\"bonuses\":[{\"condition\":{\"op\":\"posePlayed\"},\"effect\":{\"connection\":0,\"style\":3}},{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+3 Style if you play a Pose; otherwise +1 Style if you play a Flourish\",\"id\":\"song_016\",\"moment\":\"Coro\",\"number\":16,\"section\":\"Montuno\",\"title\":\"Big finish\"}],\"id\":\"lloraras\",\"title\":\"Llorarás\"},\"version\":1}",
+    "engineVersion": 6,
+    "contentHash": "65be07e208ebcb06b8a8f0492babfa227934fd2f4962885fb626d241c49b6ec3",
+    "contentBytes": "{\"cards\":[{\"id\":\"pos_001\",\"name\":\"Open Position\",\"position\":\"Open\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_002\",\"name\":\"Closed Position\",\"position\":\"Closed\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_003\",\"name\":\"Half-Open Position\",\"position\":\"Half-Open\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"pos_004\",\"name\":\"Half-Closed Position\",\"position\":\"Half-Closed\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"mov_001\",\"name\":\"Follow Right Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_002\",\"name\":\"Follow Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_003\",\"name\":\"Lead Right Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_004\",\"name\":\"Lead Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_005\",\"name\":\"Cross Body Lead — Open\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_013\",\"name\":\"Cross Body Lead — Closed\",\"positions\":[\"Closed\",\"Half-Closed\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_006\",\"name\":\"Hesitation\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_007\",\"name\":\"Cross Body Lead — Inside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_008\",\"name\":\"Cross Body Lead — Outside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_009\",\"name\":\"New York Walk\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_010\",\"name\":\"Change of Place (Enchufla)\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_011\",\"name\":\"Sombrero\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"mov_012\",\"name\":\"Follow Double Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"flo_001\",\"name\":\"Arm Overhead (Lead)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_002\",\"name\":\"Arm Overhead (Follow)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_003\",\"name\":\"Hand Twist\",\"pose\":false,\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"flourish\"},{\"id\":\"flo_004\",\"name\":\"Dip\",\"pose\":true,\"positions\":[\"Closed\"],\"style\":3,\"tier\":\"A\",\"type\":\"flourish\"},{\"id\":\"flo_005\",\"name\":\"Ponche\",\"pose\":true,\"positions\":\"any\",\"style\":0,\"tier\":\"B\",\"type\":\"flourish\"},{\"connectionCost\":1,\"id\":\"rec_001\",\"name\":\"Return to Basic\",\"tier\":\"B\",\"type\":\"recovery\"},{\"connectionCost\":0,\"id\":\"rec_002\",\"name\":\"Reconnect\",\"tier\":\"I\",\"type\":\"recovery\"}],\"decks\":{\"advanced\":[{\"cardId\":\"mov_011\",\"count\":2},{\"cardId\":\"mov_012\",\"count\":2},{\"cardId\":\"flo_004\",\"count\":2}],\"beginnerSupply\":[\"pos_001\",\"pos_002\",\"mov_001\",\"mov_002\",\"mov_003\",\"mov_004\",\"mov_005\",\"mov_013\",\"mov_006\",\"flo_003\",\"flo_005\",\"rec_001\"],\"full\":{\"follow\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_003\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":2},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_007\",\"count\":1},{\"cardId\":\"mov_009\",\"count\":1},{\"cardId\":\"flo_002\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1},{\"cardId\":\"flo_004\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}],\"lead\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_004\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":2},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_005\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"mov_006\",\"count\":1},{\"cardId\":\"mov_008\",\"count\":1},{\"cardId\":\"mov_010\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}]},\"intermediate\":[{\"cardId\":\"pos_003\",\"count\":3},{\"cardId\":\"pos_004\",\"count\":3},{\"cardId\":\"mov_007\",\"count\":2},{\"cardId\":\"mov_008\",\"count\":2},{\"cardId\":\"mov_009\",\"count\":2},{\"cardId\":\"mov_010\",\"count\":2},{\"cardId\":\"flo_001\",\"count\":2},{\"cardId\":\"flo_002\",\"count\":2},{\"cardId\":\"rec_002\",\"count\":2}],\"starter\":[{\"cardId\":\"pos_001\",\"count\":2},{\"cardId\":\"pos_002\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":1},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1}]},\"rules\":{\"call\":{\"afinqueBonus\":[0,0,1,1,2],\"inPocketStyle\":1,\"missConnectionCost\":1,\"options\":[{\"ask\":\"dance a Move — any Move\",\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":0},\"id\":\"call_001\",\"name\":\"Stay with me\",\"style\":0},{\"ask\":\"dance your Move from Open or Half-Open\",\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\",\"Half-Open\"]},\"id\":\"call_002\",\"name\":\"Open it up\",\"style\":1},{\"ask\":\"change the position during your 8-count\",\"condition\":{\"op\":\"positionChanged\"},\"id\":\"call_003\",\"name\":\"Change the room\",\"style\":3},{\"ask\":\"dance a Move I have already danced this phrase\",\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"id\":\"call_004\",\"name\":\"Echo me\",\"style\":2},{\"ask\":\"dance your Move from Closed or Half-Closed\",\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Closed\",\"Half-Closed\"]},\"id\":\"call_005\",\"name\":\"Stay close\",\"style\":4},{\"ask\":\"include a Flourish\",\"condition\":{\"op\":\"flourishPlayed\"},\"id\":\"call_006\",\"name\":\"Style it\",\"style\":4},{\"ask\":\"dance a Move worth 3 Style or more\",\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"id\":\"call_007\",\"name\":\"Show me something\",\"style\":8}],\"resetAfinqueAtPhraseEnd\":true},\"danceLimits\":{\"flourishes\":1,\"moves\":1,\"positions\":2},\"handSize\":4,\"incomePerTurn\":1,\"initialConnection\":4,\"initialStyle\":0,\"lessonCosts\":{\"advanced\":3,\"beginner\":1,\"intermediate\":2},\"lessonToDrawTop\":{\"advanced\":true,\"beginner\":false,\"intermediate\":true},\"maximumConnection\":10,\"phraseBonuses\":{\"clean\":3,\"poseFinish\":4,\"sharedFlair\":2,\"varietyPerExtraPosition\":1},\"ratings\":[{\"description\":\"You survived, and that's salsa too.\",\"minimum\":0,\"name\":\"First Timers\"},{\"description\":\"The floor is starting to feel like home.\",\"minimum\":36,\"name\":\"Social Dancers\"},{\"description\":\"People know to make room when you arrive.\",\"minimum\":50,\"name\":\"Regulars of the Social\"},{\"description\":\"The room felt every break with you.\",\"minimum\":60,\"name\":\"Crowd Favorites\"},{\"description\":\"A polished, fearless partnership.\",\"minimum\":70,\"name\":\"Festival Performers\"},{\"description\":\"You didn't follow the song. You spoke with it.\",\"minimum\":82,\"name\":\"Soneros of the Floor\"}],\"startingMoney\":0,\"stumble\":{\"defaultConnectionCost\":2}},\"song\":{\"artist\":\"Oscar D'León\",\"cards\":[{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtMost\",\"value\":2},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play a Move worth 2 Style or less\",\"favouredCall\":\"call_001\",\"id\":\"song_001\",\"moment\":\"Verse 1\",\"number\":1,\"section\":\"Cuerpo\",\"title\":\"Settle in\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\"]},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from Open\",\"favouredCall\":\"call_002\",\"id\":\"song_002\",\"moment\":\"Verse 1\",\"number\":2,\"section\":\"Cuerpo\",\"title\":\"Open invitation\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if you play a Flourish\",\"favouredCall\":\"call_003\",\"id\":\"song_003\",\"moment\":\"Horns\",\"number\":3,\"section\":\"Cuerpo\",\"title\":\"Catch the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":2},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is worth 2+ Style\",\"favouredCall\":\"call_002\",\"id\":\"song_004\",\"moment\":\"Horns\",\"number\":4,\"section\":\"Cuerpo\",\"title\":\"Make it count\"},{\"bonuses\":[{\"condition\":{\"op\":\"noPositionPlayed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play no Position card\",\"favouredCall\":\"call_005\",\"id\":\"song_005\",\"moment\":\"Verse 2\",\"number\":5,\"section\":\"Cuerpo\",\"title\":\"Stay close\"},{\"bonuses\":[{\"condition\":{\"op\":\"samePositionAsPreviousMove\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from the same position as the previous Move\",\"favouredCall\":\"call_004\",\"id\":\"song_006\",\"moment\":\"Verse 2\",\"number\":6,\"section\":\"Cuerpo\",\"title\":\"Hold the thread\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if you play a Flourish\",\"favouredCall\":\"call_006\",\"id\":\"song_007\",\"moment\":\"Horns\",\"number\":7,\"section\":\"Cuerpo\",\"title\":\"Answer the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"endsInPosition\",\"position\":\"Closed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if this 8-count ends in Closed\",\"id\":\"song_008\",\"moment\":\"Verse 3\",\"number\":8,\"section\":\"Cuerpo\",\"title\":\"Verse's end\"},{\"bonuses\":[{\"condition\":{\"op\":\"positionChanged\"},\"effect\":{\"connection\":1,\"style\":1}}],\"description\":\"+1 Style and +1 Connection if you change position this 8-count\",\"favouredCall\":\"call_003\",\"id\":\"song_009\",\"moment\":\"Puente\",\"number\":9,\"section\":\"Montuno\",\"title\":\"Cross the bridge\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMoveGame\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Move your partner has played this game\",\"favouredCall\":\"call_004\",\"id\":\"song_010\",\"moment\":\"Puente\",\"number\":10,\"section\":\"Montuno\",\"title\":\"Echo\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"effect\":{\"connection\":0,\"style\":6}}],\"description\":\"+6 Style if your Move is worth 3+ Style\",\"favouredCall\":\"call_007\",\"id\":\"song_011\",\"moment\":\"Mambo\",\"number\":11,\"section\":\"Montuno\",\"title\":\"Bring the mambo\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Flourish\",\"favouredCall\":\"call_006\",\"id\":\"song_012\",\"moment\":\"Mambo\",\"number\":12,\"section\":\"Montuno\",\"title\":\"Shine\"},{\"bonuses\":[{\"condition\":{\"op\":\"cardsPlayedAtLeast\",\"value\":3},\"effect\":{\"connection\":1,\"style\":3}}],\"description\":\"+3 Style and +1 Connection if you play 3+ cards\",\"favouredCall\":\"call_004\",\"id\":\"song_013\",\"moment\":\"Mambo\",\"number\":13,\"section\":\"Montuno\",\"title\":\"In full swing\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Move your partner played earlier this phrase\",\"favouredCall\":\"call_006\",\"id\":\"song_014\",\"moment\":\"Pregón\",\"number\":14,\"section\":\"Montuno\",\"title\":\"Call\"},{\"bonuses\":[{\"condition\":{\"op\":\"answeredCall\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you answer the call standing over you\",\"favouredCall\":\"call_006\",\"id\":\"song_015\",\"moment\":\"Coro\",\"number\":15,\"section\":\"Montuno\",\"title\":\"Response\"},{\"bonuses\":[{\"condition\":{\"op\":\"posePlayed\"},\"effect\":{\"connection\":0,\"style\":7}},{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":3}}],\"description\":\"+7 Style if you play a Pose; otherwise +3 Style if you play a Flourish\",\"id\":\"song_016\",\"moment\":\"Coro\",\"number\":16,\"section\":\"Montuno\",\"title\":\"Big finish\"}],\"id\":\"lloraras\",\"title\":\"Llorarás\"},\"version\":1}",
     "actions": [
       {
         "type": "CONFIRM_HAND",
@@ -477,16 +523,16 @@
         "recoveryInstanceId": null
       }
     ],
-    "expectedStateHash": "ded9a786e8edb8dfd2cefbf89eeb7a4fbdee046e160bad3112964c53dd57a3b9"
+    "expectedStateHash": "3b064fb15939fe13b07164f064870b59447c57b0c361d36accfd98124bd77ee2"
   },
   {
     "id": "maximum-lessons-505",
     "seed": 505,
     "strategy": "maximum-lessons",
     "ending": "completed",
-    "engineVersion": 5,
-    "contentHash": "c7a2a3a9b6c7b0d24e4ec943dfbf9983cabd1acf629354400f02cf3d319c5a66",
-    "contentBytes": "{\"cards\":[{\"id\":\"pos_001\",\"name\":\"Open Position\",\"position\":\"Open\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_002\",\"name\":\"Closed Position\",\"position\":\"Closed\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_003\",\"name\":\"Half-Open Position\",\"position\":\"Half-Open\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"pos_004\",\"name\":\"Half-Closed Position\",\"position\":\"Half-Closed\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"mov_001\",\"name\":\"Follow Right Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_002\",\"name\":\"Follow Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_003\",\"name\":\"Lead Right Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_004\",\"name\":\"Lead Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_005\",\"name\":\"Cross Body Lead — Open\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_013\",\"name\":\"Cross Body Lead — Closed\",\"positions\":[\"Closed\",\"Half-Closed\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_006\",\"name\":\"Hesitation\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_007\",\"name\":\"Cross Body Lead — Inside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_008\",\"name\":\"Cross Body Lead — Outside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_009\",\"name\":\"New York Walk\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_010\",\"name\":\"Change of Place (Enchufla)\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_011\",\"name\":\"Sombrero\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"mov_012\",\"name\":\"Follow Double Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"flo_001\",\"name\":\"Arm Overhead (Lead)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_002\",\"name\":\"Arm Overhead (Follow)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_003\",\"name\":\"Hand Twist\",\"pose\":false,\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"flourish\"},{\"id\":\"flo_004\",\"name\":\"Dip\",\"pose\":true,\"positions\":[\"Closed\"],\"style\":3,\"tier\":\"A\",\"type\":\"flourish\"},{\"connectionCost\":1,\"id\":\"rec_001\",\"name\":\"Return to Basic\",\"tier\":\"B\",\"type\":\"recovery\"},{\"connectionCost\":0,\"id\":\"rec_002\",\"name\":\"Reconnect\",\"tier\":\"I\",\"type\":\"recovery\"}],\"decks\":{\"advanced\":[{\"cardId\":\"mov_011\",\"count\":2},{\"cardId\":\"mov_012\",\"count\":2},{\"cardId\":\"flo_004\",\"count\":2}],\"beginnerSupply\":[\"pos_001\",\"pos_002\",\"mov_001\",\"mov_002\",\"mov_003\",\"mov_004\",\"mov_005\",\"mov_013\",\"mov_006\",\"flo_003\",\"rec_001\"],\"full\":{\"follow\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_003\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":2},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_007\",\"count\":1},{\"cardId\":\"mov_009\",\"count\":1},{\"cardId\":\"flo_002\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1},{\"cardId\":\"flo_004\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}],\"lead\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_004\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":2},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_005\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"mov_006\",\"count\":1},{\"cardId\":\"mov_008\",\"count\":1},{\"cardId\":\"mov_010\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}]},\"intermediate\":[{\"cardId\":\"pos_003\",\"count\":3},{\"cardId\":\"pos_004\",\"count\":3},{\"cardId\":\"mov_007\",\"count\":2},{\"cardId\":\"mov_008\",\"count\":2},{\"cardId\":\"mov_009\",\"count\":2},{\"cardId\":\"mov_010\",\"count\":2},{\"cardId\":\"flo_001\",\"count\":2},{\"cardId\":\"flo_002\",\"count\":2},{\"cardId\":\"rec_002\",\"count\":2}],\"starter\":[{\"cardId\":\"pos_001\",\"count\":2},{\"cardId\":\"pos_002\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":1},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":1},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1}]},\"rules\":{\"danceLimits\":{\"flourishes\":1,\"moves\":1,\"positions\":2},\"handSize\":4,\"incomePerTurn\":1,\"initialConnection\":4,\"initialStyle\":0,\"lessonCosts\":{\"advanced\":3,\"beginner\":1,\"intermediate\":2},\"maximumConnection\":10,\"phraseBonuses\":{\"clean\":3,\"poseFinish\":3,\"sharedFlair\":2,\"varietyPerExtraPosition\":1},\"ratings\":[{\"description\":\"You survived, and that's salsa too.\",\"minimum\":0,\"name\":\"First Timers\"},{\"description\":\"The floor is starting to feel like home.\",\"minimum\":20,\"name\":\"Social Dancers\"},{\"description\":\"People know to make room when you arrive.\",\"minimum\":30,\"name\":\"Regulars of the Social\"},{\"description\":\"The room felt every break with you.\",\"minimum\":40,\"name\":\"Crowd Favorites\"},{\"description\":\"A polished, fearless partnership.\",\"minimum\":50,\"name\":\"Festival Performers\"},{\"description\":\"You didn't follow the song. You spoke with it.\",\"minimum\":60,\"name\":\"Soneros of the Floor\"}],\"startingMoney\":0,\"stumble\":{\"defaultConnectionCost\":2}},\"song\":{\"artist\":\"Oscar D'León\",\"cards\":[{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtMost\",\"value\":2},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play a Move worth 2 Style or less\",\"id\":\"song_001\",\"moment\":\"Verse 1\",\"number\":1,\"section\":\"Cuerpo\",\"title\":\"Settle in\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\"]},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from Open\",\"id\":\"song_002\",\"moment\":\"Verse 1\",\"number\":2,\"section\":\"Cuerpo\",\"title\":\"Open invitation\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Flourish\",\"id\":\"song_003\",\"moment\":\"Horns\",\"number\":3,\"section\":\"Cuerpo\",\"title\":\"Catch the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":2},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is worth 2+ Style\",\"id\":\"song_004\",\"moment\":\"Horns\",\"number\":4,\"section\":\"Cuerpo\",\"title\":\"Make it count\"},{\"bonuses\":[{\"condition\":{\"op\":\"noPositionPlayed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play no Position card\",\"id\":\"song_005\",\"moment\":\"Verse 2\",\"number\":5,\"section\":\"Cuerpo\",\"title\":\"Stay close\"},{\"bonuses\":[{\"condition\":{\"op\":\"samePositionAsPreviousMove\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from the same position as the previous Move\",\"id\":\"song_006\",\"moment\":\"Verse 2\",\"number\":6,\"section\":\"Cuerpo\",\"title\":\"Hold the thread\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Flourish\",\"id\":\"song_007\",\"moment\":\"Horns\",\"number\":7,\"section\":\"Cuerpo\",\"title\":\"Answer the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"endsInPosition\",\"position\":\"Closed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if this 8-count ends in Closed\",\"id\":\"song_008\",\"moment\":\"Verse 3\",\"number\":8,\"section\":\"Cuerpo\",\"title\":\"Verse's end\"},{\"bonuses\":[{\"condition\":{\"op\":\"positionChanged\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you change position this 8-count\",\"id\":\"song_009\",\"moment\":\"Puente\",\"number\":9,\"section\":\"Montuno\",\"title\":\"Cross the bridge\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMoveGame\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Move your partner has played this game\",\"id\":\"song_010\",\"moment\":\"Puente\",\"number\":10,\"section\":\"Montuno\",\"title\":\"Echo\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if your Move is worth 3+ Style\",\"id\":\"song_011\",\"moment\":\"Mambo\",\"number\":11,\"section\":\"Montuno\",\"title\":\"Bring the mambo\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Flourish\",\"id\":\"song_012\",\"moment\":\"Mambo\",\"number\":12,\"section\":\"Montuno\",\"title\":\"Shine\"},{\"bonuses\":[{\"condition\":{\"op\":\"cardsPlayedAtLeast\",\"value\":3},\"effect\":{\"connection\":1,\"style\":1}}],\"description\":\"+1 Style and +1 Connection if you play 3+ cards\",\"id\":\"song_013\",\"moment\":\"Mambo\",\"number\":13,\"section\":\"Montuno\",\"title\":\"In full swing\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if you play a Move your partner played earlier this phrase\",\"id\":\"song_014\",\"moment\":\"Pregón\",\"number\":14,\"section\":\"Montuno\",\"title\":\"Call\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Half-Open\",\"Half-Closed\"]},\"effect\":{\"connection\":0,\"style\":2}}],\"description\":\"+2 Style if your Move is danced from Half-Open or Half-Closed\",\"id\":\"song_015\",\"moment\":\"Coro\",\"number\":15,\"section\":\"Montuno\",\"title\":\"Response\"},{\"bonuses\":[{\"condition\":{\"op\":\"posePlayed\"},\"effect\":{\"connection\":0,\"style\":3}},{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+3 Style if you play a Pose; otherwise +1 Style if you play a Flourish\",\"id\":\"song_016\",\"moment\":\"Coro\",\"number\":16,\"section\":\"Montuno\",\"title\":\"Big finish\"}],\"id\":\"lloraras\",\"title\":\"Llorarás\"},\"version\":1}",
+    "engineVersion": 6,
+    "contentHash": "65be07e208ebcb06b8a8f0492babfa227934fd2f4962885fb626d241c49b6ec3",
+    "contentBytes": "{\"cards\":[{\"id\":\"pos_001\",\"name\":\"Open Position\",\"position\":\"Open\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_002\",\"name\":\"Closed Position\",\"position\":\"Closed\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_003\",\"name\":\"Half-Open Position\",\"position\":\"Half-Open\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"pos_004\",\"name\":\"Half-Closed Position\",\"position\":\"Half-Closed\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"mov_001\",\"name\":\"Follow Right Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_002\",\"name\":\"Follow Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_003\",\"name\":\"Lead Right Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_004\",\"name\":\"Lead Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_005\",\"name\":\"Cross Body Lead — Open\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_013\",\"name\":\"Cross Body Lead — Closed\",\"positions\":[\"Closed\",\"Half-Closed\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_006\",\"name\":\"Hesitation\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_007\",\"name\":\"Cross Body Lead — Inside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_008\",\"name\":\"Cross Body Lead — Outside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_009\",\"name\":\"New York Walk\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_010\",\"name\":\"Change of Place (Enchufla)\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_011\",\"name\":\"Sombrero\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"mov_012\",\"name\":\"Follow Double Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"flo_001\",\"name\":\"Arm Overhead (Lead)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_002\",\"name\":\"Arm Overhead (Follow)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_003\",\"name\":\"Hand Twist\",\"pose\":false,\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"flourish\"},{\"id\":\"flo_004\",\"name\":\"Dip\",\"pose\":true,\"positions\":[\"Closed\"],\"style\":3,\"tier\":\"A\",\"type\":\"flourish\"},{\"id\":\"flo_005\",\"name\":\"Ponche\",\"pose\":true,\"positions\":\"any\",\"style\":0,\"tier\":\"B\",\"type\":\"flourish\"},{\"connectionCost\":1,\"id\":\"rec_001\",\"name\":\"Return to Basic\",\"tier\":\"B\",\"type\":\"recovery\"},{\"connectionCost\":0,\"id\":\"rec_002\",\"name\":\"Reconnect\",\"tier\":\"I\",\"type\":\"recovery\"}],\"decks\":{\"advanced\":[{\"cardId\":\"mov_011\",\"count\":2},{\"cardId\":\"mov_012\",\"count\":2},{\"cardId\":\"flo_004\",\"count\":2}],\"beginnerSupply\":[\"pos_001\",\"pos_002\",\"mov_001\",\"mov_002\",\"mov_003\",\"mov_004\",\"mov_005\",\"mov_013\",\"mov_006\",\"flo_003\",\"flo_005\",\"rec_001\"],\"full\":{\"follow\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_003\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":2},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_007\",\"count\":1},{\"cardId\":\"mov_009\",\"count\":1},{\"cardId\":\"flo_002\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1},{\"cardId\":\"flo_004\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}],\"lead\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_004\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":2},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_005\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"mov_006\",\"count\":1},{\"cardId\":\"mov_008\",\"count\":1},{\"cardId\":\"mov_010\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}]},\"intermediate\":[{\"cardId\":\"pos_003\",\"count\":3},{\"cardId\":\"pos_004\",\"count\":3},{\"cardId\":\"mov_007\",\"count\":2},{\"cardId\":\"mov_008\",\"count\":2},{\"cardId\":\"mov_009\",\"count\":2},{\"cardId\":\"mov_010\",\"count\":2},{\"cardId\":\"flo_001\",\"count\":2},{\"cardId\":\"flo_002\",\"count\":2},{\"cardId\":\"rec_002\",\"count\":2}],\"starter\":[{\"cardId\":\"pos_001\",\"count\":2},{\"cardId\":\"pos_002\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":1},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1}]},\"rules\":{\"call\":{\"afinqueBonus\":[0,0,1,1,2],\"inPocketStyle\":1,\"missConnectionCost\":1,\"options\":[{\"ask\":\"dance a Move — any Move\",\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":0},\"id\":\"call_001\",\"name\":\"Stay with me\",\"style\":0},{\"ask\":\"dance your Move from Open or Half-Open\",\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\",\"Half-Open\"]},\"id\":\"call_002\",\"name\":\"Open it up\",\"style\":1},{\"ask\":\"change the position during your 8-count\",\"condition\":{\"op\":\"positionChanged\"},\"id\":\"call_003\",\"name\":\"Change the room\",\"style\":3},{\"ask\":\"dance a Move I have already danced this phrase\",\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"id\":\"call_004\",\"name\":\"Echo me\",\"style\":2},{\"ask\":\"dance your Move from Closed or Half-Closed\",\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Closed\",\"Half-Closed\"]},\"id\":\"call_005\",\"name\":\"Stay close\",\"style\":4},{\"ask\":\"include a Flourish\",\"condition\":{\"op\":\"flourishPlayed\"},\"id\":\"call_006\",\"name\":\"Style it\",\"style\":4},{\"ask\":\"dance a Move worth 3 Style or more\",\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"id\":\"call_007\",\"name\":\"Show me something\",\"style\":8}],\"resetAfinqueAtPhraseEnd\":true},\"danceLimits\":{\"flourishes\":1,\"moves\":1,\"positions\":2},\"handSize\":4,\"incomePerTurn\":1,\"initialConnection\":4,\"initialStyle\":0,\"lessonCosts\":{\"advanced\":3,\"beginner\":1,\"intermediate\":2},\"lessonToDrawTop\":{\"advanced\":true,\"beginner\":false,\"intermediate\":true},\"maximumConnection\":10,\"phraseBonuses\":{\"clean\":3,\"poseFinish\":4,\"sharedFlair\":2,\"varietyPerExtraPosition\":1},\"ratings\":[{\"description\":\"You survived, and that's salsa too.\",\"minimum\":0,\"name\":\"First Timers\"},{\"description\":\"The floor is starting to feel like home.\",\"minimum\":36,\"name\":\"Social Dancers\"},{\"description\":\"People know to make room when you arrive.\",\"minimum\":50,\"name\":\"Regulars of the Social\"},{\"description\":\"The room felt every break with you.\",\"minimum\":60,\"name\":\"Crowd Favorites\"},{\"description\":\"A polished, fearless partnership.\",\"minimum\":70,\"name\":\"Festival Performers\"},{\"description\":\"You didn't follow the song. You spoke with it.\",\"minimum\":82,\"name\":\"Soneros of the Floor\"}],\"startingMoney\":0,\"stumble\":{\"defaultConnectionCost\":2}},\"song\":{\"artist\":\"Oscar D'León\",\"cards\":[{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtMost\",\"value\":2},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play a Move worth 2 Style or less\",\"favouredCall\":\"call_001\",\"id\":\"song_001\",\"moment\":\"Verse 1\",\"number\":1,\"section\":\"Cuerpo\",\"title\":\"Settle in\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\"]},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from Open\",\"favouredCall\":\"call_002\",\"id\":\"song_002\",\"moment\":\"Verse 1\",\"number\":2,\"section\":\"Cuerpo\",\"title\":\"Open invitation\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if you play a Flourish\",\"favouredCall\":\"call_003\",\"id\":\"song_003\",\"moment\":\"Horns\",\"number\":3,\"section\":\"Cuerpo\",\"title\":\"Catch the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":2},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is worth 2+ Style\",\"favouredCall\":\"call_002\",\"id\":\"song_004\",\"moment\":\"Horns\",\"number\":4,\"section\":\"Cuerpo\",\"title\":\"Make it count\"},{\"bonuses\":[{\"condition\":{\"op\":\"noPositionPlayed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play no Position card\",\"favouredCall\":\"call_005\",\"id\":\"song_005\",\"moment\":\"Verse 2\",\"number\":5,\"section\":\"Cuerpo\",\"title\":\"Stay close\"},{\"bonuses\":[{\"condition\":{\"op\":\"samePositionAsPreviousMove\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from the same position as the previous Move\",\"favouredCall\":\"call_004\",\"id\":\"song_006\",\"moment\":\"Verse 2\",\"number\":6,\"section\":\"Cuerpo\",\"title\":\"Hold the thread\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if you play a Flourish\",\"favouredCall\":\"call_006\",\"id\":\"song_007\",\"moment\":\"Horns\",\"number\":7,\"section\":\"Cuerpo\",\"title\":\"Answer the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"endsInPosition\",\"position\":\"Closed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if this 8-count ends in Closed\",\"id\":\"song_008\",\"moment\":\"Verse 3\",\"number\":8,\"section\":\"Cuerpo\",\"title\":\"Verse's end\"},{\"bonuses\":[{\"condition\":{\"op\":\"positionChanged\"},\"effect\":{\"connection\":1,\"style\":1}}],\"description\":\"+1 Style and +1 Connection if you change position this 8-count\",\"favouredCall\":\"call_003\",\"id\":\"song_009\",\"moment\":\"Puente\",\"number\":9,\"section\":\"Montuno\",\"title\":\"Cross the bridge\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMoveGame\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Move your partner has played this game\",\"favouredCall\":\"call_004\",\"id\":\"song_010\",\"moment\":\"Puente\",\"number\":10,\"section\":\"Montuno\",\"title\":\"Echo\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"effect\":{\"connection\":0,\"style\":6}}],\"description\":\"+6 Style if your Move is worth 3+ Style\",\"favouredCall\":\"call_007\",\"id\":\"song_011\",\"moment\":\"Mambo\",\"number\":11,\"section\":\"Montuno\",\"title\":\"Bring the mambo\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Flourish\",\"favouredCall\":\"call_006\",\"id\":\"song_012\",\"moment\":\"Mambo\",\"number\":12,\"section\":\"Montuno\",\"title\":\"Shine\"},{\"bonuses\":[{\"condition\":{\"op\":\"cardsPlayedAtLeast\",\"value\":3},\"effect\":{\"connection\":1,\"style\":3}}],\"description\":\"+3 Style and +1 Connection if you play 3+ cards\",\"favouredCall\":\"call_004\",\"id\":\"song_013\",\"moment\":\"Mambo\",\"number\":13,\"section\":\"Montuno\",\"title\":\"In full swing\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Move your partner played earlier this phrase\",\"favouredCall\":\"call_006\",\"id\":\"song_014\",\"moment\":\"Pregón\",\"number\":14,\"section\":\"Montuno\",\"title\":\"Call\"},{\"bonuses\":[{\"condition\":{\"op\":\"answeredCall\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you answer the call standing over you\",\"favouredCall\":\"call_006\",\"id\":\"song_015\",\"moment\":\"Coro\",\"number\":15,\"section\":\"Montuno\",\"title\":\"Response\"},{\"bonuses\":[{\"condition\":{\"op\":\"posePlayed\"},\"effect\":{\"connection\":0,\"style\":7}},{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":3}}],\"description\":\"+7 Style if you play a Pose; otherwise +3 Style if you play a Flourish\",\"id\":\"song_016\",\"moment\":\"Coro\",\"number\":16,\"section\":\"Montuno\",\"title\":\"Big finish\"}],\"id\":\"lloraras\",\"title\":\"Llorarás\"},\"version\":1}",
     "actions": [
       {
         "type": "CONFIRM_HAND",
@@ -498,7 +544,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -512,7 +559,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -526,7 +574,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -540,7 +589,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -554,7 +604,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -568,7 +619,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -582,7 +634,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -596,7 +649,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -610,7 +664,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -624,7 +679,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -638,7 +694,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -652,7 +709,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -666,7 +724,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -680,7 +739,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -694,7 +754,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "lead"
+        "role": "lead",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -708,7 +769,8 @@
       },
       {
         "type": "END_DANCE",
-        "role": "follow"
+        "role": "follow",
+        "callId": null
       },
       {
         "type": "BUY_LESSON",
@@ -721,6 +783,305 @@
         "role": "follow"
       }
     ],
-    "expectedStateHash": "1f019c9dec811d104c316622b4c810f18ede71887b36e393d5c272a181b5ecc5"
+    "expectedStateHash": "63e62eeae8800895553180119c5124a1d87d74635707c37904ec3a06c52ef5b4"
+  },
+  {
+    "id": "call-and-answer-606",
+    "seed": 606,
+    "strategy": "call-and-answer",
+    "ending": "completed",
+    "engineVersion": 6,
+    "contentHash": "65be07e208ebcb06b8a8f0492babfa227934fd2f4962885fb626d241c49b6ec3",
+    "contentBytes": "{\"cards\":[{\"id\":\"pos_001\",\"name\":\"Open Position\",\"position\":\"Open\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_002\",\"name\":\"Closed Position\",\"position\":\"Closed\",\"tier\":\"B\",\"type\":\"position\"},{\"id\":\"pos_003\",\"name\":\"Half-Open Position\",\"position\":\"Half-Open\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"pos_004\",\"name\":\"Half-Closed Position\",\"position\":\"Half-Closed\",\"tier\":\"I\",\"type\":\"position\"},{\"id\":\"mov_001\",\"name\":\"Follow Right Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_002\",\"name\":\"Follow Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_003\",\"name\":\"Lead Right Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_004\",\"name\":\"Lead Left Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_005\",\"name\":\"Cross Body Lead — Open\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_013\",\"name\":\"Cross Body Lead — Closed\",\"positions\":[\"Closed\",\"Half-Closed\"],\"style\":2,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_006\",\"name\":\"Hesitation\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":1,\"tier\":\"B\",\"type\":\"move\"},{\"id\":\"mov_007\",\"name\":\"Cross Body Lead — Inside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_008\",\"name\":\"Cross Body Lead — Outside Turn\",\"positions\":[\"Open\",\"Closed\",\"Half-Open\",\"Half-Closed\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_009\",\"name\":\"New York Walk\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":3,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_010\",\"name\":\"Change of Place (Enchufla)\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":2,\"tier\":\"I\",\"type\":\"move\"},{\"id\":\"mov_011\",\"name\":\"Sombrero\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"mov_012\",\"name\":\"Follow Double Turn\",\"positions\":[\"Open\",\"Half-Open\"],\"style\":4,\"tier\":\"A\",\"type\":\"move\"},{\"id\":\"flo_001\",\"name\":\"Arm Overhead (Lead)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_002\",\"name\":\"Arm Overhead (Follow)\",\"pose\":false,\"positions\":\"any\",\"style\":1,\"tier\":\"I\",\"type\":\"flourish\"},{\"id\":\"flo_003\",\"name\":\"Hand Twist\",\"pose\":false,\"positions\":[\"Open\",\"Half-Open\"],\"style\":1,\"tier\":\"B\",\"type\":\"flourish\"},{\"id\":\"flo_004\",\"name\":\"Dip\",\"pose\":true,\"positions\":[\"Closed\"],\"style\":3,\"tier\":\"A\",\"type\":\"flourish\"},{\"id\":\"flo_005\",\"name\":\"Ponche\",\"pose\":true,\"positions\":\"any\",\"style\":0,\"tier\":\"B\",\"type\":\"flourish\"},{\"connectionCost\":1,\"id\":\"rec_001\",\"name\":\"Return to Basic\",\"tier\":\"B\",\"type\":\"recovery\"},{\"connectionCost\":0,\"id\":\"rec_002\",\"name\":\"Reconnect\",\"tier\":\"I\",\"type\":\"recovery\"}],\"decks\":{\"advanced\":[{\"cardId\":\"mov_011\",\"count\":2},{\"cardId\":\"mov_012\",\"count\":2},{\"cardId\":\"flo_004\",\"count\":2}],\"beginnerSupply\":[\"pos_001\",\"pos_002\",\"mov_001\",\"mov_002\",\"mov_003\",\"mov_004\",\"mov_005\",\"mov_013\",\"mov_006\",\"flo_003\",\"flo_005\",\"rec_001\"],\"full\":{\"follow\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_003\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":2},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_007\",\"count\":1},{\"cardId\":\"mov_009\",\"count\":1},{\"cardId\":\"flo_002\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1},{\"cardId\":\"flo_004\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}],\"lead\":[{\"cardId\":\"pos_001\",\"count\":4},{\"cardId\":\"pos_002\",\"count\":2},{\"cardId\":\"pos_004\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":2},{\"cardId\":\"mov_004\",\"count\":1},{\"cardId\":\"mov_005\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"mov_006\",\"count\":1},{\"cardId\":\"mov_008\",\"count\":1},{\"cardId\":\"mov_010\",\"count\":1},{\"cardId\":\"rec_001\",\"count\":1}]},\"intermediate\":[{\"cardId\":\"pos_003\",\"count\":3},{\"cardId\":\"pos_004\",\"count\":3},{\"cardId\":\"mov_007\",\"count\":2},{\"cardId\":\"mov_008\",\"count\":2},{\"cardId\":\"mov_009\",\"count\":2},{\"cardId\":\"mov_010\",\"count\":2},{\"cardId\":\"flo_001\",\"count\":2},{\"cardId\":\"flo_002\",\"count\":2},{\"cardId\":\"rec_002\",\"count\":2}],\"starter\":[{\"cardId\":\"pos_001\",\"count\":2},{\"cardId\":\"pos_002\",\"count\":1},{\"cardId\":\"mov_001\",\"count\":1},{\"cardId\":\"mov_002\",\"count\":1},{\"cardId\":\"mov_003\",\"count\":1},{\"cardId\":\"mov_013\",\"count\":1},{\"cardId\":\"flo_003\",\"count\":1}]},\"rules\":{\"call\":{\"afinqueBonus\":[0,0,1,1,2],\"inPocketStyle\":1,\"missConnectionCost\":1,\"options\":[{\"ask\":\"dance a Move — any Move\",\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":0},\"id\":\"call_001\",\"name\":\"Stay with me\",\"style\":0},{\"ask\":\"dance your Move from Open or Half-Open\",\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\",\"Half-Open\"]},\"id\":\"call_002\",\"name\":\"Open it up\",\"style\":1},{\"ask\":\"change the position during your 8-count\",\"condition\":{\"op\":\"positionChanged\"},\"id\":\"call_003\",\"name\":\"Change the room\",\"style\":3},{\"ask\":\"dance a Move I have already danced this phrase\",\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"id\":\"call_004\",\"name\":\"Echo me\",\"style\":2},{\"ask\":\"dance your Move from Closed or Half-Closed\",\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Closed\",\"Half-Closed\"]},\"id\":\"call_005\",\"name\":\"Stay close\",\"style\":4},{\"ask\":\"include a Flourish\",\"condition\":{\"op\":\"flourishPlayed\"},\"id\":\"call_006\",\"name\":\"Style it\",\"style\":4},{\"ask\":\"dance a Move worth 3 Style or more\",\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"id\":\"call_007\",\"name\":\"Show me something\",\"style\":8}],\"resetAfinqueAtPhraseEnd\":true},\"danceLimits\":{\"flourishes\":1,\"moves\":1,\"positions\":2},\"handSize\":4,\"incomePerTurn\":1,\"initialConnection\":4,\"initialStyle\":0,\"lessonCosts\":{\"advanced\":3,\"beginner\":1,\"intermediate\":2},\"lessonToDrawTop\":{\"advanced\":true,\"beginner\":false,\"intermediate\":true},\"maximumConnection\":10,\"phraseBonuses\":{\"clean\":3,\"poseFinish\":4,\"sharedFlair\":2,\"varietyPerExtraPosition\":1},\"ratings\":[{\"description\":\"You survived, and that's salsa too.\",\"minimum\":0,\"name\":\"First Timers\"},{\"description\":\"The floor is starting to feel like home.\",\"minimum\":36,\"name\":\"Social Dancers\"},{\"description\":\"People know to make room when you arrive.\",\"minimum\":50,\"name\":\"Regulars of the Social\"},{\"description\":\"The room felt every break with you.\",\"minimum\":60,\"name\":\"Crowd Favorites\"},{\"description\":\"A polished, fearless partnership.\",\"minimum\":70,\"name\":\"Festival Performers\"},{\"description\":\"You didn't follow the song. You spoke with it.\",\"minimum\":82,\"name\":\"Soneros of the Floor\"}],\"startingMoney\":0,\"stumble\":{\"defaultConnectionCost\":2}},\"song\":{\"artist\":\"Oscar D'León\",\"cards\":[{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtMost\",\"value\":2},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play a Move worth 2 Style or less\",\"favouredCall\":\"call_001\",\"id\":\"song_001\",\"moment\":\"Verse 1\",\"number\":1,\"section\":\"Cuerpo\",\"title\":\"Settle in\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveFrom\",\"positions\":[\"Open\"]},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from Open\",\"favouredCall\":\"call_002\",\"id\":\"song_002\",\"moment\":\"Verse 1\",\"number\":2,\"section\":\"Cuerpo\",\"title\":\"Open invitation\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if you play a Flourish\",\"favouredCall\":\"call_003\",\"id\":\"song_003\",\"moment\":\"Horns\",\"number\":3,\"section\":\"Cuerpo\",\"title\":\"Catch the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":2},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is worth 2+ Style\",\"favouredCall\":\"call_002\",\"id\":\"song_004\",\"moment\":\"Horns\",\"number\":4,\"section\":\"Cuerpo\",\"title\":\"Make it count\"},{\"bonuses\":[{\"condition\":{\"op\":\"noPositionPlayed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if you play no Position card\",\"favouredCall\":\"call_005\",\"id\":\"song_005\",\"moment\":\"Verse 2\",\"number\":5,\"section\":\"Cuerpo\",\"title\":\"Stay close\"},{\"bonuses\":[{\"condition\":{\"op\":\"samePositionAsPreviousMove\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if your Move is danced from the same position as the previous Move\",\"favouredCall\":\"call_004\",\"id\":\"song_006\",\"moment\":\"Verse 2\",\"number\":6,\"section\":\"Cuerpo\",\"title\":\"Hold the thread\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":1}}],\"description\":\"+1 Style if you play a Flourish\",\"favouredCall\":\"call_006\",\"id\":\"song_007\",\"moment\":\"Horns\",\"number\":7,\"section\":\"Cuerpo\",\"title\":\"Answer the horns\"},{\"bonuses\":[{\"condition\":{\"op\":\"endsInPosition\",\"position\":\"Closed\"},\"effect\":{\"connection\":1,\"style\":0}}],\"description\":\"+1 Connection if this 8-count ends in Closed\",\"id\":\"song_008\",\"moment\":\"Verse 3\",\"number\":8,\"section\":\"Cuerpo\",\"title\":\"Verse's end\"},{\"bonuses\":[{\"condition\":{\"op\":\"positionChanged\"},\"effect\":{\"connection\":1,\"style\":1}}],\"description\":\"+1 Style and +1 Connection if you change position this 8-count\",\"favouredCall\":\"call_003\",\"id\":\"song_009\",\"moment\":\"Puente\",\"number\":9,\"section\":\"Montuno\",\"title\":\"Cross the bridge\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMoveGame\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Move your partner has played this game\",\"favouredCall\":\"call_004\",\"id\":\"song_010\",\"moment\":\"Puente\",\"number\":10,\"section\":\"Montuno\",\"title\":\"Echo\"},{\"bonuses\":[{\"condition\":{\"op\":\"moveStyleAtLeast\",\"value\":3},\"effect\":{\"connection\":0,\"style\":6}}],\"description\":\"+6 Style if your Move is worth 3+ Style\",\"favouredCall\":\"call_007\",\"id\":\"song_011\",\"moment\":\"Mambo\",\"number\":11,\"section\":\"Montuno\",\"title\":\"Bring the mambo\"},{\"bonuses\":[{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Flourish\",\"favouredCall\":\"call_006\",\"id\":\"song_012\",\"moment\":\"Mambo\",\"number\":12,\"section\":\"Montuno\",\"title\":\"Shine\"},{\"bonuses\":[{\"condition\":{\"op\":\"cardsPlayedAtLeast\",\"value\":3},\"effect\":{\"connection\":1,\"style\":3}}],\"description\":\"+3 Style and +1 Connection if you play 3+ cards\",\"favouredCall\":\"call_004\",\"id\":\"song_013\",\"moment\":\"Mambo\",\"number\":13,\"section\":\"Montuno\",\"title\":\"In full swing\"},{\"bonuses\":[{\"condition\":{\"op\":\"partnerPlayedMovePhrase\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you play a Move your partner played earlier this phrase\",\"favouredCall\":\"call_006\",\"id\":\"song_014\",\"moment\":\"Pregón\",\"number\":14,\"section\":\"Montuno\",\"title\":\"Call\"},{\"bonuses\":[{\"condition\":{\"op\":\"answeredCall\"},\"effect\":{\"connection\":0,\"style\":4}}],\"description\":\"+4 Style if you answer the call standing over you\",\"favouredCall\":\"call_006\",\"id\":\"song_015\",\"moment\":\"Coro\",\"number\":15,\"section\":\"Montuno\",\"title\":\"Response\"},{\"bonuses\":[{\"condition\":{\"op\":\"posePlayed\"},\"effect\":{\"connection\":0,\"style\":7}},{\"condition\":{\"op\":\"flourishPlayed\"},\"effect\":{\"connection\":0,\"style\":3}}],\"description\":\"+7 Style if you play a Pose; otherwise +3 Style if you play a Flourish\",\"id\":\"song_016\",\"moment\":\"Coro\",\"number\":16,\"section\":\"Montuno\",\"title\":\"Big finish\"}],\"id\":\"lloraras\",\"title\":\"Llorarás\"},\"version\":1}",
+    "actions": [
+      {
+        "type": "CONFIRM_HAND",
+        "role": "lead"
+      },
+      {
+        "type": "CONFIRM_HAND",
+        "role": "follow"
+      },
+      {
+        "type": "PLAY_OPEN",
+        "role": "lead",
+        "positionInstanceId": "lead-3",
+        "moveInstanceId": "lead-4"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "lead",
+        "callId": "call_001"
+      },
+      {
+        "type": "BUY_LESSON",
+        "role": "lead",
+        "source": "beginner",
+        "cardId": "rec_001"
+      },
+      {
+        "type": "END_LESSON",
+        "role": "lead"
+      },
+      {
+        "type": "PLAY_MOVE",
+        "role": "follow",
+        "moveInstanceId": "follow-12"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "follow",
+        "callId": "call_002"
+      },
+      {
+        "type": "BUY_LESSON",
+        "role": "follow",
+        "source": "beginner",
+        "cardId": "rec_001"
+      },
+      {
+        "type": "END_LESSON",
+        "role": "follow"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "lead",
+        "callId": "call_003"
+      },
+      {
+        "type": "BUY_LESSON",
+        "role": "lead",
+        "source": "beginner",
+        "cardId": "rec_001"
+      },
+      {
+        "type": "END_LESSON",
+        "role": "lead"
+      },
+      {
+        "type": "ADJUST",
+        "role": "follow",
+        "positionInstanceId": "follow-9"
+      },
+      {
+        "type": "PLAY_MOVE",
+        "role": "follow",
+        "moveInstanceId": "follow-14"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "follow",
+        "callId": "call_002"
+      },
+      {
+        "type": "END_LESSON",
+        "role": "follow"
+      },
+      {
+        "type": "PLAY_MOVE",
+        "role": "lead",
+        "moveInstanceId": "lead-4"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "lead",
+        "callId": "call_005"
+      },
+      {
+        "type": "END_LESSON",
+        "role": "lead"
+      },
+      {
+        "type": "COVER_CALL",
+        "role": "follow",
+        "recoveryInstanceId": "follow-18"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "follow",
+        "callId": "call_004"
+      },
+      {
+        "type": "END_LESSON",
+        "role": "follow"
+      },
+      {
+        "type": "PLAY_MOVE",
+        "role": "lead",
+        "moveInstanceId": "lead-5"
+      },
+      {
+        "type": "PLAY_FLOURISH",
+        "role": "lead",
+        "flourishInstanceId": "lead-8"
+      },
+      {
+        "type": "COVER_CALL",
+        "role": "lead",
+        "recoveryInstanceId": "lead-19"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "lead",
+        "callId": "call_006"
+      },
+      {
+        "type": "END_LESSON",
+        "role": "lead"
+      },
+      {
+        "type": "PLAY_MOVE",
+        "role": "follow",
+        "moveInstanceId": "follow-13"
+      },
+      {
+        "type": "PLAY_FLOURISH",
+        "role": "follow",
+        "flourishInstanceId": "follow-16"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "follow",
+        "callId": null
+      },
+      {
+        "type": "END_LESSON",
+        "role": "follow"
+      },
+      {
+        "type": "PLAY_OPEN",
+        "role": "lead",
+        "positionInstanceId": "lead-3",
+        "moveInstanceId": "lead-7"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "lead",
+        "callId": "call_003"
+      },
+      {
+        "type": "END_LESSON",
+        "role": "lead"
+      },
+      {
+        "type": "PLAY_MOVE",
+        "role": "follow",
+        "moveInstanceId": "follow-15"
+      },
+      {
+        "type": "TRANSITION",
+        "role": "follow",
+        "positionInstanceId": "follow-10"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "follow",
+        "callId": "call_004"
+      },
+      {
+        "type": "END_LESSON",
+        "role": "follow"
+      },
+      {
+        "type": "PLAY_MOVE",
+        "role": "lead",
+        "moveInstanceId": "lead-4"
+      },
+      {
+        "type": "COVER_CALL",
+        "role": "lead",
+        "recoveryInstanceId": "lead-19"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "lead",
+        "callId": "call_007"
+      },
+      {
+        "type": "END_LESSON",
+        "role": "lead"
+      },
+      {
+        "type": "PLAY_MOVE",
+        "role": "follow",
+        "moveInstanceId": "follow-13"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "follow",
+        "callId": "call_006"
+      },
+      {
+        "type": "END_LESSON",
+        "role": "follow"
+      },
+      {
+        "type": "COVER_CALL",
+        "role": "lead",
+        "recoveryInstanceId": "lead-19"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "lead",
+        "callId": "call_001"
+      },
+      {
+        "type": "END_LESSON",
+        "role": "lead"
+      },
+      {
+        "type": "PLAY_MOVE",
+        "role": "follow",
+        "moveInstanceId": "follow-14"
+      },
+      {
+        "type": "PLAY_FLOURISH",
+        "role": "follow",
+        "flourishInstanceId": "follow-16"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "follow",
+        "callId": "call_001"
+      },
+      {
+        "type": "END_LESSON",
+        "role": "follow"
+      },
+      {
+        "type": "PLAY_MOVE",
+        "role": "lead",
+        "moveInstanceId": "lead-6"
+      },
+      {
+        "type": "PLAY_FLOURISH",
+        "role": "lead",
+        "flourishInstanceId": "lead-8"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "lead",
+        "callId": "call_001"
+      },
+      {
+        "type": "END_LESSON",
+        "role": "lead"
+      },
+      {
+        "type": "PLAY_MOVE",
+        "role": "follow",
+        "moveInstanceId": "follow-12"
+      },
+      {
+        "type": "END_DANCE",
+        "role": "follow",
+        "callId": null
+      },
+      {
+        "type": "END_LESSON",
+        "role": "follow"
+      }
+    ],
+    "expectedStateHash": "bb91e9b4ad13c696376ee61ed52d7b30301dc9181603c46f3549b02f5f586379"
   }
 ]

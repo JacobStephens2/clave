@@ -21,11 +21,26 @@ export type SoundEffect =
   | "stumble"
   | "success"
   | "turn"
-  | "undo";
+  | "undo"
+  // The call and the answer: the moments the snapshot differ reads off a new snapshot.
+  | "call"
+  | "answer"
+  | "drop"
+  | "cover"
+  | "afinque-break"
+  | "perfect"
+  | "montuno"
+  | "cierre";
+
+/** How a cue is coloured. Today only the answer, which rises with the run behind it. */
+export interface SoundEffectOptions {
+  /** The afinque links an answer lands on: each one lifts the response a semitone. */
+  readonly links?: number;
+}
 
 interface SoundEffectsContextValue {
   enabled: boolean;
-  play: (effect: SoundEffect) => void;
+  play: (effect: SoundEffect, options?: SoundEffectOptions) => void;
   toggleEnabled: () => void;
 }
 
@@ -121,11 +136,34 @@ function clave(
   tone(context, destination, start, pitch * 2.04, 0.018, volume * 0.32, "sine");
 }
 
-function renderEffect(context: AudioContext, effect: SoundEffect): void {
+/** One strike of the campana: the bell's mouth rings high, its body low. */
+function campana(
+  context: AudioContext,
+  destination: AudioNode,
+  start: number,
+  mouth: boolean,
+  volume = 0.03,
+): void {
+  const pitch = mouth ? 1_050 : 790;
+  tone(context, destination, start, pitch, 0.07, volume, "square");
+  tone(context, destination, start, pitch * 1.45, 0.045, volume * 0.5, "square");
+}
+
+/** A semitone lift per link, so a long run of answers climbs. Four steps, then it holds. */
+function afinqueLift(links: number | undefined): number {
+  return 2 ** (Math.min(Math.max((links ?? 1) - 1, 0), 4) / 12);
+}
+
+function renderEffect(
+  context: AudioContext,
+  effect: SoundEffect,
+  options: SoundEffectOptions = {},
+): void {
   const master = context.createGain();
   master.gain.value = 0.72;
   master.connect(context.destination);
   const now = context.currentTime + 0.006;
+  const lift = afinqueLift(options.links);
 
   switch (effect) {
     case "card-select":
@@ -176,6 +214,53 @@ function renderEffect(context: AudioContext, effect: SoundEffect): void {
       tone(context, master, now, 620, 0.08, 0.028, "triangle", 440);
       tone(context, master, now + 0.07, 440, 0.1, 0.026, "triangle", 310);
       break;
+    // Two notes rising, like a voice asking for something.
+    case "call":
+      clave(context, master, now, 1_250, 0.04);
+      tone(context, master, now + 0.01, 587, 0.1, 0.032, "sine");
+      tone(context, master, now + 0.09, 784, 0.15, 0.03, "sine");
+      break;
+    // The answer comes back bright, and a step higher for every link in the run.
+    case "answer":
+      clave(context, master, now, 1_480 * lift, 0.048);
+      tone(context, master, now + 0.02, 784 * lift, 0.15, 0.034, "sine");
+      tone(context, master, now + 0.1, 988 * lift, 0.2, 0.03, "sine");
+      break;
+    // Gentle on the way down: a dropped call is part of the dance, not a buzzer.
+    case "drop":
+      paper(context, master, now, 0.12, 0.026, 900);
+      tone(context, master, now, 440, 0.16, 0.03, "triangle", 300);
+      tone(context, master, now + 0.1, 330, 0.18, 0.026, "triangle", 220);
+      break;
+    case "cover":
+      paper(context, master, now, 0.1, 0.02, 1_500);
+      tone(context, master, now + 0.03, 392, 0.2, 0.026, "sine", 523);
+      break;
+    case "afinque-break":
+      clave(context, master, now, 900, 0.03);
+      tone(context, master, now + 0.05, 294, 0.13, 0.024, "triangle", 196);
+      break;
+    case "perfect":
+      clave(context, master, now, 1_560, 0.042);
+      tone(context, master, now + 0.02, 1_047, 0.12, 0.026, "sine");
+      tone(context, master, now + 0.08, 1_319, 0.13, 0.024, "sine");
+      tone(context, master, now + 0.14, 1_568, 0.17, 0.022, "sine");
+      break;
+    // The campana enters: the bell figure that turns the verse into the montuno.
+    case "montuno":
+      campana(context, master, now, true, 0.032);
+      campana(context, master, now + 0.12, false, 0.026);
+      campana(context, master, now + 0.2, true, 0.03);
+      campana(context, master, now + 0.32, false, 0.026);
+      break;
+    // The whole band stops together.
+    case "cierre":
+      paper(context, master, now, 0.09, 0.046, 1_200);
+      tone(context, master, now, 196, 0.24, 0.052, "triangle", 98);
+      tone(context, master, now, 392, 0.17, 0.028, "sawtooth", 196);
+      clave(context, master, now, 1_320, 0.05);
+      campana(context, master, now, true, 0.028);
+      break;
   }
 }
 
@@ -189,11 +274,11 @@ export function SoundEffectsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const play = useCallback(
-    (effect: SoundEffect) => {
+    (effect: SoundEffect, options?: SoundEffectOptions) => {
       if (!enabled) return;
       const audio = getContext();
       if (audio.state === "suspended") void audio.resume();
-      renderEffect(audio, effect);
+      renderEffect(audio, effect, options);
     },
     [enabled, getContext],
   );

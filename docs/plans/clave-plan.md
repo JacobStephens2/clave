@@ -648,3 +648,151 @@ No open questions remain. Resolution log:
 | OQ-2 | Stumble-turn semantics: may the stumbling player still take a lesson and clean up? | **Resolved 2026-07-18: yes; cleanup revised 2026-07-20.** A stumble replaces only turn step 2 (Dance); steps 1, 3, and 4 proceed. Cleanup now discards the whole remaining hand automatically and draws four. Rationale: §6's literal text ("no other *dance* cards"), avoiding a bad-hand death spiral, and the "recovery is a skill" pillar. Recorded in `docs/rules/decisions.md` and enforced by engine tests. |
 | OQ-3 | Is speaker-played music acceptable for v1 evenings? | **Resolved 2026-07-18: yes**, confirmed by Jacob; playback remains ambient and unsynchronized. **Scope updated 2026-07-20:** Clave may start and pause Spotify's official embed while retaining external-player fallback and never bundling the recording (D7). |
 | — | Adversarial review 2026-07-18 | All six findings adjudicated (2 accepted, 4 partially accepted) plus two new findings accepted; this revision incorporates every accepted change. See `docs/plans/reviews/clave-plan-adjudication-2026-07-18.md`. |
+
+## 9. Post-v1 amendments
+
+This section is appended rather than merged: §§1–8 record the plan as adjudicated on
+2026-07-18 and revised through launch, and they stay as they were. Each amendment is
+dated and names exactly what it changes.
+
+### 2026-10-23 — The call, afinque, the hold, and the ladder
+
+v1 shipped, and then it was measured. A simulation of 1,000 competent games found a
+game that could not be lost (0.0% losses, 0.00 stumbles per game), scored inside a very
+narrow band (sd/mean 0.08, with 76% of games in one of the six rating bands), and
+offered 1.90 Style-plus-Connection of decision per turn with ~2.9 complete card
+sequences tied for best. Five of the sixteen song cards fired in under 1% of games and
+count 3 could not fire at all; the clean-phrase bonus fired in 100.0% of phrases and
+the pose finish in 1.2%. §7 risk 2 — "thirty minutes of rules administration kills the
+evening" — is why the answer is four small rules rather than a new system:
+
+- **The call and the answer** (rulebook 7.1). As a dance step ends, a player takes the
+  song card's bonus _or_ makes one of seven named calls over their partner's next
+  8-count. An answered call pays Style; a dropped one costs 1 Connection — the game's
+  first involuntary Connection cost, and its only loss path besides the stumble.
+- **Afinque** (7.2) — calls answered in a row, paying each answer extra Style, breaking
+  on a drop, a cover, a stumble, or an 8-count with no Move.
+- **The hold** (6.4) — one Position card played before anything else in the 8-count,
+  taking an empty floor or adjusting an established one, priced at that 8-count's song
+  bonus.
+- **The resolution ladder** (6.5) — every 8-count ends on one of five named rungs: the
+  transcript the phrase strip and the end-of-song recap read. That is the naming and
+  recording half of the concept brief's resolution pillar; the scoring half is the drop
+  and the cover, not the ladder.
+
+Shipped with them: the starter swap (Hand Twist in, Lead Left Turn out), private lessons
+to the top of the draw pile, Ponche (`flo_005`), a retuned song deck, re-fit ratings,
+and a re-conditioned clean phrase. Measured after, on the real engine and the content
+that ships here: 0.0% losses for cautious calling, 0.5% sensible, 28.8% bold, and 99.8%
+reckless; score spread sd/mean 0.158–0.223 across the four plausible-human dials; a
+rating ladder of 0.5 / 11.1 / 21.1 / 29.1 / 23.2 / 15.0% — no band above 29.1%, five of
+six above 8%; 13 of 16 song bonuses live; and the best deck beating $1-per-turn spam by
+11.1% instead of 2.2%. Every rule landed as a dated ruling in
+`docs/rules/decisions.md` with the rulebook amended in the same commit (D6, and §7 risk
+6), and every tunable number stayed in content JSON, tabulated in
+`docs/cards/v1-card-list.md`.
+
+**D6 amendment.** The condition DSL grows by one op — `answeredCall`, for song card
+15's "Response" — so "~12 condition ops cover all 16 Llorarás cards" now reads 13.
+Calls get their own id space (`call_###`) and schema rather than a sixth card prefix;
+`CLAUDE.md` and `AGENTS.md` list `call_` on the ID line.
+
+**D7 amendment: the embed is gone, and nothing has taken its place yet.** D7's "the web
+UI may control Spotify's licensed embed" no longer describes production. Pull request 28
+stopped the client from appending Spotify's iframe API script and sent
+`Content-Security-Policy: script-src 'self'` on the static HTML response, which would
+block that classic script in any case; since then the drawer has offered only its
+fallback link. That left D7 describing a feature the deployed app does not have — the
+open question raised as issue #29, and answered here: the drawer is a link to the
+recording, not a player, and widening the CSP for a third-party script is not worth it.
+
+An original instrumental soundtrack was tried as the replacement four times — ElevenLabs
+Music on this same date, Google Lyria, Mureka and Suno (through the reseller APIFRAME) on
+2026-10-24 — and **did not ship** any time. All four ElevenLabs generations were dropped or came back unusable, carrying
+silences, stutters or unloopable endings. The seven Lyria takes held their tempo, their
+length and one unbroken groove, but none sounded played rather than programmed: two
+independent listening passes scored every one between 1 and 4 out of 10 against a pass bar
+of 7, and one leaked eight seconds of spoken Spanish despite an instrumental-only
+instruction. The three Mureka takes were the best behaved — on tempo, voice-free and
+lossless — and still scored 1 to 4. The ten Suno takes were the first with a clave and a
+tumbao both listeners agreed on, but they too sounded programmed, and they could not ship
+anyway: Suno has no public API and assigns output rights only to its own paying
+subscribers, so audio bought through a reseller carries no rights to pass on. Not one of
+the twenty-four passed as a real salsa-dura band, so no music files were added.
+`docs/audio/soundtrack.md` records the services, the prompts, the terms, every
+measurement, and what to do differently. v1's non-goal on "bundled music files, original
+soundtracks" therefore stands unamended, and the clients keep the synthesized cues plus
+the "Open Llorarás in Spotify" link.
+
+What this amendment does **not** change: the Oscar D'León recording is still never
+hosted, bundled, proxied, or cached; playback is still ambient and still local UI state
+rather than a game action or a room event; and the game is still turn-based and untimed,
+with its 16 "8-counts" remaining thematic game units. The Phase 0b couch gate still
+plays the actual record on a speaker, and its pass criterion is untouched — the song
+deck's order, sections, and moments are unchanged. Its bonus numbers, the starter deck,
+and one new Beginner card are not, so those pages of the physical prototype are
+rebuilt before the gate. Phase 6's post-v1 menu is untouched too: "a bundled or original
+soundtrack" is still on it, now with four failed attempts behind it.
+
+### 2026-10-24/26 — The house band: an original soundtrack ships
+
+The amendment above closed by recording that an original soundtrack had been tried four
+times and failed, that v1's non-goal on "bundled music files, original soundtracks"
+therefore stood unamended, and that Phase 6 still carried the item with four failed
+attempts behind it. A fifth attempt, generated on 2026-10-24 and cut into loops on
+2026-10-25/26, shipped. Both of those lines are superseded here.
+
+**What ships.** Two original instrumental loops, bundled with the client and served from
+the app's own origin: `packages/client/public/audio/cuerpo.mp3` (40 bars, 51.560 s at
+186.19 BPM) under phrase 1, the cuerpo, 8-counts 1–8, and
+`packages/client/public/audio/montuno.mp3` (56 bars, 73.040 s at 184.01 BPM) under phrase
+2, the montuno, 8-counts 9–16. Both are 44.1 kHz stereo 192 kbps MP3 at −16.0 LUFS,
+about 1.2 MB and 1.7 MB; each one's loop points are in
+`packages/client/src/house-band-loops.json`, and the loop body's length is a whole number
+of bars and a whole multiple of 441 samples, so a browser repeats it without a gap or a
+skipped sample. The house band is **off by default** and switched on per device. Which
+cue plays comes from the song card's own `section` in the player's snapshot — `Cuerpo` on
+song cards 1–8, `Montuno` on 9–16 — so the client reads the music the way it reads
+everything else, and nothing about it reaches the engine. The drawer that held only the
+"Open Llorarás in Spotify" link now opens from a button reading "Music" and carries the
+house band's switch above that link, which reads "Llorarás in Spotify".
+
+**How it was made, and why that matters more here than how it sounds.** The audio was
+generated with Suno v6 in Suno's own web app, on a Suno Pro subscription in Jacob's name,
+and downloaded as WAV through Suno's own download channel. Suno's terms
+(<https://suno.com/terms>) assign Output ownership to Pro and Premier account holders —
+"Suno hereby assigns to you all of its right, title and interest in and to any Output
+owned by Suno" — and condition commercial exploitation on the Output having been
+"downloaded by you through an approved channel". That is precisely the link the reseller
+route of attempt 4 could not supply, and it is why this attempt shipped where a
+better-sounding take bought through an API could not have.
+`docs/audio/soundtrack.md` records the model, the exact web-app settings, the condensed
+style text Suno actually generated from, the four takes and their measurements, the
+terms, and the loop engineering, with the four failed attempts preserved above it.
+
+**The music non-goal is amended in two of its three clauses.** §2's non-goal reads
+"Bundled music files, original soundtracks, and **music synchronization of any kind**".
+The first two clauses no longer hold: Clave bundles two original instrumental files,
+which it may distribute because it owns them. **The third clause stands.** Nothing is
+synchronized: the cue follows the game's own phrase rather than the game following the
+music, each cue loops indefinitely until that phrase ends, nothing is scheduled against a
+recording or a turn clock, the game remains turn-based and untimed, and the rulebook's
+"8-count" remains a thematic game unit. The non-goal's own sentence about never hosting
+or distributing the Oscar D'León recording is untouched, and so is the reason for it.
+
+**D7 amendment.** D7 ("Audio: an official external embed, explicitly ambient — the game
+does not synchronize with the recording") grows one clause: the app may also play its own
+original, owned loops from its own origin. Everything else D7 says still holds exactly as
+written. The Oscar D'León recording is still never stored, proxied, cached, bundled, or
+distributed; the drawer is still a link to that recording rather than a player, per the
+2026-10-23 amendment; playback is still local UI state rather than a game action or a
+shared-room event, which now covers the house-band toggle too, so two devices in a room
+need not agree about music; and the locally synthesized interface cues are unchanged. The
+Phase 0b couch gate still plays the actual record on a speaker and its pass criterion is
+untouched: the house band gives a couple something to dance to when the record is not
+playing, and the gate tests the ambient-record evening, not the loops.
+
+**Phase 6.** "A bundled or original soundtrack" leaves the post-v1 menu as delivered.
+What remains unplanned is the rest of the music work: a third cue, a second song's deck,
+and the human session player or licensed salsa-dura library that
+`docs/audio/soundtrack.md` still recommends for a band that breathes.

@@ -3,10 +3,12 @@ import { isDeepStrictEqual } from "node:util";
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
+  afinqueCap,
   applyAction,
   createGame,
   legalActions,
   nextRandom,
+  type CardInstance,
   type GameAction,
   type GameState,
   type Role,
@@ -24,6 +26,35 @@ function progress(actions: GameAction[]): GameAction {
 }
 
 const roles: Role[] = ["lead", "follow"];
+const phraseLength = content.song.cards.length / 2;
+
+/** Every card instance a player owns, wherever it currently sits. */
+function owned(state: GameState, role: Role): string[] {
+  const player = state.players[role];
+  const table = [state.table.position, state.table.move?.card ?? null, state.table.flourish]
+    .filter((entry): entry is CardInstance => entry !== null)
+    .filter((entry) => entry.owner === role);
+  return [...player.hand, ...player.drawPile, ...player.discardPile, ...table].map(
+    (entry) => entry.instanceId,
+  );
+}
+
+/** What has to be true of every state the engine hands back. */
+function invariants(state: GameState): void {
+  expect(state.shared.style).toBeGreaterThanOrEqual(0);
+  expect(state.shared.afinque).toBeGreaterThanOrEqual(0);
+  expect(state.shared.afinque).toBeLessThanOrEqual(afinqueCap(content));
+  // No call crosses a phrase ending, so counts 1 and 9 are never danced into one.
+  if (state.phase === "dance" && state.songIndex % phraseLength === 0)
+    expect(state.call).toBeNull();
+  // A call asks for something from the floor the caller left, which keeps its Position.
+  if (state.call) expect(state.table.position).not.toBeNull();
+  if (state.status === "completed" || state.status === "lost") expect(state.call).toBeNull();
+  for (const role of roles) {
+    const ids = owned(state, role);
+    expect(new Set(ids).size).toBe(ids.length);
+  }
+}
 
 // Every action the reducer could be offered from the current state: every hand card in every
 // hand-card slot, every hand pair for PLAY_OPEN, every supply, market and history card in every
@@ -42,18 +73,22 @@ function broadCandidates(state: GameState): GameAction[] {
       { type: "CONFIRM_HAND", role },
       { type: "CLEAR_SIGNAL", role },
       { type: "UNDO_TURN", role },
-      { type: "END_DANCE", role },
+      { type: "END_DANCE", role, callId: null },
       { type: "STUMBLE", role, recoveryInstanceId: null },
       { type: "END_LESSON", role },
     );
+    for (const option of content.rules.call?.options ?? [])
+      actions.push({ type: "END_DANCE", role, callId: option.id });
     const hand = state.players[role].hand.map((entry) => entry.instanceId);
     for (const instanceId of hand) {
       actions.push(
         { type: "SIGNAL_CARD", role, instanceId },
         { type: "PLAY_MOVE", role, moveInstanceId: instanceId },
         { type: "TRANSITION", role, positionInstanceId: instanceId },
+        { type: "ADJUST", role, positionInstanceId: instanceId },
         { type: "PLAY_FLOURISH", role, flourishInstanceId: instanceId },
         { type: "STUMBLE", role, recoveryInstanceId: instanceId },
+        { type: "COVER_CALL", role, recoveryInstanceId: instanceId },
       );
       for (const moveInstanceId of hand)
         actions.push({ type: "PLAY_OPEN", role, positionInstanceId: instanceId, moveInstanceId });
@@ -118,6 +153,7 @@ describe("engine properties", () => {
           expect(state.shared.connection).toBeLessThanOrEqual(content.rules.maximumConnection);
           expect(state.players.lead.hand.length).toBeLessThanOrEqual(content.rules.handSize);
           expect(state.players.follow.hand.length).toBeLessThanOrEqual(content.rules.handSize);
+          invariants(state);
           steps += 1;
         }
         expect(["completed", "lost"]).toContain(state.status);
@@ -130,6 +166,7 @@ describe("engine properties", () => {
     fc.assert(
       fc.property(fc.integer({ min: 0, max: 0xffff_ffff }), (seed) => {
         walk(seed, (state) => {
+          invariants(state);
           const listed = roles.flatMap((role) => legalActions(state, role, content));
           for (const action of broadCandidates(state)) {
             const result = applyAction(state, action, content);
@@ -137,6 +174,26 @@ describe("engine properties", () => {
             expect(action.type).toBe("UNDO_TURN");
             expect(withoutBookkeeping(result.state)).toEqual(withoutBookkeeping(state));
           }
+        });
+      }),
+      { numRuns: 4 },
+    );
+  });
+
+  it("never loses or duplicates a card instance along a walk", () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 0, max: 0xffff_ffff }), (seed) => {
+        let previous: GameState | null = null;
+        walk(seed, (state) => {
+          for (const role of roles) {
+            const ids = owned(state, role);
+            expect(new Set(ids).size).toBe(ids.length);
+            // Lessons mint cards and nothing else ever removes one, so the only way a card
+            // can leave is an undo rolling back the turn that minted it, `nextInstance` too.
+            if (previous && state.nextInstance >= previous.nextInstance)
+              for (const id of owned(previous, role)) expect(ids).toContain(id);
+          }
+          previous = state;
         });
       }),
       { numRuns: 4 },

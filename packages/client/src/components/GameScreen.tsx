@@ -1,19 +1,37 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { DanceCard as DanceCardDefinition } from "@clave/content";
 import type { CardView, GameAction, PlayerSnapshot, Role } from "@clave/engine";
+import { rungLabel } from "../rungs.js";
+import { eventsBetween, type SnapshotEvent } from "../snapshot-events.js";
 import { useAppStore, type PartnerPresence } from "../store.js";
 import {
   NO_INTENT,
+  callHandoff,
+  callMadeNote,
   readDanceStep,
+  type CallStanding,
   type DanceTelling,
   type HandOffer,
   type TurnIntent,
 } from "../turn-intent.js";
+import { AfinqueMeter } from "./AfinqueMeter.js";
+import { CallBanner } from "./CallBanner.js";
+import { CallPickerTrigger, CallSheet } from "./CallPicker.js";
 import { DanceCard } from "./DanceCard.js";
 import { DancerDemo } from "./DancerDemo.js";
 import { MusicButton } from "./MusicPlayer.js";
 import { PhraseHistory, comboSummary } from "./PhraseHistory.js";
 import { RulesButton } from "./RulesDialog.js";
+import { SnapshotCues } from "./SnapshotCues.js";
+import { SongRecap } from "./SongRecap.js";
 import { SoundEffectsButton, useSoundEffects, type SoundEffect } from "./SoundEffects.js";
 
 const roleName = (role: Role) => (role === "lead" ? "Lead" : "Follow");
@@ -111,7 +129,11 @@ function viewersTurn(view: PlayerSnapshot | null): boolean {
   return view.status === "playing" && view.activeRole === view.viewerRole;
 }
 
-function soundForAction(action: GameAction): SoundEffect {
+/**
+ * The sound a tap makes on the device that taps it. Null where the moment it starts is one
+ * the snapshot differ cues on both devices instead (SnapshotCues), so nothing plays twice.
+ */
+function soundForAction(action: GameAction): SoundEffect | null {
   switch (action.type) {
     case "MULLIGAN":
     case "END_LESSON":
@@ -119,10 +141,14 @@ function soundForAction(action: GameAction): SoundEffect {
     case "PLAY_MOVE":
     case "PLAY_OPEN":
       return "card-move";
+    // The hold is a Position landing on the floor, the same as a transition.
     case "TRANSITION":
+    case "ADJUST":
       return "card-position";
     case "PLAY_FLOURISH":
       return "card-flourish";
+    // The 8-count ending. Whatever it resolved — a call, an answer, a drop — the differ
+    // lays over the top of it, so this stays the plain sound of a step closing.
     case "END_DANCE":
       return "turn";
     case "BUY_LESSON":
@@ -134,6 +160,9 @@ function soundForAction(action: GameAction): SoundEffect {
       return "turn";
     case "SIGNAL_CARD":
       return "card-select";
+    // The save, not the card: the differ plays "cover" for it on both devices.
+    case "COVER_CALL":
+      return null;
     case "CLEAR_SIGNAL":
     case "UNDO_TURN":
       return "undo";
@@ -149,56 +178,39 @@ interface ScoreChange {
   announcement: string;
 }
 
-interface ScoreReading {
-  gameId: string;
-  viewer: Role;
-  sequence: number;
-  connection: number;
-  style: number;
-  money: number;
+/** One moment of a kind out of a step's events, narrowed. */
+function momentOf<K extends SnapshotEvent["kind"]>(
+  events: readonly SnapshotEvent[],
+  kind: K,
+): Extract<SnapshotEvent, { kind: K }> | null {
+  return (
+    events.find((event): event is Extract<SnapshotEvent, { kind: K }> => event.kind === kind) ??
+    null
+  );
 }
 
-function readScore(view: PlayerSnapshot): ScoreReading {
-  return {
-    gameId: view.gameId,
-    viewer: view.viewerRole,
-    sequence: view.sequence,
-    connection: view.shared.connection,
-    style: view.shared.style,
-    money: view.self.money,
-  };
-}
-
-function scoreChange(previous: ScoreReading, view: PlayerSnapshot): ScoreChange | null {
-  if (
-    previous.gameId !== view.gameId ||
-    previous.viewer !== view.viewerRole ||
-    view.sequence <= previous.sequence
-  )
-    return null;
-  const change = {
-    connection: view.shared.connection - previous.connection,
-    style: view.shared.style - previous.style,
-    money: view.self.money - previous.money,
-  };
-  if (!change.connection && !change.style && !change.money) return null;
+/**
+ * The HUD's reading of a step: the couple's shared score, the viewer's own practice money,
+ * and the engine's own sentences for why. The differ already leaves a reset turn and a
+ * resumed dance eventless, so the scoreboard never flashes at a rewind.
+ */
+function scoreChange(events: readonly SnapshotEvent[]): ScoreChange | null {
+  const score = momentOf(events, "score");
+  const money = momentOf(events, "practice-money");
+  const at = score ?? money;
+  if (!at) return null;
   const said = (label: string, value: number) =>
     value ? `${label} ${value > 0 ? "up" : "down"} ${Math.abs(value)}.` : "";
-  // Only entries newer than the previous reading, so an undone play is never cited.
-  const causes = view.log
-    .filter(
-      (entry) =>
-        entry.sequence > previous.sequence && (entry.kind === "score" || entry.kind === "dance"),
-    )
-    .map((entry) => entry.message);
   return {
-    key: view.sequence,
-    ...change,
+    key: at.sequence,
+    connection: score?.connection ?? 0,
+    style: score?.style ?? 0,
+    money: money?.money ?? 0,
     announcement: [
-      said("Style", change.style),
-      said("Connection", change.connection),
-      said("Your practice money", change.money),
-      ...causes,
+      said("Style", score?.style ?? 0),
+      said("Connection", score?.connection ?? 0),
+      said("Your practice money", money?.money ?? 0),
+      ...(score?.causes ?? []),
     ]
       .filter(Boolean)
       .join(" "),
@@ -241,6 +253,7 @@ function Hud({
         <strong>{view.shared.style}</strong>
         {change && <HudDelta value={change.style} changeKey={change.key} />}
       </div>
+      <AfinqueMeter view={view} />
       <div className="hud-stat">
         <small>Your practice</small>
         <strong>${view.self.money}</strong>
@@ -490,6 +503,12 @@ function Market({
         <strong>{title}</strong>
         <span>${cost}</span>
       </div>
+      {/* Where the money sends the card, against this game's own rule for the row. */}
+      {view.rules.lessonToDrawTop?.[source] && (
+        <small className="market-destination">
+          Private lesson · goes on top of your draw pile, so you dance it next turn
+        </small>
+      )}
       <div className="market-row">
         {cards.map((card, index) => {
           const buy = findBuy(source, card.id);
@@ -616,6 +635,9 @@ function TurnActions({
   onCleanup,
   cleanupPending,
   telling,
+  call,
+  callSheetOpen,
+  onOpenCallSheet,
   returnStagedPosition,
   invite,
   partnerAway,
@@ -625,6 +647,9 @@ function TurnActions({
   onCleanup: (action: CleanupAction) => void;
   cleanupPending: boolean;
   telling: DanceTelling | null;
+  call: CallStanding | null;
+  callSheetOpen: boolean;
+  onOpenCallSheet: () => void;
   returnStagedPosition: () => void;
   /** The room code to share while the partner's seat is still empty. */
   invite: string | null;
@@ -678,11 +703,10 @@ function TurnActions({
     );
   }
   if (view.activeRole !== view.viewerRole)
+    // The standing call has its own band above the floor; this says who is dancing.
     return (
       <div className="turn-actions waiting-actions">
-        <strong>
-          {roleName(view.activeRole)} {partnerAway ? "stepped away" : "is dancing"}
-        </strong>
+        <strong>{`${roleName(view.activeRole)} ${partnerAway ? "stepped away" : "is dancing"}`}</strong>
         <span>
           {partnerAway
             ? "The dance resumes when they reconnect."
@@ -693,6 +717,8 @@ function TurnActions({
 
   if (view.phase === "dance") {
     if (!telling) return null;
+    const controls = telling.controls;
+    const hold = controls.kind === "return" ? controls.hold : null;
     return (
       <div className="turn-actions">
         <div className="step-heading">
@@ -700,6 +726,7 @@ function TurnActions({
           <div>
             <small>Dance</small>
             <strong>{telling.heading}</strong>
+            {telling.note && <span className="step-note">{telling.note}</span>}
             {telling.instruction && <span className="dance-step-note">{telling.instruction}</span>}
           </div>
         </div>
@@ -710,22 +737,63 @@ function TurnActions({
           </div>
         )}
         <div className="button-row wrap">
-          {telling.controls.kind === "return" ? (
-            <button type="button" className="button outline" onClick={returnStagedPosition}>
-              {telling.controls.label}
-            </button>
+          {controls.kind === "return" ? (
+            <>
+              {hold && (
+                <button
+                  type="button"
+                  className="button outline"
+                  title={hold.note}
+                  onClick={() => dispatch(hold.action)}
+                >
+                  {hold.label}
+                </button>
+              )}
+              <button type="button" className="button outline" onClick={returnStagedPosition}>
+                {controls.label}
+              </button>
+            </>
           ) : (
-            telling.controls.controls.map((control) => {
+            controls.controls.map((control) => {
               if (control.kind === "end")
                 return (
-                  <button
-                    type="button"
-                    className="button gold"
-                    key="end"
-                    onClick={() => dispatch(control.action)}
-                  >
-                    {control.label}
-                  </button>
+                  <Fragment key="end">
+                    <button
+                      type="button"
+                      className="button gold"
+                      onClick={() => dispatch(control.action)}
+                    >
+                      {control.label}
+                    </button>
+                    {telling.picker && (
+                      <CallPickerTrigger
+                        picker={telling.picker}
+                        open={callSheetOpen}
+                        onOpen={onOpenCallSheet}
+                      />
+                    )}
+                    {call?.covers.map((cover) => {
+                      // The note is read with the button, not only beside it: on the table it
+                      // is printed for the eye only on a phone, but always for a screen reader.
+                      const noteId = `cover-note-${cover.action.recoveryInstanceId}`;
+                      return (
+                        <span className="call-cover-control" key={cover.action.recoveryInstanceId}>
+                          <button
+                            type="button"
+                            className="button outline call-cover"
+                            aria-describedby={noteId}
+                            title={cover.note}
+                            onClick={() => dispatch(cover.action)}
+                          >
+                            {cover.label}
+                          </button>
+                          <small className="call-cover-note" id={noteId}>
+                            {cover.note}
+                          </small>
+                        </span>
+                      );
+                    })}
+                  </Fragment>
                 );
               if (control.kind === "stumble")
                 return (
@@ -733,6 +801,7 @@ function TurnActions({
                     type="button"
                     className="button danger-outline"
                     key={control.action.recoveryInstanceId ?? "plain"}
+                    title={control.note ?? undefined}
                     onClick={() => dispatch(control.action)}
                   >
                     {control.label}
@@ -759,6 +828,7 @@ function TurnActions({
     const learn = byType("LEARN_FROM_PARTNER");
     const done = byType("END_LESSON")[0];
     const undo = byType("UNDO_TURN")[0];
+    const made = callMadeNote(view);
     return (
       <div className="turn-actions">
         <div className="step-heading">
@@ -766,6 +836,7 @@ function TurnActions({
           <div>
             <small>Take a lesson</small>
             <strong>Practice something new—or keep moving</strong>
+            {made && <span className="call-made-note">{made}</span>}
             <span className="cleanup-note">Your whole remaining hand discards automatically.</span>
           </div>
         </div>
@@ -813,6 +884,8 @@ function Hand({
   onCardDragEnd,
   discardTargetRef,
   discardReceiving,
+  deckTargetRef,
+  deckReceiving,
   acceptsLessonDrop,
   lessonDropOver,
   onLessonDragOverChange,
@@ -831,6 +904,9 @@ function Hand({
   onCardDragEnd: () => void;
   discardTargetRef: React.RefObject<HTMLButtonElement | null>;
   discardReceiving: boolean;
+  /** The draw-pile count: where a private lesson lands, so the flight can fly to it. */
+  deckTargetRef: React.RefObject<HTMLSpanElement | null>;
+  deckReceiving: boolean;
   acceptsLessonDrop: boolean;
   lessonDropOver: boolean;
   onLessonDragOverChange: (over: boolean) => void;
@@ -854,7 +930,9 @@ function Hand({
           )}
         </div>
         <div>
-          <span>Deck {view.self.drawCount}</span>
+          <span ref={deckTargetRef} className={`deck-count ${deckReceiving ? "receiving" : ""}`}>
+            Deck {view.self.drawCount}
+          </span>
           <button
             type="button"
             ref={discardTargetRef}
@@ -1005,7 +1083,7 @@ function GameLog({ view }: { view: PlayerSnapshot }) {
       </summary>
       <ol>
         {[...view.log].reverse().map((entry, index) => (
-          <li key={`${entry.sequence}-${index}`}>
+          <li key={`${entry.sequence}-${index}`} data-kind={entry.kind}>
             <span>{entry.sequence || "·"}</span>
             <p>{entry.message}</p>
           </li>
@@ -1096,6 +1174,19 @@ function DiscardPileInspector({
         )}
       </section>
     </div>
+  );
+}
+
+const clamp = (value: number, low: number, high: number) =>
+  Math.min(Math.max(value, low), Math.max(low, high));
+
+/** Whether a card could be flown to this box, or whether it sits past the fold. */
+function inViewport(rect: DOMRect): boolean {
+  return (
+    rect.bottom > 0 &&
+    rect.right > 0 &&
+    rect.top < window.innerHeight &&
+    rect.left < window.innerWidth
   );
 }
 
@@ -1301,6 +1392,8 @@ function PassScreen({
     (entry) => entry.sequence === view.sequence && entry.kind === "score" && entry.role === null,
   );
   const nextSong = view.status === "playing" ? view.currentSong : null;
+  // The call the player taking the screen has to answer: the reason this handoff matters.
+  const handoff = view.status === "playing" ? callHandoff(view, role) : null;
   const readyButton = useRef<HTMLButtonElement>(null);
   useEffect(() => readyButton.current?.focus(), []);
   return (
@@ -1314,7 +1407,17 @@ function PassScreen({
         <br />
         <em>{roleName(role)}</em>
       </h2>
-      <p>When your partner has the screen, tap below.</p>
+      {handoff ? (
+        <section className="pass-call" aria-label="The call you have to answer">
+          <small>{handoff.caller} called</small>
+          <strong>{handoff.name}</strong>
+          <p>{handoff.ask}</p>
+          <span>Your answer · {handoff.reward}</span>
+          {handoff.price && <b className="pass-call-price">{handoff.price}</b>}
+        </section>
+      ) : (
+        <p>When your partner has the screen, tap below.</p>
+      )}
       <button ref={readyButton} type="button" className="button gold" onClick={onReady}>
         I’m the {roleName(role)}
       </button>
@@ -1323,7 +1426,9 @@ function PassScreen({
           {lastCombo && (
             <div>
               <dt>Last 8-count</dt>
-              <dd>{comboSummary(lastCombo)}</dd>
+              <dd>
+                {comboSummary(lastCombo)} · {rungLabel(lastCombo.rung)}
+              </dd>
             </div>
           )}
           {phraseResult && (
@@ -1407,42 +1512,17 @@ function Terminal({
   return (
     <main className="terminal-screen" inert={inert}>
       <div className="terminal-inner">
-        <small>
-          {won
-            ? "The final 8-count"
-            : unresumable
-              ? "This dance can’t continue"
-              : "The connection broke"}
-        </small>
-        <h2>
-          {won ? view.rating?.name : unresumable ? "The floor has changed" : "The dance ends here"}
-        </h2>
-        {!unresumable && (
+        {unresumable ? (
           <>
-            <div className="final-score">
-              <span>{view.finalScore ?? view.shared.style + view.shared.connection}</span>
-              <small>{won ? "final score" : "Style + Connection"}</small>
-            </div>
-            <div className="score-equation">
-              <span>
-                {view.shared.style}
-                <small>Style</small>
-              </span>
-              <b>+</b>
-              <span>
-                {view.shared.connection}
-                <small>Connection</small>
-              </span>
-            </div>
+            <small>This dance can’t continue</small>
+            <h2>The floor has changed</h2>
+            <p>
+              {`${view.terminalReason ?? "This saved dance cannot be read by the current release."} Nothing you did caused this; start a fresh dance.`}
+            </p>
           </>
+        ) : (
+          <SongRecap view={view} />
         )}
-        <p>
-          {won
-            ? view.rating?.description
-            : unresumable
-              ? `${view.terminalReason ?? "This saved dance cannot be read by the current release."} Nothing you did caused this; start a fresh dance.`
-              : "Take a breath, find each other, and try the song again."}
-        </p>
         {won && <RatingLadder view={view} />}
         {view.danceHistory.length > 0 && (
           <div className="terminal-choreography">
@@ -1493,11 +1573,17 @@ export function GameScreen() {
   const [lessonFlight, setLessonFlight] = useState<LessonFlight | null>(null);
   const [cleanupFlight, setCleanupFlight] = useState<CleanupFlight | null>(null);
   const [dancerDemoOpen, setDancerDemoOpen] = useState(false);
+  const [callSheetOpen, setCallSheetOpen] = useState(false);
   const [roomCopyStatus, setRoomCopyStatus] = useState<RoomCopyStatus>("idle");
   const [latestScoreChange, setLatestScoreChange] = useState<ScoreChange | null>(null);
-  const lastScoreReading = useRef<ScoreReading | null>(null);
+  // The HUD reads the same differ the cue layer does, each keeping its own last snapshot.
+  const lastScoredSnapshot = useRef<PlayerSnapshot | null>(null);
   const signalReturnFocus = useRef<Element | null>(null);
   const discardTargetRef = useRef<HTMLButtonElement>(null);
+  const deckTargetRef = useRef<HTMLSpanElement>(null);
+  // A control that commits its own step unmounts with it, and the browser drops focus to the
+  // body: the step that replaces it takes the focus back, so the keyboard stays in the turn.
+  const resumeFocus = useRef(false);
   const lessonDragRef = useRef<{
     key: string;
     card: DanceCardDefinition;
@@ -1535,18 +1621,17 @@ export function GameScreen() {
     // The enlarged card closes as the reveal opens; return to its surviving hand card.
     if (action.type === "SIGNAL_CARD")
       signalReturnFocus.current = inspection?.origin?.element ?? document.activeElement;
-    playSoundEffect(soundForAction(action));
+    resumeFocus.current =
+      document.activeElement instanceof HTMLElement &&
+      document.activeElement.closest(".turn-actions, .call-sheet") !== null;
+    const sound = soundForAction(action);
+    if (sound) playSoundEffect(sound);
     dispatchAction(action);
   };
   const acceptPass = () => {
     playSoundEffect("turn");
     acceptPassAction();
   };
-  useEffect(() => {
-    if (previousStatus.current !== "completed" && view?.status === "completed")
-      playSoundEffect("success");
-    previousStatus.current = view?.status;
-  }, [playSoundEffect, view?.status]);
   const myTurn = viewersTurn(view);
   const wasMyTurn = useRef(myTurn);
   useEffect(() => {
@@ -1562,12 +1647,43 @@ export function GameScreen() {
   }, [mode, myTurn, playSoundEffect]);
   useEffect(() => {
     if (!view) return;
-    const previous = lastScoreReading.current;
-    lastScoreReading.current = readScore(view);
-    if (previous?.viewer !== view.viewerRole) setLatestScoreChange(null);
-    const change = previous ? scoreChange(previous, view) : null;
+    const previous = lastScoredSnapshot.current;
+    lastScoredSnapshot.current = view;
+    // A hot-seat handoff re-reads the same step for the other player: clear the stale delta.
+    if (previous?.viewerRole !== view.viewerRole) setLatestScoreChange(null);
+    const events = previous ? eventsBetween(previous, view) : [];
+    const change = scoreChange(events);
     if (change) setLatestScoreChange(change);
-  }, [view]);
+    // The song ending has a sound of its own when it ends on a pose — the cierre, played by
+    // the cue layer. This is the chime for every other ending.
+    if (
+      previousStatus.current !== "completed" &&
+      view.status === "completed" &&
+      !momentOf(events, "cierre")
+    )
+      playSoundEffect("success");
+    previousStatus.current = view.status;
+  }, [playSoundEffect, view]);
+  useEffect(() => {
+    if (!resumeFocus.current) return;
+    resumeFocus.current = false;
+    // Only when nothing else claimed it: a pass screen or a dialog focuses its own control.
+    if (document.activeElement !== document.body) return;
+    document.querySelector<HTMLElement>(".turn-actions .button-row button")?.focus();
+  }, [view?.sequence, view?.phase, view?.viewerRole]);
+  // The pass screen and the opening hand sit over a table that scrolls at short desktop
+  // heights, and the page keeps whatever scroll they leave behind — on a 1280×720 screen the
+  // HUD's labels started tucked under the sticky header. A dance step begins at the top.
+  const handedOver = useRef(false);
+  useEffect(() => {
+    if (passTo !== null || view?.status === "setup") {
+      handedOver.current = true;
+      return;
+    }
+    if (!handedOver.current) return;
+    handedOver.current = false;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [passTo, view?.status]);
   useEffect(() => {
     setDraggingCardId(null);
     setFloorDragOver(false);
@@ -1575,6 +1691,7 @@ export function GameScreen() {
     setLessonDropOver(false);
     lessonDragRef.current = null;
     setDiscardOpen(false);
+    setCallSheetOpen(false);
   }, [view?.sequence, view?.phase, view?.viewerRole, passTo]);
   useEffect(() => setLessonFlight(null), [view?.viewerRole, passTo]);
   useEffect(() => {
@@ -1657,18 +1774,28 @@ export function GameScreen() {
   ) => {
     if (!view || lessonFlight) return;
     const sourceCard = sourceElement.closest<HTMLElement>(".dance-card");
-    const discardTarget = discardTargetRef.current;
-    if (!sourceCard || !discardTarget) {
+    // A private lesson goes on top of the draw pile, so it flies to the deck, not the discard.
+    const pile = view.rules.lessonToDrawTop?.[action.source]
+      ? deckTargetRef.current
+      : discardTargetRef.current;
+    // On a phone scrolled to the market the pile can be off-screen: land on the rail instead.
+    const target = [pile, document.querySelector<HTMLElement>(".hand-scroll")].find(
+      (element) => element !== null && inViewport(element.getBoundingClientRect()),
+    );
+    if (!sourceCard || !target) {
       dispatch(action);
       return;
     }
 
     const sourceRect = sourceCard.getBoundingClientRect();
-    const targetRect = discardTarget.getBoundingClientRect();
-    const deltaX =
-      targetRect.left + targetRect.width / 2 - (sourceRect.left + sourceRect.width / 2);
-    const deltaY =
-      targetRect.top + targetRect.height / 2 - (sourceRect.top + sourceRect.height / 2);
+    const targetRect = target.getBoundingClientRect();
+    // A rail that only half shows has its middle past the fold: land on the screen's edge.
+    const landing = {
+      x: clamp(targetRect.left + targetRect.width / 2, 24, window.innerWidth - 24),
+      y: clamp(targetRect.top + targetRect.height / 2, 24, window.innerHeight - 24),
+    };
+    const deltaX = landing.x - (sourceRect.left + sourceRect.width / 2);
+    const deltaY = landing.y - (sourceRect.top + sourceRect.height / 2);
     const arcHeight = Math.min(90, Math.abs(deltaY) * 0.18 + 30);
     lessonFlightKey.current += 1;
     setLessonFlight({
@@ -1860,7 +1987,8 @@ export function GameScreen() {
         run: closeThen(() => dispatch(signal)),
       });
     }
-    return { actions, note: offer.sentence };
+    // A card that can be played carries what the play costs; one that cannot, why not.
+    return { actions, note: offer.sentence ?? offer.playNote };
   };
 
   if (!view || !step)
@@ -1873,9 +2001,29 @@ export function GameScreen() {
         </button>
       </main>
     );
-  if (view.status === "completed" || view.status === "lost" || view.status === "unresumable")
-    return (
-      <>
+  const terminal =
+    view.status === "completed" || view.status === "lost" || view.status === "unresumable";
+  // Which pile the lesson in flight is landing in, so the one that moves is the one that flashes.
+  const lessonToDrawTop = Boolean(
+    lessonFlight && view.rules.lessonToDrawTop?.[lessonFlight.source],
+  );
+  const status = connectionStatus(mode, connection, partnerPresence);
+  const passScreenOpen = Boolean(passTo && mode === "hotseat" && !cleanupFlight);
+  const signalPeekOpen = view.signal?.role === view.viewerRole && mode === "hotseat";
+  // While a dialog is up, the table behind it leaves the tab order and the accessibility tree.
+  const callPicker = step.telling?.picker ?? null;
+  const callSheetUp = callSheetOpen && Boolean(callPicker && callPicker.options.length > 0);
+  const overlayOpen =
+    passScreenOpen ||
+    signalPeekOpen ||
+    Boolean(inspection) ||
+    discardOpen ||
+    dancerDemoOpen ||
+    callSheetUp;
+
+  return (
+    <>
+      {terminal ? (
         <Terminal
           view={view}
           mode={mode}
@@ -1886,192 +2034,223 @@ export function GameScreen() {
           }
           leave={leaveGame}
         />
-        {inspection && (
-          <CardInspector
-            inspection={inspection}
-            {...inspectorControls(inspection, view)}
-            onClosed={() => setInspection(null)}
-          />
-        )}
-      </>
-    );
-
-  const status = connectionStatus(mode, connection, partnerPresence);
-  const passScreenOpen = Boolean(passTo && mode === "hotseat" && !cleanupFlight);
-  const signalPeekOpen = view.signal?.role === view.viewerRole && mode === "hotseat";
-  // While a dialog is up, the table behind it leaves the tab order and the accessibility tree.
-  const overlayOpen =
-    passScreenOpen || signalPeekOpen || Boolean(inspection) || discardOpen || dancerDemoOpen;
-
-  return (
-    <main className="game">
-      <header className="game-header" inert={overlayOpen}>
-        <button type="button" className="mini-brand" onClick={leaveGame} aria-label="Return home">
-          CLAVE
-        </button>
-        {mode === "online" && onlineSeat ? (
-          <>
+      ) : (
+        <main className="game">
+          <header className="game-header" inert={overlayOpen}>
             <button
               type="button"
-              className={`room-code ${roomCopyStatus}`}
-              data-copy-state={roomCopyStatus}
-              onClick={() => void copyRoomCode()}
-              title="Copy room code"
-              aria-label={
-                roomCopyStatus === "copied"
-                  ? `Room ${onlineSeat.code} copied to clipboard`
-                  : roomCopyStatus === "failed"
-                    ? `Room ${onlineSeat.code} could not be copied. Tap to try again`
-                    : `Copy room code ${onlineSeat.code}`
+              className="mini-brand"
+              onClick={leaveGame}
+              aria-label="Return home"
+            >
+              CLAVE
+            </button>
+            {mode === "online" && onlineSeat ? (
+              <>
+                <button
+                  type="button"
+                  className={`room-code ${roomCopyStatus}`}
+                  data-copy-state={roomCopyStatus}
+                  onClick={() => void copyRoomCode()}
+                  title="Copy room code"
+                  aria-label={
+                    roomCopyStatus === "copied"
+                      ? `Room ${onlineSeat.code} copied to clipboard`
+                      : roomCopyStatus === "failed"
+                        ? `Room ${onlineSeat.code} could not be copied. Tap to try again`
+                        : `Copy room code ${onlineSeat.code}`
+                  }
+                >
+                  <small>
+                    {roomCopyStatus === "copied"
+                      ? "Copied!"
+                      : roomCopyStatus === "failed"
+                        ? "Copy failed · tap again"
+                        : "Room · tap to copy"}
+                  </small>
+                  <strong>{onlineSeat.code}</strong>
+                </button>
+                <span
+                  className="room-copy-announcement"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  {roomCopyStatus === "copied"
+                    ? `Room ${onlineSeat.code} copied to clipboard.`
+                    : roomCopyStatus === "failed"
+                      ? `Room ${onlineSeat.code} could not be copied. Tap to try again.`
+                      : ""}
+                </span>
+              </>
+            ) : (
+              <span className="mode-label">Pass & play</span>
+            )}
+            <RulesButton compact />
+            <span
+              className={`connection-status ${status.state}`}
+              data-connection={mode === "online" ? connection : "local"}
+              data-partner={
+                mode === "online" && connection === "connected"
+                  ? (partnerPresence ?? "unknown")
+                  : undefined
               }
             >
-              <small>
-                {roomCopyStatus === "copied"
-                  ? "Copied!"
-                  : roomCopyStatus === "failed"
-                    ? "Copy failed · tap again"
-                    : "Room · tap to copy"}
-              </small>
-              <strong>{onlineSeat.code}</strong>
-            </button>
-            <span
-              className="room-copy-announcement"
-              role="status"
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              {roomCopyStatus === "copied"
-                ? `Room ${onlineSeat.code} copied to clipboard.`
-                : roomCopyStatus === "failed"
-                  ? `Room ${onlineSeat.code} could not be copied. Tap to try again.`
-                  : ""}
+              <span className="status-long">{status.long}</span>
+              <span className="status-short" aria-hidden="true">
+                {status.short}
+              </span>
             </span>
-          </>
-        ) : (
-          <span className="mode-label">Pass & play</span>
-        )}
-        <RulesButton compact />
-        <span
-          className={`connection-status ${status.state}`}
-          data-connection={mode === "online" ? connection : "local"}
-          data-partner={
-            mode === "online" && connection === "connected"
-              ? (partnerPresence ?? "unknown")
-              : undefined
-          }
-        >
-          <span className="status-long">{status.long}</span>
-          <span className="status-short" aria-hidden="true">
-            {status.short}
-          </span>
-        </span>
-      </header>
-      {mode === "online" && connection !== "connected" && (
-        <p className="reconnect-banner" role="status">
-          {connection === "offline"
-            ? "This seat is offline. Head home to reconnect or start a new room."
-            : connection === "connecting"
-              ? "Connecting to your room…"
-              : "Reconnecting to your room… your moves will wait."}
-        </p>
+          </header>
+          {mode === "online" && connection !== "connected" && (
+            <p className="reconnect-banner" role="status">
+              {connection === "offline"
+                ? "This seat is offline. Head home to reconnect or start a new room."
+                : connection === "connecting"
+                  ? "Connecting to your room…"
+                  : "Reconnecting to your room… your moves will wait."}
+            </p>
+          )}
+          <p className="visually-hidden" role="status" aria-live="polite">
+            {turnAnnouncement(view)}
+          </p>
+          <Hud view={view} change={latestScoreChange} inert={overlayOpen} />
+          <div className="game-grid" inert={overlayOpen}>
+            <div className={`main-table ${step.call ? "with-call" : ""}`}>
+              <SongMoment view={view} />
+              <PhraseHistory view={view} onInspect={inspectCard} />
+              <DanceTable
+                view={view}
+                onInspect={inspectCard}
+                stagedPosition={step.stagedPosition}
+                floorHint={step.floorHint}
+                acceptsDrop={step.acceptsDrop}
+                dragOver={floorDragOver}
+                onDragOverChange={setFloorDragOver}
+                onCardDrop={playToFloor}
+                onOpenDancerDemo={() => setDancerDemoOpen(true)}
+              />
+              {step.call && <CallBanner call={step.call} />}
+              <TurnActions
+                view={view}
+                dispatch={dispatch}
+                onCleanup={cleanupTurn}
+                cleanupPending={Boolean(cleanupFlight)}
+                telling={step.telling}
+                call={step.call}
+                callSheetOpen={callSheetUp}
+                onOpenCallSheet={() => setCallSheetOpen(true)}
+                returnStagedPosition={returnStagedPosition}
+                invite={
+                  mode === "online" && partnerPresence === "absent"
+                    ? (onlineSeat?.code ?? null)
+                    : null
+                }
+                partnerAway={mode === "online" && partnerPresence === "away"}
+              />
+              <Hand
+                view={view}
+                offers={step.offers}
+                staged={step.stagedPosition !== null}
+                acceptsDrop={step.acceptsDrop}
+                dispatch={dispatch}
+                onPlayCard={playToFloor}
+                onInspect={inspectCard}
+                draggingCardId={draggingCardId}
+                onCardDragStart={(instanceId, event) => {
+                  event.dataTransfer.effectAllowed = "move";
+                  event.dataTransfer.setData("application/x-clave-card", instanceId);
+                  event.dataTransfer.setData("text/plain", instanceId);
+                  setDraggingCardId(instanceId);
+                  setInspection(null);
+                }}
+                onCardDragEnd={() => {
+                  setDraggingCardId(null);
+                  setFloorDragOver(false);
+                }}
+                discardTargetRef={discardTargetRef}
+                discardReceiving={Boolean(
+                  (lessonFlight?.flying && !lessonToDrawTop) || cleanupFlight?.flying,
+                )}
+                deckTargetRef={deckTargetRef}
+                deckReceiving={Boolean(lessonFlight?.flying && lessonToDrawTop)}
+                acceptsLessonDrop={Boolean(draggingLessonKey)}
+                lessonDropOver={lessonDropOver}
+                onLessonDragOverChange={setLessonDropOver}
+                onLessonDrop={dropLesson}
+                onOpenDiscard={() => {
+                  playSoundEffect("card-select");
+                  setDiscardOpen(true);
+                }}
+              />
+            </div>
+            <aside className="game-sidebar">
+              <Market
+                view={view}
+                onInspect={inspectCard}
+                onBuyLesson={buyLesson}
+                onLessonDragStart={beginLessonDrag}
+                onLessonDragEnd={endLessonDrag}
+                draggingLessonKey={draggingLessonKey}
+                pendingLesson={
+                  lessonFlight
+                    ? { source: lessonFlight.source, cardId: lessonFlight.card.id }
+                    : null
+                }
+              />
+              <GameLog view={view} />
+            </aside>
+          </div>
+          {lessonFlight && (
+            <LessonCardFlight flight={lessonFlight} onComplete={() => setLessonFlight(null)} />
+          )}
+          {cleanupFlight && (
+            <CleanupCardFlights flight={cleanupFlight} onComplete={() => setCleanupFlight(null)} />
+          )}
+          {callSheetUp && callPicker && (
+            <CallSheet
+              picker={callPicker}
+              onChoose={(action) => {
+                setCallSheetOpen(false);
+                dispatch(action);
+              }}
+              onClose={() => setCallSheetOpen(false)}
+            />
+          )}
+          {passScreenOpen && passTo && (
+            <PassScreen role={passTo} view={view} onReady={acceptPass} />
+          )}
+          {signalPeekOpen && view.signal && (
+            <SignalPeek
+              card={view.signal.card}
+              opener={signalReturnFocus.current}
+              onHide={() => clearSignal && dispatch(clearSignal)}
+            />
+          )}
+          {view.signal?.role === view.viewerRole && mode === "online" && clearSignal && (
+            <button type="button" className="signal-live" onClick={() => dispatch(clearSignal)}>
+              Signal visible to partner · tap to hide
+            </button>
+          )}
+          {discardOpen && (
+            <DiscardPileInspector
+              cards={view.self.discard}
+              role={view.viewerRole}
+              covered={Boolean(inspection)}
+              onInspect={inspectCard}
+              onClose={() => setDiscardOpen(false)}
+            />
+          )}
+          {dancerDemoOpen && <DancerDemo view={view} onClose={() => setDancerDemoOpen(false)} />}
+        </main>
       )}
-      <p className="visually-hidden" role="status" aria-live="polite">
-        {turnAnnouncement(view)}
-      </p>
-      <Hud view={view} change={latestScoreChange} inert={overlayOpen} />
-      <div className="game-grid" inert={overlayOpen}>
-        <div className="main-table">
-          <SongMoment view={view} />
-          <PhraseHistory view={view} onInspect={inspectCard} />
-          <DanceTable
-            view={view}
-            onInspect={inspectCard}
-            stagedPosition={step.stagedPosition}
-            floorHint={step.floorHint}
-            acceptsDrop={step.acceptsDrop}
-            dragOver={floorDragOver}
-            onDragOverChange={setFloorDragOver}
-            onCardDrop={playToFloor}
-            onOpenDancerDemo={() => setDancerDemoOpen(true)}
-          />
-          <TurnActions
-            view={view}
-            dispatch={dispatch}
-            onCleanup={cleanupTurn}
-            cleanupPending={Boolean(cleanupFlight)}
-            telling={step.telling}
-            returnStagedPosition={returnStagedPosition}
-            invite={
-              mode === "online" && partnerPresence === "absent" ? (onlineSeat?.code ?? null) : null
-            }
-            partnerAway={mode === "online" && partnerPresence === "away"}
-          />
-          <Hand
-            view={view}
-            offers={step.offers}
-            staged={step.stagedPosition !== null}
-            acceptsDrop={step.acceptsDrop}
-            dispatch={dispatch}
-            onPlayCard={playToFloor}
-            onInspect={inspectCard}
-            draggingCardId={draggingCardId}
-            onCardDragStart={(instanceId, event) => {
-              event.dataTransfer.effectAllowed = "move";
-              event.dataTransfer.setData("application/x-clave-card", instanceId);
-              event.dataTransfer.setData("text/plain", instanceId);
-              setDraggingCardId(instanceId);
-              setInspection(null);
-            }}
-            onCardDragEnd={() => {
-              setDraggingCardId(null);
-              setFloorDragOver(false);
-            }}
-            discardTargetRef={discardTargetRef}
-            discardReceiving={Boolean(lessonFlight?.flying || cleanupFlight?.flying)}
-            acceptsLessonDrop={Boolean(draggingLessonKey)}
-            lessonDropOver={lessonDropOver}
-            onLessonDragOverChange={setLessonDropOver}
-            onLessonDrop={dropLesson}
-            onOpenDiscard={() => {
-              playSoundEffect("card-select");
-              setDiscardOpen(true);
-            }}
-          />
-        </div>
-        <aside className="game-sidebar">
-          <Market
-            view={view}
-            onInspect={inspectCard}
-            onBuyLesson={buyLesson}
-            onLessonDragStart={beginLessonDrag}
-            onLessonDragEnd={endLessonDrag}
-            draggingLessonKey={draggingLessonKey}
-            pendingLesson={
-              lessonFlight ? { source: lessonFlight.source, cardId: lessonFlight.card.id } : null
-            }
-          />
-          <GameLog view={view} />
-        </aside>
-      </div>
-      {lessonFlight && (
-        <LessonCardFlight flight={lessonFlight} onComplete={() => setLessonFlight(null)} />
-      )}
-      {cleanupFlight && (
-        <CleanupCardFlights flight={cleanupFlight} onComplete={() => setCleanupFlight(null)} />
-      )}
-      {passScreenOpen && passTo && <PassScreen role={passTo} view={view} onReady={acceptPass} />}
-      {signalPeekOpen && view.signal && (
-        <SignalPeek
-          card={view.signal.card}
-          opener={signalReturnFocus.current}
-          onHide={() => clearSignal && dispatch(clearSignal)}
-        />
-      )}
-      {view.signal?.role === view.viewerRole && mode === "online" && clearSignal && (
-        <button type="button" className="signal-live" onClick={() => dispatch(clearSignal)}>
-          Signal visible to partner · tap to hide
-        </button>
-      )}
+      {/*
+       * One instance across the swap to the end screen, and in the same place in the tree
+       * either way: the cue layer keeps the snapshot it last read, so the commit that ends the
+       * song is still cued — the cierre, a call the last 8-count dropped — instead of being
+       * unmounted with the table before its effect runs.
+       */}
+      <SnapshotCues view={view} />
       {inspection && (
         <CardInspector
           inspection={inspection}
@@ -2079,16 +2258,6 @@ export function GameScreen() {
           onClosed={() => setInspection(null)}
         />
       )}
-      {discardOpen && (
-        <DiscardPileInspector
-          cards={view.self.discard}
-          role={view.viewerRole}
-          covered={Boolean(inspection)}
-          onInspect={inspectCard}
-          onClose={() => setDiscardOpen(false)}
-        />
-      )}
-      {dancerDemoOpen && <DancerDemo view={view} onClose={() => setDancerDemoOpen(false)} />}
-    </main>
+    </>
   );
 }
