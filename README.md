@@ -41,12 +41,17 @@ adjudicated build plan is [`docs/plans/clave-plan.md`](docs/plans/clave-plan.md)
 - **Original card artwork** in an Afro-Caribbean figurative-expressionist style,
   repainted card by card with GPT Image 2.5; see
   [`docs/art/card-art-direction.md`](docs/art/card-art-direction.md).
-- **Music and sound:** Clave bundles no music. The home screen and song banner
-  open a link to the Llorarás recording on Spotify — the couple plays it on one
-  speaker — and the copyrighted recording is never hosted or synchronized to
-  turns. Card landings, calls, answers, drops, afinque links, lesson, turn,
-  stumble, and finish cues are synthesized locally with the Web Audio API on
-  **both** devices, with a separate SFX toggle that each device remembers.
+- **Music and sound:** an optional **house band** — two original instrumental
+  loops made for Clave with Suno v6 on the owner's own Suno Pro account, Cuerpo
+  under phrase 1 and Montuno under phrase 2, cut to whole bars and looped
+  seamlessly in the browser. It is **off by default**, and the home screen and
+  song banner still link to the real Llorarás recording on Spotify for couples
+  who would rather dance to the record — that copyrighted recording is never
+  hosted or synchronized to turns. See
+  [`docs/audio/soundtrack.md`](docs/audio/soundtrack.md). Card landings, calls,
+  answers, drops, afinque links, lesson, turn, stumble, and finish cues are
+  synthesized locally with the Web Audio API on **both** devices, with a separate
+  SFX toggle that each device remembers.
 
 ## Play locally
 
@@ -86,9 +91,10 @@ npm run build
 - [`docs/cards/v1-card-list.md`](docs/cards/v1-card-list.md) — the complete v1 card set and the Llorarás song deck
 - [`docs/plans/`](docs/plans/) — the v1 build plan, its adversarial review and adjudication, and the admin console plan
 - [`docs/art/`](docs/art/) — card art direction and the generation prompts
-- [`docs/audio/soundtrack.md`](docs/audio/soundtrack.md) — the four 2026-10-23/24
-  attempts at an original instrumental soundtrack, the verification all four failed,
-  and the licensing homework they leave for the next one
+- [`docs/audio/soundtrack.md`](docs/audio/soundtrack.md) — the five 2026-10-23/24
+  attempts at an original instrumental soundtrack: the four that did not ship, and
+  the house band that did, with its prompts, model settings, licensing, and the
+  loop engineering behind the two files the game plays
 - [`docs/unity-vs-web-implementation-report.md`](docs/unity-vs-web-implementation-report.md) — comparison of Unity/Hearthstone-style and browser/BGA-style Clave development
 - [`docs/living-documents/1-concept-brief.md`](docs/living-documents/1-concept-brief.md) — pitch, pillars, non-goals
 - [`docs/living-documents/0-dance.md`](docs/living-documents/0-dance.md) — the Llorarás song/dance breakdown behind the v1 song deck

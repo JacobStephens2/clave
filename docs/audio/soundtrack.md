@@ -1,24 +1,34 @@
-# Soundtrack — four attempts, nothing shipped
+# Soundtrack — five attempts, the fifth shipped
 
-Clave ships **no music files**. This document records four attempts to generate an
-original two-part instrumental soundtrack ("Cuerpo" for the verse, "Montuno" for the
-mambo), the verification they all failed, and the licensing homework, so a fifth attempt
-does not start from nothing. Nothing was added to `packages/client/public/audio/`, and
-the clients keep the synthesized rhythm cues and the "Open Llorarás in Spotify" link
-instead of a house-band toggle.
+Clave ships **two original instrumental loops it owns**: a **Cuerpo** cue for phrase 1
+and a **Montuno** cue for phrase 2, in `packages/client/public/audio/`, with their loop
+points in `packages/client/src/house-band-loops.json`. This document records all five
+attempts to generate an original two-part instrumental soundtrack ("Cuerpo" for the
+verse, "Montuno" for the mambo) — the four that failed, the verification they failed,
+and the licensing homework that eventually decided it — so the files that ship are
+traceable to the prompt, the model, the settings and the measurements behind them, and so
+a sixth cue does not start from nothing.
 
-| Attempt | Date       | Service                         | Generations | Best score | Outcome     |
-| ------- | ---------- | ------------------------------- | ----------- | ---------- | ----------- |
-| 1       | 2026-10-23 | ElevenLabs Music `music_v2_5`   | 4           | —          | not shipped |
-| 2       | 2026-10-24 | Google Lyria 3.5 / Lyria 3 Clip | 7           | 4/10       | not shipped |
-| 3       | 2026-10-24 | Mureka `mureka-9.5`             | 2           | 4/10       | not shipped |
-| 4       | 2026-10-24 | Suno `V5_5` via APIFRAME        | 5           | 6/10       | not shipped |
+| Attempt | Date       | Service                          | Generations | Best score    | Outcome     |
+| ------- | ---------- | -------------------------------- | ----------- | ------------- | ----------- |
+| 1       | 2026-10-23 | ElevenLabs Music `music_v2_5`    | 4           | —             | not shipped |
+| 2       | 2026-10-24 | Google Lyria 3.5 / Lyria 3 Clip  | 7           | 4/10          | not shipped |
+| 3       | 2026-10-24 | Mureka `mureka-9.5`              | 2           | 4/10          | not shipped |
+| 4       | 2026-10-24 | Suno `V5_5` via APIFRAME         | 5           | 6/10          | not shipped |
+| 5       | 2026-10-24 | Suno v6, the owner's Pro account | 2           | chosen by ear | **shipped** |
 
-All four failed the same way: the takes do not sound like a band playing. Attempt 3 adds
-a **listening pack** so a human ear gets a vote, after one AI listener was caught
+The first four failed the same way: the takes do not sound like a band playing. Attempt 3
+adds a **listening pack** so a human ear gets a vote, after one AI listener was caught
 reporting a glitch that measurement shows is not in the file. Attempt 4 raised the best
 score to 6/10, then spent a request proving that score was a lucky draw — and found a
-licensing problem that rules the whole service out regardless of how it sounds.
+licensing problem that rules the whole service out regardless of how it sounds: a
+reseller cannot pass on rights Suno assigns only to its own subscribers.
+
+Attempt 5 answers that finding by buying the subscription. Same service family, the same
+two briefs and the same banned-style list as attempt 4, but generated with v6 in Suno's
+own app on Jacob's own Pro account and downloaded through Suno, which is the one route on
+which the output is his. Two of the four takes were cut into bar-exact seamless loops and
+those two files are what the game plays.
 
 ## Attempt 1 — ElevenLabs Music (2026-10-23)
 
@@ -1118,3 +1128,288 @@ Original instrumental salsa dura, 1970s New York style, 190 BPM, 4/4, son clave.
 ```
 Original instrumental salsa dura mambo, 1970s New York style, 190 BPM, 4/4, son clave, hot and loud. One nine-piece band live in one room, close-miked: you hear the room, the players breathing, palms cracking on conga skin, sticks on metal. Human timing - they push and pull, nobody sits exactly on the grid, every stroke a different weight. The timbalero is off the shells and onto a loud hand-struck campana bell riding every bar. Congas open up loud, bongo player on the bongo bell, piano driving a hard montuno guajeo, upright bass pushing a strong tumbao. Two trumpets and a trombone blow loud interlocking mambo riffs in tight harmony, breathing between phrases. One unbroken driving groove, one tempo, one key, full tilt from the first beat to the last: no intro, no count-in, no build, no breakdown, no solo, no ending, no fade. Instrumental only: no singing, no coro, no chanting, no shouts, no spoken words.
 ```
+
+## Attempt 5 — Suno v6 on the owner's Pro account (2026-10-24), shipped
+
+This is the one that shipped. Two of its four takes are the files in
+`packages/client/public/audio/`: `cuerpo.mp3` under phrase 1 and `montuno.mp3` under
+phrase 2. What changed from attempt 4 is neither the service nor the brief — it is who
+holds the rights, and who decides. The audio was generated inside Suno's own app on a
+Suno Pro subscription in Jacob's name and downloaded through Suno's own download channel,
+which is what makes the output his to ship; and the choice between takes was made by ear,
+on the listening page, rather than by two AI listeners who had spent four attempts
+contradicting each other and twice had to be overruled by measurement.
+
+### Why this route, and why nothing cheaper would do
+
+Attempt 4's finding was a rights chain with its middle link missing: APIFRAME is not an
+authorised Suno partner, Suno has no public API, and Suno assigns output ownership only
+to its own paying subscribers, so a reseller cannot pass on what it was never granted.
+The way out is to be the subscriber, which is what Jacob became on 2026-10-24.
+
+Checked against Suno's Terms of Service (<https://suno.com/terms>, Date of Last Revision
+10 August 2026, Effective Date 3 September 2026), re-read on 2026-10-26 before shipping:
+
+- **The assignment.** Under _Pro and Premier Accounts_: "Suno hereby assigns to you all
+  of its right, title and interest in and to any Output owned by Suno." That sentence is
+  the entire reason this attempt exists, and it runs to the account holder — here, Jacob,
+  rather than to a reseller's account of unknown tier.
+- **The download channel is a condition, not a convenience.** "You may not commercially
+  exploit Output that has not been downloaded by you through an approved channel", and
+  "Obtaining a copy of an Output by any means other than a download channel made
+  available by Suno is prohibited." Every file here came from Suno's own
+  "Unlock & Download" on the song page, which is the approved channel; attempt 4's audio
+  arrived over a reseller's API, which is the prohibited one.
+- **What Suno still does not promise.** It "makes no representation or warranty to you
+  that any copyright will vest in any Output", and it does not promise that an Output is
+  unique. So the honest claim for these two files is that Jacob holds whatever rights
+  exist in them and obtained them the way the terms require — not that they are
+  protectable, and not that no one else's generation resembles them.
+- **Free and basic tiers are the opposite**, which is why the subscription was the whole
+  point: there, outputs may be used only "for your lawful, personal and non-commercial
+  purposes".
+
+The legal backdrop from attempt 4 is unchanged and still unsettled — Warner settled with
+Suno and signed a licensing deal, Sony and Universal are reported to be talking, and
+European societies are still litigating. That is a reason to keep this record, not a
+reason to wait: the rights Clave relies on are the ones Suno's terms assign to its own
+subscriber, which is the narrowest claim available here.
+
+### The model, and the exact settings
+
+**Model: v6, not v6-wild.** Suno released both to Pro and Premier on 2026-09-09
+([Suno](https://about.suno.com/blog/introducing-v6)). The pair's experimental variant was
+not used: this brief wants nine people holding one groove for three minutes, which is
+also why Max Mode is on. Suno's own record of both songs reports
+`"major_model_version": "v6"`,
+`"model_name": "chirp-hawk"` and `"uses_latest_model": true`.
+
+Generated at <https://suno.com/create> in **Advanced** mode, one Create per cue. The
+right-hand column is how Suno recorded the setting in its own metadata for these two
+songs, which is the check that the control did what the label says:
+
+| Control                       | Setting                                                     | As Suno recorded it                            |
+| ----------------------------- | ----------------------------------------------------------- | ---------------------------------------------- |
+| Lyrics                        | left empty, so the take is instrumental                     | `"make_instrumental": true`, `"prompt": ""`    |
+| Styles                        | attempt 4's Cuerpo / Montuno briefs, unchanged              | condensed by v6 — see below                    |
+| More options → Exclude styles | attempt 4's 364-character ban list, unchanged               | `negative_tags`, verbatim                      |
+| Max Mode                      | on — "maximize consistency throughout the song", 2× credits | `"is_max_mode": true`                          |
+| Style Influence               | 81%                                                         | `"control_sliders": {"style_weight": 0.81, …}` |
+| Weirdness                     | 40%                                                         | `"weirdness_constraint": 0.4`                  |
+| Variety                       | normal                                                      | `"aug_creativity": 1`                          |
+| Personalize                   | off                                                         | —                                              |
+
+Two operational notes for the next session. The blue wand beside the Styles field, which
+rewrites the prompt "to match your taste", was deliberately left alone, so the only text
+behind these takes is the brief plus Suno's own condensation of it. And Style Influence
+has to be dragged by its handle — clicking a tick mark does nothing — so the number on
+screen is worth reading back before pressing Create.
+
+### Suno condensed each brief, and dropped the clause that matters most for looping
+
+v6 rewrites the style text before generating. Each song's condensed text is on its song
+page under "Show full styles", and it is reproduced verbatim here because it — and not
+attempt 4's brief above, which was what was typed in — is what the model worked from.
+
+**Cuerpo B** — song `5dceada7-56a2-46cb-9e14-63ec45476646`, titled "Clave Cuerpo":
+
+```
+salsa dura, 1970s New York style; one nine-piece band drives son clave in an unbroken groove: acoustic piano hammers a two-bar montuno guajeo, upright bass plays a tumbao leaving beat one open, congas ring on tumbao, bongo martillo, timbales ride cascara with maracas and guiro; two trumpets and trombone take an audible breath, answer with short punchy stabs, then leave space; close-miked room sound, players breathing, palms on conga skin, wooden piano action, human push-pull and weighted strokes; 190 BPM in 4/4, full energy throughout; instrumental.
+```
+
+**Montuno A** — song `cb8e5e1c-248e-45ed-a564-ad3c8c81782e`, titled "Clave Montuno":
+
+```
+Salsa dura mambo, 190 BPM four-square son-clave drive; hand-struck campana bell over open congas and bongo bell, hard piano montuno guajeo, tumbling upright-bass tumbao, two trumpets and trombone in tight interlocking riffs; close-miked nine-piece band in one room, audible breath and room, raw human push-pull timing with varied stroke weight; instrumental.
+```
+
+Both condensations are faithful on everything musical: the style, the tempo, the clave,
+every instrument and its pattern, the room and the human timing all survive, and the
+Montuno one is simply tighter. The one thing both drop is the loop-oriented negation —
+"no intro, no count-in, no build, no breakdown, no solo, no ending, no fade" survives in
+neither — and all four takes duly compose an ending and decay to silence. That is not a
+defect to re-prompt away; it is why the loops below are cut out of the middle of a take
+rather than used whole. Worth knowing in advance next time: in v6's web app the negations
+are the part of a brief most likely to be condensed off the end.
+
+`negative_tags` came back verbatim, all 364 characters of it, so nothing was condensed
+out of the ban list.
+
+### What was generated, and what was chosen
+
+Two Create requests, one per cue, two takes each. All four are 48 kHz 16-bit stereo WAV
+as downloaded, kept outside the repository in
+`~/Music/Clave soundtrack takes/suno-v6-source/`. Loudness is measured on the WAV as
+delivered: Suno masters near −16 LUFS with about 3 dB of headroom, so for the first time
+in five attempts the candidates could be compared without normalizing them first.
+
+| Take      | Source file             | Delivered       | LUFS  | LRA    | True peak | Chosen              |
+| --------- | ----------------------- | --------------- | ----- | ------ | --------- | ------------------- |
+| Cuerpo A  | `suno-v6-cuerpo-a.wav`  | 219.60 s (3:40) | −16.2 | 4.5 LU | −3.0 dBFS | —                   |
+| Cuerpo B  | `suno-v6-cuerpo-b.wav`  | 180.00 s (3:00) | −15.8 | 2.2 LU | −3.1 dBFS | **the Cuerpo cue**  |
+| Montuno A | `suno-v6-montuno-a.wav` | 196.16 s (3:16) | −15.2 | 3.2 LU | −2.8 dBFS | **the Montuno cue** |
+| Montuno B | `suno-v6-montuno-b.wav` | 187.96 s (3:08) | −15.9 | 3.9 LU | −3.2 dBFS | —                   |
+
+Jacob chose this attempt over the four before it by ear, on the listening page. Within
+each cue the take with the steadier groove was taken forward, measured as loudness range:
+Cuerpo B's 2.2 LU against take A's 4.5, Montuno A's 3.2 against take B's 3.9. Loudness
+range is the measurement that matters most for this job. A cue that swells and falls away
+across three minutes cannot sit under twenty minutes of play without the band seeming to
+lurch each time it goes round, and it also narrows the places where a seam can be cut at
+all.
+
+**Downloading spends allowance, not money.** Each take is downloaded from its own song
+page: More options → Download, untick the default M4A and tick WAV (the format list is
+multi-select), then "Unlock & Download", which spends one of the plan's monthly
+downloads. Four takes spent **4 of the Pro plan's 27 monthly downloads**, which refresh
+on the 24th. The download icon on the cover art saves the cover image, not the audio.
+
+### How the takes were verified
+
+No AI listeners this time. Four attempts established that the two listening models cannot
+settle this question — they disagreed with each other about instrumentation, invented a
+glitch, invented a crowd, and were twice overruled by measurement — and the question left
+once the rights were sorted out ("does this belong under my game?") is Jacob's, on real
+speakers. So the screen reduced to measurement:
+
+1. `ffprobe` for container, duration, sample rate, channels and bit depth: all four are
+   48 kHz 16-bit stereo PCM at the lengths in the table.
+2. `ffmpeg -af ebur128=peak=true` for integrated loudness, loudness range and true peak
+   (the table). Nothing overshoots 0 dBFS on decode; every take in attempts 2, 3 and 4
+   did.
+3. `silencedetect` at −50 dBFS over 0.2 s for anything that drops out. The only quiet
+   window in any of the four is the final decay after the composed ending: 0.79 s in
+   Cuerpo A, 0.40 s in Cuerpo B, 0.43 s in Montuno B, and in Montuno A no qualifying
+   window at all — its tail never falls that quiet for as long as 0.2 s. Nothing drops
+   out mid-take, which is the failure that killed attempt 1.
+
+All four takes were then loudness-matched to MP3 and added to the listening page as
+"Attempt 5 · Suno v6 on your Pro account", above the four earlier attempts.
+
+### The loop engineering
+
+A three-minute take is not a loop. Each chosen take gave up one region that can repeat
+indefinitely without the ear finding the join, and that region — not the take — is what
+ships.
+
+| Cue     | Source region                                              | Loop              | BPM    | File                                       | Length  | Loudness                      | Size     |
+| ------- | ---------------------------------------------------------- | ----------------- | ------ | ------------------------------------------ | ------- | ----------------------------- | -------- |
+| Cuerpo  | `suno-v6-cuerpo-b.wav` 32.411 → 83.971 s (0:32.4–1:24.0)   | 40 bars, 51.560 s | 186.19 | `packages/client/public/audio/cuerpo.mp3`  | 53.06 s | −16.0 LUFS, −3.2 dBTP, 1.4 LU | 1,245 KB |
+| Montuno | `suno-v6-montuno-a.wav` 94.088 → 167.128 s (1:34.1–2:47.1) | 56 bars, 73.040 s | 184.01 | `packages/client/public/audio/montuno.mp3` | 74.54 s | −16.0 LUFS, −4.0 dBTP, 3.2 LU | 1,749 KB |
+
+Both files are 44.1 kHz stereo 192 kbps CBR MP3, loudness-matched to each other at
+exactly −16.0 LUFS integrated so neither cue wins by being louder, and both are served as
+static assets (the room server already maps `.mp3` to `audio/mpeg`, and the 500 KB gzip
+gate measures the client's initial JavaScript only, so they sit outside it).
+`packages/client/src/house-band-loops.json` carries each cue's file, `loopStart`,
+`loopEnd`, `bpm` and `bars`; it is audio metadata rather than card or song content, so it
+carries no content schema.
+
+**Both sources drift, and that decided the whole design.** The local two-bar cycle,
+measured in 16-second windows, falls from 187.0 to 183.2 BPM across the Cuerpo take (2%)
+and from 194.5 to 183.6 BPM across the Montuno take (5.6%); an independent bar-period
+measurement put the Cuerpo's fall nearer 4%. No single global tempo describes either
+file, so a long loop whose two ends sit at different local tempos lurches at the seam
+however carefully it is crossfaded. Both regions were therefore chosen where the local
+tempo at the start and at the end agree to within about 1%: the loop search measured
+187.21 against 187.26 BPM for Cuerpo and 185.9 against 184.4 BPM for Montuno, and the
+independent check measured 187.2 against 186.1 and 185.7 against 183.9. A 1% step is
+about 3 ms a beat, inside the groove's own wobble. The BPM in `house-band-loops.json` is
+each loop's own average — bars × 4 beats over the loop length — which is the figure that
+makes `bars` exact.
+
+**The construction, and why there is a pre-roll.** Each file is a 0.75 s pre-roll, the
+loop body, and a 0.75 s post-roll, joined with an 80 ms equal-power crossfade, so
+`loopStart` is 0.750 s and `loopEnd` is 0.750 s plus the loop length exactly. Each body
+length is a whole multiple of 441 samples — a whole number of 10 ms at 44.1 kHz — so
+`loopEnd` is exact both as the millisecond figure in the JSON and as a sample count, and
+nothing is skipped at the seam. The rolls are there because an MP3 decoder may hand back
+a few samples more or fewer than it was given at the head of a file: the post-roll is a
+byte-for-byte copy of the body's head, and the pre-roll's last 80 ms carries the same
+blend as the body's tail, so a decoder that keeps extra leading samples splices identical
+audio instead of an unblended edit. Simulated decoder offsets from −50 to +700 ms stay
+inside the file's own normal step distribution; without the blended pre-roll, negative
+offsets of 25 to 50 ms produced steps at the 97th to 99.9th percentile. In practice
+neither decoder tested needs the insurance — ffmpeg and Chromium both return exactly the
+pre-encode sample count at zero offset, because libmp3lame writes a gapless header both
+honour — so the 0.75 s rolls are held for Safari and Firefox, which were not tested.
+
+**The seams were verified in three decoders**, and ffmpeg's decode, Chromium's
+`decodeAudioData` and Chromium's own `AudioBufferSourceNode` render with `loop = true`
+agree to the third decimal on every figure here.
+
+- **Cuerpo.** The sample step at the join is 1.92e-2, the 66th percentile of all 6.85 M
+  steps in the looping render, where the file's own p99 is 1.00e-1 and its maximum
+  3.40e-1 — so the step at the join is smaller than ordinary sample-to-sample motion in
+  the same music. RMS across it
+  changes −2.92 dB over 5 ms and +0.57 dB over 20 ms, against control medians of 1.47 and
+  1.08 dB at seam-free points, and the 100 ms window centred on the join sits at the 56th
+  percentile of loudness, so there is no dip. The beat grid continues +11.21 and
+  +11.22 ms at the two joins, against a median absolute shift of 14.08 ms at 80 seam-free
+  control points in the same render: the loop is tighter than the groove's own wobble.
+- **Montuno.** Step 2.09e-2, the 77th percentile of 9.70 M; RMS −0.39 dB over 5 ms and
+  −0.53 dB over 20 ms, finer at that scale than Cuerpo's; grid continuing +12.64 and
+  +9.82 ms against a control median of 24.71 ms. Two-bar clave self-similarity across the
+  join is 0.200 and 0.139 against a control median of 0.311 — inside normal variation,
+  and the weakest number in this section. It is the honest cost of the longer loop.
+
+**Two traps worth recording, because both nearly shipped a wrong loop.** First, the
+unconstrained correlation peak for loop _length_ is not safe on this material: the
+continuous maraca and güiro layer makes a half-beat shift correlate almost as well, so
+peaks land on eighth-note aliases. One early Cuerpo candidate's "best" lag put the end
+170 ms off the nearest beat and implied 24.25 bars. Bass-band (30–130 Hz) correlation is
+what separates them — +0.15 to +0.30 at true metrical alignments against about −0.05 at
+half-bar aliases — and this is the same hazard, from the same instruments, that attempt
+2's method note recorded for tempo. Second, a beat-level phase check cannot see a
+whole-beat error, because it reads phase modulo one beat: a loop 161 beats long instead
+of 160 passes it while being a beat out of the bar. Both lengths were therefore proved on
+the source with a wide-lag correlation (±2 bars) read at whole-beat offsets. Cuerpo's
+peaks exactly at +0.0 ms, scoring 0.853 against 0.355 and 0.357 at ±1 beat and 0.479 and
+0.496 at ±2 beats — the even/odd signature of a correct 4/4 grid. Montuno's whole-beat
+maximum is at zero (0.497 against 0.206 and 0.226 at ±1 beat), with the fine peak at
++21 ms, which is the drift accumulated over 56 bars.
+
+**What was rejected, by measurement rather than taste.** With gates of 3 dB per frequency
+band, mel-spectral cosine ≥ 0.95, matched tempo within 0.6% and a positive onset
+correlation, nothing above 40 bars survives in Cuerpo at all: the 64-bar candidate passes
+every timing check but puts a 13.2 dB high-band and 7.2 dB bass mismatch at the seam
+(horns playing on one side of it and absent on the other, mel cosine 0.58), the 80-bar
+candidate drops the 20 ms RMS by 10.1 dB at the join, and the 96- and 112-bar candidates
+fail the whole-beat grid test by about half a beat. In Montuno, 48 bars has an 11.1 dB
+high-band mismatch, 40 bars a 6.3 dB bass and 8.4 dB air mismatch, and the other 56-bar
+start drops 11.5 dB over 100 ms.
+
+**The one cost that remains, and the swap that removes it.** Montuno's 56-bar loop is the
+longest the take allows — it travels through the horns dropping out, the hot mambo, and
+back — but the music arrives at the join about 1.5 dB hotter than it leaves it, so the
+band drops back a notch each time round. A 24-bar alternative starting at 65.011 s
+(30.940 s, 186.17 BPM) measures dramatically tighter: grid phase +0.65 and +0.50 ms,
+clave self-similarity 0.64 and 0.73 against a control median of 0.42, every band within
+2.4 dB. It is a one-line change in `house-band-loops.json` plus a rebuild if the long
+version bothers the ear. Both are flagged on the listening page, where the two shipped
+loops lead as "Chosen · Clave's house band loops", each playing three times round with
+chips a few seconds before every join — because measurement cannot hear a phrase
+restarting in the wrong place, and that is what the ear is for.
+
+### Next time
+
+- **Settle the rights before spending anything on sound.** Attempt 4 spent its whole
+  budget on a service whose rights chain could not reach Jacob, and that was readable
+  from the vendor's own pages before the first request. The route that worked is the
+  narrow, boring one: hold the subscription yourself and download through the vendor's
+  own channel.
+- **Read "Show full styles" before judging a take.** v6 condenses the brief, and the
+  condensation is the real prompt. Here it kept every instrument and dropped every
+  negation — and the negations are the half that a loop needs.
+- **Do not expect a generated take to loop as a whole.** All four takes compose an
+  ending; the usable material is a region in the middle, chosen where the local tempo at
+  the two ends matches. Budget the editing, not more generations.
+- **Pin loop length with a metrical constraint and prove it at whole-beat offsets.** On
+  salsa, with a continuous eighth-note percussion layer, correlation alone will happily
+  recommend an eighth-note alias, and a beat-level phase check will not catch a
+  whole-beat error.
+- **The oldest recommendation in this file is still unspent**: a human session player, or
+  a licensed salsa-dura library, is the only route that answers the complaint every
+  listening pass in attempts 1 to 4 made — quantized timing, static velocities, no room.
+  What shipped is good enough to play under a card game at low volume, chosen by the one
+  ear that has to live with it. That is not the same as a band breathing in a room.

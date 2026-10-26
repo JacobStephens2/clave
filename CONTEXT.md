@@ -71,3 +71,15 @@ version it ran under and why it was retired: pre-upgrade, replay mismatch, or un
 **Unresumable**:
 The ending of a game whose stored envelope the running release cannot safely resume.
 _Avoid_: corrupted, lost (a lost game is one whose Connection reached 0)
+
+## Music
+
+**House band**:
+The game's own optional background music: two looping instrumental cues made for Clave,
+**Cuerpo** under phrase 1 and **Montuno** under phrase 2, bundled with the client and
+played locally. Off by default, remembered per device, and never part of game or room
+state. It is also the band painted into the home-screen and recap artwork — same fiction,
+one name.
+_Avoid_: the song, Llorarás, the record (the song is Llorarás, the Oscar D'León
+recording, which Clave only links to and never hosts); background track; calling one cue
+"the house band" — a cue is the **Cuerpo cue** or the **Montuno cue**

@@ -733,3 +733,66 @@ deck's order, sections, and moments are unchanged. Its bonus numbers, the starte
 and one new Beginner card are not, so those pages of the physical prototype are
 rebuilt before the gate. Phase 6's post-v1 menu is untouched too: "a bundled or original
 soundtrack" is still on it, now with four failed attempts behind it.
+
+### 2026-10-24/26 — The house band: an original soundtrack ships
+
+The amendment above closed by recording that an original soundtrack had been tried four
+times and failed, that v1's non-goal on "bundled music files, original soundtracks"
+therefore stood unamended, and that Phase 6 still carried the item with four failed
+attempts behind it. A fifth attempt, generated on 2026-10-24 and cut into loops on
+2026-10-25/26, shipped. Both of those lines are superseded here.
+
+**What ships.** Two original instrumental loops, bundled with the client and served from
+the app's own origin: `packages/client/public/audio/cuerpo.mp3` (40 bars, 51.560 s at
+186.19 BPM) under phrase 1, the cuerpo, 8-counts 1–8, and
+`packages/client/public/audio/montuno.mp3` (56 bars, 73.040 s at 184.01 BPM) under phrase
+2, the montuno, 8-counts 9–16. Both are 44.1 kHz stereo 192 kbps MP3 at −16.0 LUFS,
+about 1.2 MB and 1.7 MB; each one's loop points are in
+`packages/client/src/house-band-loops.json`, and the loop body's length is a whole number
+of bars and a whole multiple of 441 samples, so a browser repeats it without a gap or a
+skipped sample. The house band is **off by default** and switched on per device. Which
+cue plays comes from the song card's own `section` in the player's snapshot — `Cuerpo` on
+song cards 1–8, `Montuno` on 9–16 — so the client reads the music the way it reads
+everything else, and nothing about it reaches the engine. The drawer that held only the
+"Open Llorarás in Spotify" link now opens from a button reading "Music" and carries the
+house band's switch above that link, which reads "Llorarás in Spotify".
+
+**How it was made, and why that matters more here than how it sounds.** The audio was
+generated with Suno v6 in Suno's own web app, on a Suno Pro subscription in Jacob's name,
+and downloaded as WAV through Suno's own download channel. Suno's terms
+(<https://suno.com/terms>) assign Output ownership to Pro and Premier account holders —
+"Suno hereby assigns to you all of its right, title and interest in and to any Output
+owned by Suno" — and condition commercial exploitation on the Output having been
+"downloaded by you through an approved channel". That is precisely the link the reseller
+route of attempt 4 could not supply, and it is why this attempt shipped where a
+better-sounding take bought through an API could not have.
+`docs/audio/soundtrack.md` records the model, the exact web-app settings, the condensed
+style text Suno actually generated from, the four takes and their measurements, the
+terms, and the loop engineering, with the four failed attempts preserved above it.
+
+**The music non-goal is amended in two of its three clauses.** §2's non-goal reads
+"Bundled music files, original soundtracks, and **music synchronization of any kind**".
+The first two clauses no longer hold: Clave bundles two original instrumental files,
+which it may distribute because it owns them. **The third clause stands.** Nothing is
+synchronized: the cue follows the game's own phrase rather than the game following the
+music, each cue loops indefinitely until that phrase ends, nothing is scheduled against a
+recording or a turn clock, the game remains turn-based and untimed, and the rulebook's
+"8-count" remains a thematic game unit. The non-goal's own sentence about never hosting
+or distributing the Oscar D'León recording is untouched, and so is the reason for it.
+
+**D7 amendment.** D7 ("Audio: an official external embed, explicitly ambient — the game
+does not synchronize with the recording") grows one clause: the app may also play its own
+original, owned loops from its own origin. Everything else D7 says still holds exactly as
+written. The Oscar D'León recording is still never stored, proxied, cached, bundled, or
+distributed; the drawer is still a link to that recording rather than a player, per the
+2026-10-23 amendment; playback is still local UI state rather than a game action or a
+shared-room event, which now covers the house-band toggle too, so two devices in a room
+need not agree about music; and the locally synthesized interface cues are unchanged. The
+Phase 0b couch gate still plays the actual record on a speaker and its pass criterion is
+untouched: the house band gives a couple something to dance to when the record is not
+playing, and the gate tests the ambient-record evening, not the loops.
+
+**Phase 6.** "A bundled or original soundtrack" leaves the post-v1 menu as delivered.
+What remains unplanned is the rest of the music work: a third cue, a second song's deck,
+and the human session player or licensed salsa-dura library that
+`docs/audio/soundtrack.md` still recommends for a band that breathes.
