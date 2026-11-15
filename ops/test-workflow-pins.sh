@@ -33,29 +33,30 @@ check_action() {
 check_action checkout
 check_action setup-node
 
-node_found=0
-while IFS= read -r line; do
-  [[ -n "$line" ]] || continue
-  node_found=1
-  number=${line%%:*}
-  body=${line#*:}
-  value=${body#*node-version:}
-  value=${value%%#*}
-  value=${value#"${value%%[![:space:]]*}"}
-  value=${value%"${value##*[![:space:]]}"}
-  if [[ "$value" == \"*\" && "$value" == *\" ]]; then
-    value=${value:1:${#value}-2}
-  elif [[ "$value" == \'*\' && "$value" == *\' ]]; then
-    value=${value:1:${#value}-2}
-  fi
-  if [[ ! "$value" =~ ^22\.[0-9]+\.[0-9]+$ ]]; then
-    echo "node-version on line ${number} must be an exact Node 22 release, not: ${value}" >&2
+if ! grep -Eq '^[[:space:]]*node-version: \$\{\{ matrix.node \}\}[[:space:]]*$' "$workflow"; then
+  echo "CI must select node-version from \${{ matrix.node }}." >&2
+  fail=1
+fi
+
+# Keep exact release pins while covering both the current and next host runtime.
+versions=$(sed -nE 's/^[[:space:]]*node: \[([^]]*)\][[:space:]]*$/\1/p' "$workflow")
+IFS=',' read -ra node_versions <<< "$versions"
+node_22=0
+node_26=0
+for value in "${node_versions[@]}"; do
+  value=${value//[[:space:]\"\']/}
+  if [[ "$value" =~ ^22\.[0-9]+\.[0-9]+$ ]]; then
+    node_22=1
+  elif [[ "$value" =~ ^26\.[0-9]+\.[0-9]+$ ]]; then
+    node_26=1
+  else
+    echo "matrix.node must use exact Node 22 and 26 releases, not: ${value}" >&2
     fail=1
   fi
-done < <(grep -nE '^[[:space:]]*node-version:' "$workflow" || true)
+done
 
-if [[ "$node_found" -eq 0 ]]; then
-  echo "CI workflow does not set node-version." >&2
+if [[ "$node_22" -ne 1 || "$node_26" -ne 1 ]]; then
+  echo "CI matrix must cover both Node 22 and Node 26." >&2
   fail=1
 fi
 
