@@ -1,3 +1,4 @@
+- [x] Build, test, and run on Node 26 alongside Node 22 (issue #53): add exact-release CI matrix coverage, retain one Node 22 production artifact gated on both runtimes, update workflow pin checks, and smoke-start the built server against an isolated database on both runtimes without startup deprecation warnings; existing engine constraints and locked dependencies need no changes.
 - [x] turn images into markdown
 - [x] Write an opinionated rulebook to docs/rules/game-rules according to docs/rules/decisions and docs/rules/game-rules-draft. Feel free to look elsewhere in the repo, and especially the handwritten-notes, for inspiration.
 - [x] Add a file or files to docs/cards which defines cards for v1 of Clave.

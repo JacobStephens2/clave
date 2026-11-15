@@ -18,12 +18,16 @@ the repository's default branch (including a merged PR) then deploys to the
 `production` environment. `workflow_dispatch` can retry the default branch without
 creating another commit. PRs, tags, and other branches cannot deploy.
 
-CI uses Node 22 to match the server, runs release-packaging and validation checks,
-ShellCheck,
-`npm ci`, the full unit suite, typechecking, and the production build. It packages
-the exact checked-out source and all four built packages into one immutable Actions
-artifact. `/release.json` identifies its commit. No credentials or `node_modules`
-are shipped in the artifact.
+CI uses exact Node 22 and 26 releases, covering both the current host runtime and
+its planned upgrade. Each runs release-packaging and validation checks, ShellCheck,
+`npm ci`, the full unit suite, typechecking, the production build, and
+`bash ops/test-server-start.sh`. The smoke check starts the built server on loopback
+with a temporary database, checks `/healthz` and `/`, and rejects startup deprecation
+warnings. Only the Node 22 job packages the exact checked-out source and all four
+built packages into the immutable `production-release` artifact; deployment waits
+for both runtimes to pass. `/release.json` identifies its commit. No credentials or
+`node_modules` are shipped in the artifact. This matrix does not change the host's
+Node installation or service configuration.
 
 The deployment job rejects superseded commits and serializes releases without
 cancelling an in-progress deployment. It streams the artifact over host-key-pinned

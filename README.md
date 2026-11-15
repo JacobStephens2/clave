@@ -55,7 +55,7 @@ adjudicated build plan is [`docs/plans/clave-plan.md`](docs/plans/clave-plan.md)
 
 ## Play locally
 
-Requires Node 22 or newer.
+Requires Node 22 or newer. CI verifies Node 22 and 26.
 
 ```sh
 npm install
@@ -74,6 +74,7 @@ npm run test:e2e
 npm run typecheck
 npm run lint
 npm run build
+bash ops/test-server-start.sh # after building; isolated database, no secrets
 ```
 
 ## Application map

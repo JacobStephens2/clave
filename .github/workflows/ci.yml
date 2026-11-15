@@ -11,11 +11,15 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22.23.4, 26.13.1]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 22.23.4
+          node-version: ${{ matrix.node }}
           cache: npm
       - run: bash ops/test-workflow-pins.sh
       - run: bash ops/test-package-release.sh
@@ -25,13 +29,14 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run build
+      - run: bash ops/test-server-start.sh
       - name: Package the verified release
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        if: startsWith(matrix.node, '22.') && github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         env:
           DEPLOY_COMMIT: ${{ github.sha }}
         run: bash ops/package-release.sh "$DEPLOY_COMMIT" "$RUNNER_TEMP/clave-release.tgz"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        if: startsWith(matrix.node, '22.') && github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         with:
           name: production-release
           path: ${{ runner.temp }}/clave-release.tgz
